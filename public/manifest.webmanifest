@@ -1,0 +1,11 @@
+{
+  "name": "Neon Foundry Pinball",
+  "short_name": "Neon Foundry",
+  "description": "Cyberpunk pinball with an underground fight club lower level.",
+  "start_url": "./",
+  "display": "fullscreen",
+  "orientation": "portrait",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}
