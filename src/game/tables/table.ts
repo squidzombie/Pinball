@@ -1,4 +1,4 @@
-import { Ball, FLOOR, RAMP, World, type Flipper } from '../../engine/physics';
+import { Ball, FLOOR, RAMP, RAMP2, World, type Flipper } from '../../engine/physics';
 import type { Game } from '../game';
 import {
   art,
@@ -255,7 +255,7 @@ export abstract class Table {
     for (const s of list) s.draw(ctx);
     if (this.rampCanvas) ctx.drawImage(this.rampCanvas, 0, 0, TABLE_W, TABLE_H);
     ctx.globalAlpha = 1;
-    for (const b of this.world.balls) if (b.layer === RAMP) drawBall(ctx, b, this.ballZ(b));
+    for (const b of this.world.balls) if (b.layer !== FLOOR) drawBall(ctx, b, this.ballZ(b));
     ctx.globalAlpha = dim;
     this.drawTop(ctx);
     ctx.globalAlpha = 1;
@@ -269,7 +269,7 @@ export abstract class Table {
     ctx.lineWidth = 1.5;
     for (const s of w.segments) {
       if (!s.enabled) continue;
-      ctx.strokeStyle = s.oneWay ? '#ffe000' : s.layers & RAMP ? (s.layers & FLOOR ? '#ffffff' : '#ff40ff') : '#00ffff';
+      ctx.strokeStyle = s.oneWay ? '#ffe000' : s.layers & RAMP2 ? '#40a0ff' : s.layers & RAMP ? (s.layers & FLOOR ? '#ffffff' : '#ff40ff') : '#00ffff';
       ctx.beginPath();
       ctx.moveTo(s.ax, s.ay);
       ctx.lineTo(s.bx, s.by);

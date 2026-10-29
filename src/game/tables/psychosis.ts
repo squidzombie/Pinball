@@ -1,4 +1,4 @@
-import { FLOOR, RAMP, Flipper, LineSensor, ZoneSensor, type Ball, type Circle, type Segment } from '../../engine/physics';
+import { FLOOR, RAMP, RAMP2, Flipper, LineSensor, ZoneSensor, type Ball, type Circle, type Segment } from '../../engine/physics';
 import { sound } from '../../engine/audio';
 import { drawGlow } from '../../engine/fx';
 import type { DMD } from '../../engine/dmd';
@@ -6,9 +6,9 @@ import type { Game } from '../game';
 import { fmt, short } from '../format';
 import { Blackout, MODES, Rage, type Mode, type ModeDef, type Shot, type Switch } from '../modes';
 import { buildLowerSection, poly, type LowerSection, type P } from './geom';
-import { box, drawBallAt, drawBumper, drawShadow, lift, mix, type BumperStyle, type Lamp, type LampState } from './draw';
+import { drawBallAt, lift, type Lamp, type LampState } from './draw';
 import * as L from './psychosis-layout';
-import { INK, drawImpound, paintCameras, paintRamps, paintStatic } from './psychosis-art';
+import { drawDrop, drawImpound, drawReactorEye, drawSpinner, drawStandup, drawTank, drawTurbine, paintDynamic, paintRamps, paintStatic } from './psychosis-art';
 import { Table, type Sprite } from './table';
 
 const INS = {
@@ -22,40 +22,15 @@ const INS = {
 
 /** Where each shot's popups and glows appear. */
 const SHOT_POS: Record<Shot, P> = {
-  alleyL: [52, 420],
-  skyway: L.SKYWAY.path[0],
-  breach: L.BREACH,
-  reactor: L.REACTOR.pos(60),
+  alley: [400, 58],
   market: L.MARKET.path[0],
-  alleyR: [502, 420],
+  breach: L.BREACH,
+  skyway: [512, 620],
+  reactor: L.REACTOR.pos(50),
 };
 
-const STEEL_BUMPER: BumperStyle = {
-  name: 'psycho',
-  base: '#3a3d42',
-  body: '#8a1414',
-  cap: '#9aa1a8',
-  art: (g, r, lit) => {
-    // red reactor eye in a steel cap
-    const eye = g.createRadialGradient(0, 0, 0, 0, 0, r * 0.55);
-    eye.addColorStop(0, lit ? '#ffffff' : '#ff6a5a');
-    eye.addColorStop(0.45, lit ? '#ff5040' : '#c41414');
-    eye.addColorStop(1, '#2a0606');
-    g.fillStyle = eye;
-    g.beginPath();
-    g.arc(0, 0, r * 0.55, 0, Math.PI * 2);
-    g.fill();
-    g.strokeStyle = 'rgba(0,0,0,0.6)';
-    g.lineWidth = 2;
-    for (let i = 0; i < 8; i++) {
-      const a = (i / 8) * Math.PI * 2;
-      g.beginPath();
-      g.moveTo(Math.cos(a) * r * 0.68, Math.sin(a) * r * 0.68);
-      g.lineTo(Math.cos(a) * r * 0.95, Math.sin(a) * r * 0.95);
-      g.stroke();
-    }
-  },
-};
+/** Ramp layer for each ramp: the Black Market crosses above the Skyway's footprint, so it gets its own. */
+const RAMP_LAYER = [RAMP, RAMP2];
 
 interface Drop {
   seg: Segment;
@@ -76,7 +51,9 @@ type ItemKey = (typeof ITEMS)[number]['key'];
 
 export class Psychosis extends Table {
   lower: LowerSection;
-  upper: Flipper;
+  /** Upper left flippers: the top one under the Impound shoots the Back Alley, the middle one the Black Market. */
+  topFlipper: Flipper;
+  midFlipper: Flipper;
   bumpers: Circle[] = [];
   drops: Drop[] = [];
   standups: Segment[] = [];
@@ -90,6 +67,7 @@ export class Psychosis extends Table {
   spinnerAngle = 0;
   spinnerVel = 0;
   private spinAccum = 0;
+  turbineAngle = 0;
   breachBall: Ball | null = null;
   private breachTimer = 0;
   private standupWobble = [0, 0, 0, 0, 0, 0];
@@ -138,21 +116,28 @@ export class Psychosis extends Table {
   constructor(game: Game) {
     super(game);
     const w = this.world;
-    this.flipperStyle = { body: '#eceae6', rubber: '#c01818' };
+    this.flipperStyle = { body: '#f2f0ec', rubber: '#c41a1a' };
 
-    poly(w, L.OUTER, { restitution: 0.4 });
+    // Cabinet, shooter lane and the Back Alley loop
+    poly(w, L.LEFT_LOW, { restitution: 0.4 });
+    poly(w, L.RIGHT_WALL, { restitution: 0.4 });
+    poly(w, L.SHOOTER_FLOOR, { restitution: 0.2 });
     poly(w, L.PLUNGER_WALL, { restitution: 0.3 });
     w.seg(L.GATE[0][0], L.GATE[0][1], L.GATE[1][0], L.GATE[1][1], { oneWay: true, restitution: 0.3 });
-    poly(w, L.ALLEY_INNER, { restitution: 0.4 });
-    poly(w, L.LEFT_WALL_TOP, { restitution: 0.4 });
-    poly(w, L.LEFT_WALL_LOW, { restitution: 0.4 });
-    poly(w, L.RIGHT_WALL, { restitution: 0.4 });
-    poly(w, L.DEFLECT_L, { restitution: 0.6 });
-    poly(w, L.DEFLECT_R, { restitution: 0.6 });
-    w.seg(L.DIVERTER[0][0], L.DIVERTER[0][1], L.DIVERTER[1][0], L.DIVERTER[1][1], { oneWay: true, restitution: 0.25 });
+    poly(w, L.ALLEY_OUTER, { restitution: 0.35, friction: 0.02 });
+    poly(w, L.ALLEY_INNER, { restitution: 0.35, friction: 0.02 });
 
-    // Breach: cup plus two banks of standups
+    // Top left: Impound, machinery, the guides down to both upper flippers
+    poly(w, L.IMPOUND_BOX, { restitution: 0.3 }, true);
+    poly(w, L.MACHINE, { restitution: 0.3 }, true);
+    poly(w, L.UPPER_LEFT, { restitution: 0.3 });
+    poly(w, L.TOP_GUIDE, { restitution: 0.25 });
+    poly(w, L.LEFT_MASS, { restitution: 0.35 }, true);
+    w.seg(L.DUCT_GATE[0][0], L.DUCT_GATE[0][1], L.DUCT_GATE[1][0], L.DUCT_GATE[1][1], { oneWay: true, restitution: 0.25 });
+
+    // Breach: cup, the scoop housing, and two banks of standups
     poly(w, L.BREACH_CUP, { restitution: 0.25 });
+    poly(w, [L.BANK_L.bottom, L.BANK_L.outer, ...L.BREACH_BOX, L.BANK_R.outer, L.BANK_R.bottom], { restitution: 0.4 });
     [L.BANK_L, L.BANK_R].forEach((bank, side) => {
       const at = (t: number): P => [bank.top[0] + (bank.bottom[0] - bank.top[0]) * t, bank.top[1] + (bank.bottom[1] - bank.top[1]) * t];
       const T = L.STANDUP_T;
@@ -163,7 +148,7 @@ export class Psychosis extends Table {
         const idx = side * 3 + i;
         this.standups.push(w.seg(a[0], a[1], b[0], b[1], { restitution: 0.35, onHit: (h) => h.speed > 70 && this.hitStandup(idx) }));
       }
-      poly(w, [at(T[3]), bank.bottom, bank.outer, bank.top], { restitution: 0.45 });
+      poly(w, [at(T[3]), bank.bottom], { restitution: 0.4 });
     });
     w.zones.push(new ZoneSensor(L.BREACH[0], L.BREACH[1], 18, (b) => this.enterBreach(b)));
 
@@ -173,6 +158,8 @@ export class Psychosis extends Table {
     poly(w, [R.mouthL, R.channelL0, R.lipL], { restitution: 0.3 });
     poly(w, [R.mouthR, R.channelR0, R.lipR], { restitution: 0.3 });
     poly(w, [R.channelL0, R.channelL1, R.channelR1, R.channelR0], { restitution: 0.3 });
+    w.seg(L.SKY_LANE_X, 640, L.SKY_LANE_X, 672, { restitution: 0.35 });
+    poly(w, L.LANE_ROOF, { restitution: 0.35 });
     L.DROPS.forEach(([a, b], i) => {
       const seg = w.seg(a[0], a[1], b[0], b[1], { restitution: 0.3, onHit: (h) => this.hitDrop(i, h.speed) });
       this.drops.push({ seg, down: false, anim: 0 });
@@ -188,10 +175,11 @@ export class Psychosis extends Table {
     });
     this.captive = { c: cap, s: R.restS, v: 0 };
 
-    // Ramps live on the ramp layer; their foot blocks the floor.
+    // Ramps: their walls live on their own layer; their foot blocks the floor.
     L.RAMPS.forEach((r, idx) => {
-      poly(w, r.walls.left, { layers: RAMP, restitution: 0.3, friction: 0.02 });
-      poly(w, r.walls.right, { layers: RAMP, restitution: 0.3, friction: 0.02 });
+      const layer = RAMP_LAYER[idx];
+      poly(w, r.walls.left, { layers: layer, restitution: 0.3, friction: 0.02 });
+      poly(w, r.walls.right, { layers: layer, restitution: 0.3, friction: 0.02 });
       poly(w, r.walls.left.slice(0, r.baseTo + 1), { restitution: 0.35 });
       poly(w, r.walls.right.slice(0, r.baseTo + 1), { restitution: 0.35 });
       const bl = r.walls.left[r.baseTo];
@@ -209,7 +197,7 @@ export class Psychosis extends Table {
           eb[1],
           (b, dir) => {
             if (dir === inward && b.layer === FLOOR) {
-              b.layer = RAMP;
+              b.layer = layer;
               b.tags.ramp = idx + 1;
               b.tags.ri = 0;
               b.tags.made = 0;
@@ -218,7 +206,7 @@ export class Psychosis extends Table {
               b.tags.ramp = 0;
             }
           },
-          FLOOR | RAMP,
+          FLOOR | layer,
         ),
       );
     });
@@ -230,10 +218,15 @@ export class Psychosis extends Table {
     });
     this.flipperL = this.lower.left;
     this.flipperR = this.lower.right;
-    const U = L.UPPER;
-    this.upper = new Flipper(U.x, U.y, U.len, U.rest, U.up, U.r0, U.r1);
-    w.flippers.push(this.upper);
-    this.extraFlippers.push({ f: this.upper, side: -1 });
+    const mk = (U: typeof L.TOP_FLIPPER) => {
+      const f = new Flipper(U.x, U.y, U.len, U.rest, U.up, U.r0, U.r1);
+      w.flippers.push(f);
+      this.extraFlippers.push({ f, side: -1 });
+      return f;
+    };
+    this.topFlipper = mk(L.TOP_FLIPPER);
+    this.midFlipper = mk(L.MID_FLIPPER);
+    w.circle(L.MID_POST[0], L.MID_POST[1], 6, { restitution: 0.6 });
 
     L.BUMPERS.forEach(([x, y]) => {
       const c = w.circle(x, y, L.BUMPER_R, { restitution: 0.6, kick: 900, kickThreshold: 10, onHit: (h) => this.hitBumper(c, h.ball) });
@@ -241,15 +234,25 @@ export class Psychosis extends Table {
     });
 
     // Sensors
-    const line = (pts: P[], fn: (b: Ball, dir: number) => void) => w.lineSensors.push(new LineSensor(pts[0][0], pts[0][1], pts[1][0], pts[1][1], fn));
-    line(L.ALLEY_L_SENSOR, (b, dir) => dir > 0 && this.alley('alleyL', b));
-    line(L.ALLEY_R_SENSOR, (b, dir) => dir > 0 && this.alley('alleyR', b));
+    const line = (pts: P[], fn: (b: Ball, dir: number) => void, layers = FLOOR) =>
+      w.lineSensors.push(new LineSensor(pts[0][0], pts[0][1], pts[1][0], pts[1][1], fn, layers));
+    // The Back Alley counts once a ball is over the top heading clockwise (plunges go the other way).
+    const top = L.ALLEY_CENTER[Math.round(L.ALLEY_CENTER.length * 0.45)];
     line(
       [
-        [470, L.SPINNER_Y],
-        [535, L.SPINNER_Y],
+        [top[0], top[1] - 26],
+        [top[0], top[1] + 26],
+      ],
+      (b, dir) => dir > 0 && this.alley(b),
+    );
+    line(L.DUCT_SENSOR, (_b, dir) => dir > 0 && this.duct());
+    line(
+      [
+        [L.SKY_LANE_X, 650],
+        [535, 650],
       ],
       (b) => (this.spinnerVel = Math.min(40, this.spinnerVel + b.speed / 120)),
+      FLOOR | RAMP,
     );
     L.ROLLOVERS.forEach(([x0, x1], i) =>
       line(
@@ -265,11 +268,11 @@ export class Psychosis extends Table {
 
     this.shooter = { x: 557.5, y: 1165, minX: 536, maxX: 580, minY: 700 };
     this.flashers = [
-      { x: 150, y: 52, r: 11, z: 40, color: INS.red, level: 0 },
-      { x: 504, y: 112, r: 11, z: 40, color: INS.red, level: 0 },
-      { x: L.BREACH[0] - L.BREACH_AXIS[0] * 34, y: L.BREACH[1] - L.BREACH_AXIS[1] * 34, r: 9, z: 30, color: INS.white, level: 0 },
-      { x: L.REACTOR.core[0], y: L.REACTOR.core[1], r: 12, z: 34, color: INS.red, level: 0 },
-      { x: 40, y: 42, r: 9, z: 56, color: INS.orange, level: 0 },
+      { x: 186, y: 30, r: 10, z: 46, color: INS.red, level: 0 },
+      { x: 520, y: 300, r: 11, z: 70, color: INS.yellow, level: 0 },
+      { x: L.BREACH[0], y: 366, r: 9, z: 40, color: INS.red, level: 0 },
+      { x: L.REACTOR.eye[0], y: L.REACTOR.eye[1], r: 12, z: 36, color: INS.red, level: 0 },
+      { x: 312, y: 112, r: 9, z: 46, color: INS.orange, level: 0 },
     ];
     this.buildLamps();
   }
@@ -284,25 +287,27 @@ export class Psychosis extends Table {
       lamp({ kind: 'circle', x, y, w: 15, color: INS.red, label: 'JP', labelSize: 7, state: () => (this.jpLit(s) ? 3 : 0) });
     const dirAngle = (d: P) => Math.atan2(d[0], -d[1]);
 
-    arrow('alleyL', 52, 645, 0);
-    jp('alleyL', 52, 606);
-    arrow('alleyR', 502, 600, 0);
-    jp('alleyR', 502, 562);
-    const su = L.SKYWAY.path[1];
-    const s0 = L.SKYWAY.path[0];
-    const sd = L.unit(L.sub(su, s0));
-    arrow('skyway', s0[0] - sd[0] * 44, s0[1] - sd[1] * 44, dirAngle(sd));
-    jp('skyway', s0[0] - sd[0] * 44 - 26, s0[1] - sd[1] * 44 + 6);
+    // Back Alley: in front of its mouth, pointing up the left leg
+    const am = L.ALLEY_MOUTH;
+    const amc: P = [(am[0][0] + am[1][0]) / 2, (am[0][1] + am[1][1]) / 2];
+    const ad = L.unit(L.sub(L.ALLEY_CENTER[3], L.ALLEY_CENTER[0]));
+    arrow('alley', amc[0] - ad[0] * 36, amc[1] - ad[1] * 36, dirAngle(ad));
+    jp('alley', amc[0] - ad[0] * 36 + 22, amc[1] - ad[1] * 36 + 8);
+    // Black Market: in front of its mouth
     const m0 = L.MARKET.path[0];
-    const md = L.unit(L.sub(L.MARKET.path[1], m0));
-    arrow('market', m0[0] - md[0] * 40, m0[1] - md[1] * 40, dirAngle(md));
-    jp('market', m0[0] - md[0] * 40 - 8, m0[1] - md[1] * 40 + 26);
+    const md = L.unit(L.sub(L.MARKET.path[2], m0));
+    arrow('market', m0[0] - md[0] * 44, m0[1] - md[1] * 44, dirAngle(md));
+    jp('market', m0[0] - md[0] * 44 + 24, m0[1] - md[1] * 44 + 4);
+    // Skyway: up the lane beside the Reactor
+    arrow('skyway', 512, 676, 0);
+    jp('skyway', 512, 634);
     const ba = L.BREACH_AXIS;
-    arrow('breach', L.BREACH[0] + ba[0] * 120, L.BREACH[1] + ba[1] * 120, dirAngle([-ba[0], -ba[1]]));
+    arrow('breach', L.BREACH[0] + ba[0] * 128, L.BREACH[1] + ba[1] * 128, dirAngle([-ba[0], -ba[1]]));
+    jp('breach', L.BREACH[0] + ba[0] * 92, L.BREACH[1] + ba[1] * 92);
     const ra = L.REACTOR_AXIS;
-    arrow('reactor', L.REACTOR_MOUTH[0] - ra[0] * 40, L.REACTOR_MOUTH[1] - ra[1] * 40, dirAngle(ra));
+    arrow('reactor', L.REACTOR_MOUTH[0] - ra[0] * 44, L.REACTOR_MOUTH[1] - ra[1] * 44, dirAngle(ra));
 
-    // B-R-E-A-C-H letters beside their standups, on the funnel floor
+    // B-R-E-A-C-H letters beside their standups, on the channel floor
     [L.BANK_L, L.BANK_R].forEach((bank, side) => {
       for (let i = 0; i < 3; i++) {
         const t = (L.STANDUP_T[i] + L.STANDUP_T[i + 1]) / 2;
@@ -313,7 +318,7 @@ export class Psychosis extends Table {
           kind: 'circle',
           x: p[0] + toAxis[0] * 13,
           y: p[1] + toAxis[1] * 13,
-          w: 16,
+          w: 15,
           color: INS.red,
           tint: () => (this.mode?.litStandup(idx) ? this.mode.color : INS.red),
           label: L.BREACH_LETTERS[idx],
@@ -323,27 +328,27 @@ export class Psychosis extends Table {
       }
     });
 
-    // Reactor drop lamps and heat
+    // Reactor drop lamps
     L.DROPS.forEach(([a, b], i) => {
-      const m: P = [(a[0] + b[0]) / 2 - ra[0] * 14, (a[1] + b[1]) / 2 - ra[1] * 14];
+      const m: P = [(a[0] + b[0]) / 2 - ra[0] * 15, (a[1] + b[1]) / 2 - ra[1] * 15];
       lamp({ kind: 'rect', x: m[0], y: m[1], w: 16, h: 7, angle: Math.atan2(ra[0], -ra[1]), color: INS.yellow, state: () => (this.drops[i].down ? 1 : 0) });
     });
-    // Lock: LOCK insert and the three Impound slots
-    lamp({ kind: 'rect', x: 52, y: 570, w: 44, h: 15, color: INS.orange, label: 'LOCK', labelSize: 9, state: () => (this.lockLit ? 3 : 0) });
-    for (let i = 0; i < 3; i++)
-      lamp({ kind: 'circle', x: 34 + i * 18, y: 545, w: 11, color: INS.orange, state: () => (i < this.locked.length ? 1 : 0) });
+    // Lock: the warning triangle on the Impound, and the lit-lock insert on the Skyway lane
+    lamp({ kind: 'tri', x: 56, y: 56 - lift(36), w: 16, h: 14, color: INS.red, state: () => (this.lockLit ? 3 : this.multiball === 'impound' ? 2 : 0) });
+    lamp({ kind: 'rect', x: 512, y: 594, w: 38, h: 13, color: INS.orange, label: 'LOCK', labelSize: 8, state: () => (this.lockLit ? 3 : 0) });
 
     // Black Market menu: the item on offer blinks; the one you can afford is solid
     ITEMS.forEach((it, i) =>
       lamp({
         kind: 'rect',
-        x: 432,
-        y: 386 + i * 17,
-        w: 40,
-        h: 13,
+        x: 312 + i * 31,
+        y: 466 + i * 7,
+        w: 28,
+        h: 12,
+        angle: 0.22,
         color: INS.yellow,
         label: it.label,
-        labelSize: 7.5,
+        labelSize: 6.5,
         state: () => (this.offer()?.key === it.key ? (this.cash >= it.price ? 3 : 2) : 0),
       }),
     );
@@ -351,7 +356,8 @@ export class Psychosis extends Table {
     // The heist map
     const plaque = (k: ModeDef['key'], p: P) => {
       const def = MODES.find((m) => m.key === k)!;
-      lamp({ kind: 'rect', x: p[0], y: p[1], w: 78, h: 22, color: def.color, label: def.name, labelSize: 10, state: () => this.mapLamp(def) });
+      lamp({ kind: 'rect', x: p[0], y: p[1], w: 74, h: 20, color: def.color, label: def.name, labelSize: 9.5, state: () => this.mapLamp(def) });
+      lamp({ kind: 'circle', x: p[0], y: p[1] - 17, w: 11, color: INS.white, state: () => (this.modeKey === def.key ? 3 : this.completed.has(def.key) ? 1 : 0) });
     };
     plaque('infiltrate', L.MAP.infiltrate);
     plaque('hack', L.MAP.hack);
@@ -362,19 +368,27 @@ export class Psychosis extends Table {
       kind: 'shield',
       x: L.MAP.blackout[0],
       y: L.MAP.blackout[1],
-      w: 92,
-      h: 30,
+      w: 86,
+      h: 26,
       color: INS.red,
       label: 'BLACKOUT',
-      labelSize: 12,
+      labelSize: 11,
       state: () => (this.wizard ? 3 : this.blackoutLit ? 2 : 0),
     });
+    // Junction lights on the map: they show how many modes are lit
+    const nodes: P[] = [
+      [L.CX, L.MAP.infiltrate[1] - 44],
+      [L.CX - 62, L.MAP.hack[1] - 42],
+      [L.CX + 62, L.MAP.route[1] - 42],
+      [L.CX, (L.MAP.hack[1] + L.MAP.payload[1]) / 2 - 12],
+    ];
+    nodes.forEach(([x, y], i) => lamp({ kind: 'circle', x, y, w: 13, color: INS.red, state: () => (i < this.modesLit ? 2 : this.blackoutLit ? 1 : 0) }));
     // mode clock: a bar of lamps under the map
     for (let i = 0; i < 12; i++)
       lamp({
         kind: 'rect',
         x: L.CX - 66 + i * 12,
-        y: 884,
+        y: 928,
         w: 9,
         h: 6,
         color: INS.white,
@@ -389,20 +403,22 @@ export class Psychosis extends Table {
 
     // Bonus multiplier and R-A-G-E
     [2, 3, 4, 5, 6].forEach((n, i) =>
-      lamp({ kind: 'circle', x: L.CX - 80 + i * 40, y: 920, w: 22, color: INS.green, label: `${n}X`, labelSize: 8, state: () => (this.game.bonusMult >= n ? 1 : 0) }),
+      lamp({ kind: 'circle', x: L.CX - 64 + i * 32, y: 952, w: 17, color: INS.red, label: `${n}X`, labelSize: 7, state: () => (this.game.bonusMult >= n ? 1 : 0) }),
     );
     ['R', 'A', 'G', 'E'].forEach((label, i) =>
       lamp({
-        kind: 'circle',
+        kind: 'tri',
         x: (L.ROLLOVERS[i][0] + L.ROLLOVERS[i][1]) / 2,
-        y: 945,
+        y: 868,
         w: 22,
+        h: 19,
         color: INS.red,
         label,
+        labelSize: 8,
         state: () => (this.rage ? 2 : this.rageLit[i] ? 1 : 0),
       }),
     );
-    lamp({ kind: 'rect', x: 557.5, y: 990, w: 30, h: 46, color: INS.red, label: 'SKILL', labelSize: 7, labelTurns: true, angle: -Math.PI / 2, state: () => (this.skillT > 0 || this.skillArmed ? 3 : 0) });
+    lamp({ kind: 'tri', x: 557.5, y: 960, w: 24, h: 21, color: INS.red, state: () => (this.skillT > 0 || this.skillArmed ? 3 : 0) });
     lamp({
       kind: 'rect',
       x: L.CX,
@@ -438,7 +454,7 @@ export class Psychosis extends Table {
     return null;
   }
 
-  private shotLamp(s: Shot): LampState {
+  shotLamp(s: Shot): LampState {
     const m = this.modeFor(s);
     if (m) return this.urgency(m, m.lit(s));
     if (this.multiball === 'impound' && (this.jpLit(s) || (s === 'reactor' && this.impoundSuper))) return 3;
@@ -446,7 +462,8 @@ export class Psychosis extends Table {
     if (s === 'market' && this.skillT > 0) return 4;
     if (s === 'breach') return this.modesLit > 0 && this.canStartMode() && this.available().length ? 2 : 0;
     if (s === 'reactor') return this.blackoutLit && this.canStartMode() ? 3 : this.dropsDown() ? 2 : 0;
-    if (s === 'alleyL') return this.lockLit ? 2 : this.comboTimer > 0 ? 2 : 0;
+    if (s === 'skyway') return this.lockLit ? 2 : this.comboTimer > 0 ? 2 : 0;
+    if (s === 'alley') return this.comboTimer > 0 ? 2 : 0;
     if (s === 'market') return this.offer() && this.cash >= this.offer()!.price ? 2 : 0;
     return 0;
   }
@@ -455,13 +472,13 @@ export class Psychosis extends Table {
     const m = this.modeFor(s);
     if (m) return m.tint(s);
     if (s === 'reactor' && this.blackoutLit) return INS.red;
-    if (s === 'alleyL' && this.lockLit) return INS.orange;
+    if (s === 'skyway' && this.lockLit) return INS.orange;
     if (s === 'market' && this.skillT > 0) return INS.red;
     return this.rage?.color ?? INS.white;
   }
 
   private jpLit(s: Shot) {
-    return this.multiball === 'impound' && !this.impoundSuper && (s === 'skyway' || s === 'market' || s === 'alleyL' || s === 'alleyR');
+    return this.multiball === 'impound' && !this.impoundSuper && s !== 'reactor';
   }
 
   shotPos(s: Shot): P {
@@ -497,7 +514,7 @@ export class Psychosis extends Table {
     this.wizard = null;
     this.blackoutLit = false;
     this.level = 0;
-    this.modesLit = 1; // the first job comes lit so new players see the Breach flash
+    this.modesLit = 1; // the first mode comes lit so new players see the Breach flash
     this.lockLit = false;
     this.locked = [];
     this.multiball = null;
@@ -515,7 +532,7 @@ export class Psychosis extends Table {
     this.skillArmed = true;
   }
 
-  /** The ball has just been plunged: it rides the Back Alley round to the upper flipper. */
+  /** The ball has just been plunged: it rides the Back Alley round to the top flipper. */
   onPlunge() {
     if (!this.skillArmed) return;
     this.skillArmed = false;
@@ -576,17 +593,25 @@ export class Psychosis extends Table {
     if (this.multiball === 'impound' && this.jpLit(s)) this.impoundJackpot(s);
   }
 
-  private alley(s: 'alleyL' | 'alleyR', b: Ball) {
+  /** Round the Back Alley, behind the pops. */
+  private alley(b: Ball) {
     sound.orbit();
-    this.flash(s === 'alleyL' ? 0 : 1, 0.7);
-    this.majorShot(s, 50_000, b);
-    if (s === 'alleyL' && this.lockLit && !this.multiball && this.locked.length < 3 && !this.locking) this.lockBall(b);
+    this.flash(4, 0.7);
+    this.flash(0, 0.5);
+    this.majorShot('alley', 75_000, b);
+  }
+
+  /** Up the duct to the upper flippers. */
+  private duct() {
+    this.sw('rollover');
+    this.game.addScore(25_000, 43, 420);
+    sound.lane();
   }
 
   private rampMade(s: 'skyway' | 'market', b: Ball) {
     const g = this.game;
     sound.ramp();
-    this.flash(s === 'skyway' ? 4 : 1, 0.8);
+    this.flash(s === 'skyway' ? 3 : 1, 0.8);
     if (s === 'market' && this.skillT > 0) {
       this.skillT = 0;
       g.addScore(500_000);
@@ -653,7 +678,7 @@ export class Psychosis extends Table {
       this.flash(3, 0.8);
       if (!this.lockLit && this.locked.length < 3 && !this.multiball) {
         this.lockLit = true;
-        g.show('REACTOR EXPOSED', 'LOCK IS LIT', 2, true);
+        g.show('REACTOR EXPOSED', 'LOCK IS LIT AT THE SKYWAY', 2, true);
       } else {
         g.show('REACTOR EXPOSED', 'HIT THE CORE', 1.6, true);
       }
@@ -900,6 +925,7 @@ export class Psychosis extends Table {
 
   // ---------------------------------------------------------------- lock & multiball
 
+  /** A lit lock diverts a Skyway ball up the wire into the Impound. */
   private lockBall(b: Ball) {
     const g = this.game;
     b.captured = true;
@@ -909,8 +935,12 @@ export class Psychosis extends Table {
     // The drops come back up: each lock has to be earned.
     this.later(1, () => !this.wantsDropsDown() && this.dropsDown() && this.resetDrops());
     sound.scoop();
-    this.flash(4);
+    this.flash(0);
     g.show(`BALL ${this.locked.length + 1} LOCKED`, this.locked.length + 1 < 3 ? 'IN THE IMPOUND' : 'IMPOUND BREAKOUT!', 1.8, true);
+  }
+
+  private canLock() {
+    return this.lockLit && !this.multiball && this.locked.length < 3 && !this.locking;
   }
 
   /** Locked balls already on their way out of the Impound. */
@@ -1042,7 +1072,7 @@ export class Psychosis extends Table {
   /** Ramp gravity: the climb slows a ball down, the descent speeds it up. */
   private rampForce(b: Ball, dt: number) {
     const idx = (b.tags.ramp ?? 0) - 1;
-    if (b.layer !== RAMP || idx < 0) return;
+    if (b.layer === FLOOR || idx < 0) return;
     const r = L.RAMPS[idx];
     const path = r.path;
     let i = b.tags.ri ?? 0;
@@ -1062,11 +1092,16 @@ export class Psychosis extends Table {
     b.vy -= (ty / len) * slope * G * dt;
     if (!b.tags.made && i >= r.madeAt) {
       b.tags.made = 1;
-      this.rampMade(r.id === 'skyway' ? 'skyway' : 'market', b);
+      this.rampMade(r.id, b);
+    }
+    if (r.divertAt !== undefined && i >= r.divertAt && !b.tags.diverted) {
+      b.tags.diverted = 1;
+      if (this.canLock()) this.lockBall(b);
     }
     if (i >= path.length - 4) {
       b.layer = FLOOR;
       b.tags.ramp = 0;
+      b.tags.diverted = 0;
     }
   }
 
@@ -1125,6 +1160,7 @@ export class Psychosis extends Table {
     const due = this.timers.filter((x) => x.t <= 0);
     this.timers = this.timers.filter((x) => x.t > 0);
     for (const x of due) x.fn();
+    this.turbineAngle += dt * (this.rage ? 9 : this.mode ? 4 : 1.2);
 
     if (g.ballInShooter() && this.world.balls.length === 1) {
       this.validated = false;
@@ -1160,10 +1196,10 @@ export class Psychosis extends Table {
       if (this.breachTimer <= 0) this.ejectBreach();
     }
 
-    // Ball rolling into the Impound.
+    // Ball rolling up the wire into the Impound.
     if (this.locking) {
       const lk = this.locking;
-      lk.t += dt / 0.7;
+      lk.t += dt / 0.8;
       const pts = [...L.IMPOUND_LANE, L.IMPOUND_SLOTS[lk.slot]];
       const u = Math.min(1, lk.t) * (pts.length - 1);
       const k = Math.min(pts.length - 2, Math.floor(u));
@@ -1178,11 +1214,11 @@ export class Psychosis extends Table {
         else if (this.world.balls.length === 0) g.serveBall();
       }
     }
-    // Balls rolling out of the Impound.
+    // Balls dropping out of the Impound onto the top flipper.
     if (this.releaseQueue > 0 && this.locked.length > 0) {
       this.releaseT -= dt;
       if (this.releaseT <= 0) {
-        this.releaseT = 0.6;
+        this.releaseT = 0.9;
         this.releaseQueue--;
         const b = this.locked.pop()!;
         b.captured = false;
@@ -1190,11 +1226,11 @@ export class Psychosis extends Table {
         b.tags = {};
         b.x = L.IMPOUND_EXIT[0];
         b.y = L.IMPOUND_EXIT[1];
-        b.vx = (Math.random() - 0.5) * 40;
-        b.vy = 260;
+        b.vx = -20 + Math.random() * 20;
+        b.vy = 120;
         this.world.balls.push(b);
         sound.eject();
-        this.flash(4, 0.7);
+        this.flash(0, 0.7);
       }
     } else if (this.locked.length === 0) {
       this.releaseQueue = 0;
@@ -1207,7 +1243,7 @@ export class Psychosis extends Table {
       this.offerIdx++;
     }
 
-    // Spinner
+    // Spinner in the Skyway lane
     if (this.spinnerVel > 0.05) {
       this.spinnerAngle += this.spinnerVel * dt * Math.PI * 2;
       this.spinAccum += this.spinnerVel * dt;
@@ -1282,28 +1318,12 @@ export class Psychosis extends Table {
   }
 
   protected override drawDynamic(ctx: CanvasRenderingContext2D) {
-    const t = this.time;
-    paintCameras(ctx, t, this.cameraTarget());
+    paintDynamic(ctx, this.time, this.cameraTarget(), this.plungerPull);
     // The Breach glows when it has something to give.
-    if (this.shotLamp('breach')) drawGlow(ctx, L.BREACH[0], L.BREACH[1], 36, this.shotTint('breach'), 0.35 + 0.3 * Math.sin(t * 6));
-    // Plunger
-    const py = 1180 + this.plungerPull * 50;
-    ctx.strokeStyle = '#8a8c90';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    for (let i = 0; i <= 14; i++) {
-      const yy = py + 6 + (i / 14) * (1236 - py - 6);
-      ctx.lineTo(i % 2 ? 563 : 552, yy);
-    }
-    ctx.stroke();
-    drawShadow(ctx, 559, py + 4, 9, 5, 0.5);
-    ctx.fillStyle = '#6a6e74';
-    ctx.fillRect(551.5, py - 4, 12, 8);
-    ctx.fillStyle = '#b8bcc2';
-    ctx.fillRect(551.5, py - 4 - lift(10), 12, lift(10));
+    if (this.shotLamp('breach')) drawGlow(ctx, L.BREACH[0], L.BREACH[1], 36, this.shotTint('breach'), 0.35 + 0.3 * Math.sin(this.time * 6));
   }
 
-  /** Where the security cameras are looking (a watched shot in Infiltrate, else a lazy sweep). */
+  /** Where the security camera is looking (a watched shot in Infiltrate, else a lazy sweep). */
   private cameraTarget(): P | null {
     const w = (this.mode as { watched?: Shot | null } | null)?.watched;
     return w ? SHOT_POS[w] : null;
@@ -1312,114 +1332,36 @@ export class Psychosis extends Table {
   protected override sprites(out: Sprite[]) {
     for (const c of this.bumpers) {
       const hit = Math.max(0, 1 - c.lastHit / 0.18);
-      out.push({ y: c.y, draw: (ctx) => drawBumper(ctx, c.x, c.y, c.r, STEEL_BUMPER, hit, INS.red) });
+      out.push({ y: c.y, draw: (ctx) => drawTank(ctx, c.x, c.y, c.r, hit) });
     }
     // Drop targets sink into the floor
     this.drops.forEach((d, i) => {
       const [a, b] = L.DROPS[i];
-      const z = 24 * (1 - d.anim);
-      out.push({
-        y: Math.max(a[1], b[1]),
-        draw: (ctx) => {
-          if (z < 1) return;
-          slab(ctx, a, b, 7, z, '#d23a2a', '#5a1410');
-        },
-      });
+      out.push({ y: Math.max(a[1], b[1]), draw: (ctx) => drawDrop(ctx, a, b, d.anim) });
     });
     // Breach standups
     this.standups.forEach((s, i) => {
       const wob = Math.sin(this.time * 60) * this.standupWobble[i] * 1.5;
       const lit = this.letters[i] || !!this.mode?.litStandup(i);
-      out.push({
-        y: Math.max(s.ay, s.by),
-        draw: (ctx) => {
-          ctx.save();
-          ctx.translate(wob, 0);
-          slab(ctx, [s.ax, s.ay], [s.bx, s.by], 6, 22, lit ? '#ff6050' : '#a81c1c', '#3a0a0a');
-          ctx.restore();
-        },
-      });
+      out.push({ y: Math.max(s.ay, s.by), draw: (ctx) => drawStandup(ctx, [s.ax + wob, s.ay], [s.bx + wob, s.by], lit) });
     });
-    // Captive ball and the reactor core housing
+    // Captive ball and the Reactor's eye
     const cap = this.captive.c;
     out.push({ y: cap.y, draw: (ctx) => drawBallAt(ctx, cap.x, cap.y) });
-    const core = L.REACTOR.core;
+    const eye = L.REACTOR.eye;
     out.push({
-      y: core[1] + 20,
+      y: eye[1] + 30,
       draw: (ctx) => {
         const heat = Math.min(1, this.reactorHeat / 8);
         const glow = Math.max(this.coreFlash, this.blackoutLit ? 0.5 + 0.5 * Math.sin(this.time * 8) : 0);
-        reactorCore(ctx, core[0], core[1], L.REACTOR.coreR, heat, glow);
-        if (glow > 0.05) drawGlow(ctx, core[0], core[1] - lift(30), 70, INS.red, glow);
+        drawReactorEye(ctx, heat, glow);
       },
     });
-    out.push({ y: 133, draw: (ctx) => drawImpound(ctx, this.locked.length) });
+    out.push({ y: 150, draw: (ctx) => drawImpound(ctx, this.locked.length, this.time) });
+    out.push({ y: L.TURBINE[1] + 20, draw: (ctx) => drawTurbine(ctx, this.turbineAngle) });
   }
 
   protected override drawTop(ctx: CanvasRenderingContext2D) {
-    // Spinner flag across the right lane.
-    const wy = L.SPINNER_Y - lift(34);
-    const a = this.spinnerAngle;
-    const Lf = 18;
-    const reach = Lf * Math.sin(a) + lift(Lf * Math.cos(a));
-    ctx.fillStyle = '#25272b';
-    ctx.fillRect(470, wy - 2, 66, 3);
-    const face = Math.cos(a);
-    ctx.fillStyle = face > 0 ? mix('#5a5e64', '#e0e2e6', face) : mix('#3a3c40', '#7a7e84', -face);
-    ctx.fillRect(474, Math.min(wy, wy + reach), 57, Math.abs(reach) + 1);
-    ctx.fillStyle = INK;
-    ctx.fillRect(474, wy + reach / 2 - 1, 57, 2);
-    drawShadow(ctx, 502, L.SPINNER_Y + 6, 30, 5, 0.3);
+    drawSpinner(ctx, this.spinnerAngle);
   }
-}
-
-/** A thin standing target from a to b: a front face and a lit top. */
-function slab(ctx: CanvasRenderingContext2D, a: P, b: P, thick: number, z: number, top: string, side: string) {
-  const lz = lift(z);
-  const dx = b[0] - a[0];
-  const dy = b[1] - a[1];
-  const l = Math.hypot(dx, dy) || 1;
-  const nx = (-dy / l) * (thick / 2);
-  const ny = (dx / l) * (thick / 2);
-  const q: P[] = [
-    [a[0] + nx, a[1] + ny],
-    [b[0] + nx, b[1] + ny],
-    [b[0] - nx, b[1] - ny],
-    [a[0] - nx, a[1] - ny],
-  ];
-  ctx.fillStyle = side;
-  ctx.beginPath();
-  for (const [x, y] of q) ctx.lineTo(x, y);
-  for (const [x, y] of [...q].reverse()) ctx.lineTo(x, y - lz);
-  ctx.fill();
-  ctx.fillStyle = top;
-  ctx.beginPath();
-  q.forEach(([x, y]) => ctx.lineTo(x, y - lz));
-  ctx.closePath();
-  ctx.fill();
-  ctx.strokeStyle = 'rgba(0,0,0,0.6)';
-  ctx.lineWidth = 1;
-  ctx.stroke();
-}
-
-function reactorCore(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, heat: number, glow: number) {
-  box(ctx, x - r, y - r * 0.2, r * 2, r * 0.4, 30, '#4a4e54', '#1e2024');
-  const cy = y - lift(30);
-  const g = ctx.createRadialGradient(x, cy, 0, x, cy, r);
-  g.addColorStop(0, mix('#3a0808', '#ffffff', glow * 0.8));
-  g.addColorStop(0.35, mix('#7a1010', '#ff3020', Math.max(heat, glow)));
-  g.addColorStop(0.7, '#2a2c30');
-  g.addColorStop(1, '#14161a');
-  ctx.fillStyle = g;
-  ctx.beginPath();
-  ctx.arc(x, cy, r, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.strokeStyle = '#6a6e74';
-  ctx.lineWidth = 3;
-  ctx.stroke();
-  ctx.strokeStyle = mix('#5a1010', '#ff4030', Math.max(heat, glow));
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.arc(x, cy, r * 0.62, 0, Math.PI * 2);
-  ctx.stroke();
 }

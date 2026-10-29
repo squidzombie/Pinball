@@ -42,8 +42,11 @@ const shrink = (poly: P[], k: number): P[] => {
 const SOLIDS: [string, P[]][] = [
   // the shell minus the funnel: with the drops down a ball may run up to the captive ball
   ['reactor', shrink([L.REACTOR.pos(40), ...L.REACTOR.shell.slice(1, -1)], 0.8)],
-  ['bankL', shrink([L.BANK_L.top, L.BANK_L.bottom, L.BANK_L.outer], 0.6)],
-  ['bankR', shrink([L.BANK_R.top, L.BANK_R.bottom, L.BANK_R.outer], 0.6)],
+  ['bankL', shrink([L.BANK_L.top, L.BANK_L.bottom, L.BANK_L.outer, L.BANK_L.peak], 0.6)],
+  ['bankR', shrink([L.BANK_R.top, L.BANK_R.bottom, L.BANK_R.outer, L.BANK_R.peak], 0.6)],
+  ['leftMass', shrink(L.LEFT_MASS, 0.85)],
+  ['impound', shrink(L.IMPOUND_BOX, 0.85)],
+  ['machine', shrink(L.MACHINE, 0.8)],
   ...L.RAMPS.map((r) => [`${r.id}-foot`, shrink([...r.walls.left.slice(1, r.baseTo), ...r.walls.right.slice(1, r.baseTo).reverse()], 0.7)] as [string, P[]]),
 ];
 

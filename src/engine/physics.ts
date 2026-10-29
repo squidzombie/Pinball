@@ -3,6 +3,8 @@
 
 export const FLOOR = 1;
 export const RAMP = 2;
+/** A second ramp level, for a ramp whose walls must not touch balls on the first. */
+export const RAMP2 = 4;
 
 export const STEP = 1 / 480;
 const MAX_SPEED = 4600;

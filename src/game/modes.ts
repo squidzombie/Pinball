@@ -11,16 +11,15 @@ import type { LampState } from './tables/draw';
 import type { Psychosis } from './tables/psychosis';
 import { fmt, short } from './format';
 
-export type Shot = 'alleyL' | 'skyway' | 'breach' | 'reactor' | 'market' | 'alleyR';
-/** The major shots, roughly left to right. */
-export const SHOTS: Shot[] = ['alleyL', 'skyway', 'breach', 'reactor', 'market', 'alleyR'];
+export type Shot = 'alley' | 'market' | 'breach' | 'skyway' | 'reactor';
+/** The major shots: the two upper flipper shots, then the lower flippers' left to right. */
+export const SHOTS: Shot[] = ['alley', 'market', 'breach', 'skyway', 'reactor'];
 export const SHOT_NAME: Record<Shot, string> = {
-  alleyL: 'LEFT ALLEY',
-  skyway: 'SKYWAY',
-  breach: 'BREACH',
-  reactor: 'REACTOR',
+  alley: 'BACK ALLEY',
   market: 'BLACK MARKET',
-  alleyR: 'RIGHT ALLEY',
+  breach: 'BREACH',
+  skyway: 'SKYWAY',
+  reactor: 'REACTOR',
 };
 
 /** Minor switches: everything that isn't a shot. */
@@ -189,7 +188,7 @@ class Infiltrate extends Mode {
   color = '#7fd8ff';
   brief = 'AVOID THE CAMERAS';
   time = 45;
-  private sneak = new Set<Shot>(['alleyL', 'skyway', 'market', 'alleyR']);
+  private sneak = new Set<Shot>(['alley', 'market', 'skyway', 'reactor']);
   /** The shot the cameras are watching right now. */
   watched: Shot | null = null;
   private sweepT = 0;
@@ -321,13 +320,13 @@ class Hack extends Mode {
   }
 }
 
-/** Plot the escape: four shots in order, twice. The flow runs through the upper flipper. */
+/** Plot the escape: four shots in order, twice, through both upper flippers. */
 class Route extends Mode {
   name = 'ROUTE';
   color = '#ffd23f';
   brief = 'SHOTS IN ORDER, TWICE';
   time = 45;
-  private seq: Shot[] = ['alleyR', 'market', 'alleyL', 'skyway'];
+  private seq: Shot[] = ['skyway', 'alley', 'market', 'reactor'];
   private step = 0;
   private laps = 0;
 
@@ -405,9 +404,9 @@ class Payload extends Mode {
 class Extract extends Mode {
   name = 'EXTRACT';
   color = '#f4efe6';
-  brief = 'SKYWAY  ALLEY  BREACH';
+  brief = 'SKYWAY  MARKET  BREACH';
   time = 35;
-  private legs: Shot[] = ['skyway', 'alleyL', 'breach'];
+  private legs: Shot[] = ['skyway', 'market', 'breach'];
   private leg = 0;
   private legT = 0;
 
