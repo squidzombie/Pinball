@@ -244,6 +244,8 @@ export function box(ctx: CanvasRenderingContext2D, x: number, y: number, w: numb
 export type LampState = 0 | 1 | 2 | 3 | 4; // off, on, slow blink, fast blink, strobe
 
 export interface Lamp {
+  /** Stable name for tools and art (the template, the insert list). */
+  id?: string;
   kind: 'arrow' | 'circle' | 'rect' | 'tri' | 'star' | 'shield';
   x: number;
   y: number;

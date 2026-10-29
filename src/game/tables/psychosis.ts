@@ -314,9 +314,9 @@ export class Psychosis extends Table {
   private buildLamps() {
     const lamp = (l: Lamp) => this.lamps.push(l);
     const arrow = (s: Shot, x: number, y: number, angle: number) =>
-      lamp({ kind: 'arrow', x, y, w: 26, h: 36, angle, color: INS.white, tint: () => this.shotTint(s), state: () => this.shotLamp(s) });
+      lamp({ id: `arrow:${s}`, kind: 'arrow', x, y, w: 26, h: 36, angle, color: INS.white, tint: () => this.shotTint(s), state: () => this.shotLamp(s) });
     const jp = (s: Shot, x: number, y: number) =>
-      lamp({ kind: 'circle', x, y, w: 15, color: INS.red, label: 'JP', labelSize: 7, state: () => (this.jpLit(s) ? 3 : 0) });
+      lamp({ id: `jackpot:${s}`, kind: 'circle', x, y, w: 15, color: INS.red, label: 'JP', labelSize: 7, state: () => (this.jpLit(s) ? 3 : 0) });
     const dirAngle = (d: P) => Math.atan2(d[0], -d[1]);
 
     // Back Alley: in front of its mouth, pointing up the left leg
@@ -337,14 +337,14 @@ export class Psychosis extends Table {
     arrow('breach', L.BREACH[0] + ba[0] * 150, L.BREACH[1] + ba[1] * 150, dirAngle([-ba[0], -ba[1]]));
     jp('breach', L.BREACH[0] + ba[0] * 70, L.BREACH[1] + ba[1] * 70);
     // Duct: lit when an upper flipper shot is wanted
-    lamp({ kind: 'arrow', x: 43, y: 620, w: 22, h: 30, angle: 0, color: INS.white, state: () => (this.shotLamp('alley') || this.shotLamp('market') ? 2 : 0) });
+    lamp({ id: 'arrow:duct', kind: 'arrow', x: 43, y: 620, w: 22, h: 30, angle: 0, color: INS.white, state: () => (this.shotLamp('alley') || this.shotLamp('market') ? 2 : 0) });
     // SAFE and VENT inserts in front of their targets
     [L.SAFE, L.REACTOR.vent].forEach(([a, b], i) => {
       const mx = (a[0] + b[0]) / 2;
       const my = (a[1] + b[1]) / 2;
       const nx = (b[1] - a[1]) / Math.hypot(b[0] - a[0], b[1] - a[1]);
       const ny = -(b[0] - a[0]) / Math.hypot(b[0] - a[0], b[1] - a[1]);
-      lamp({ kind: 'circle', x: mx + nx * 16, y: my + ny * 16, w: 13, color: INS.red, label: i === 0 ? 'S' : 'V', labelSize: 8, state: () => (this.flankFlash[i] > 0 ? 3 : 0) });
+      lamp({ id: i === 0 ? 'flank:safe' : 'flank:vent', kind: 'circle', x: mx + nx * 16, y: my + ny * 16, w: 13, color: INS.red, label: i === 0 ? 'S' : 'V', labelSize: 8, state: () => (this.flankFlash[i] > 0 ? 3 : 0) });
     });
     const ra = L.REACTOR_AXIS;
     arrow('reactor', L.REACTOR_MOUTH[0] - ra[0] * 74, L.REACTOR_MOUTH[1] - ra[1] * 74, dirAngle(ra));
@@ -357,6 +357,7 @@ export class Psychosis extends Table {
         const toAxis = side === 0 ? L.cw([-ba[0], -ba[1]]) : L.cw(ba);
         const idx = side * 3 + i;
         lamp({
+          id: `letter:${L.BREACH_LETTERS[idx]}`,
           kind: 'circle',
           x: p[0] + toAxis[0] * 10,
           y: p[1] + toAxis[1] * 10,
@@ -373,15 +374,16 @@ export class Psychosis extends Table {
     // Reactor drop lamps
     L.DROPS.forEach(([a, b], i) => {
       const m: P = [(a[0] + b[0]) / 2 - ra[0] * 15, (a[1] + b[1]) / 2 - ra[1] * 15];
-      lamp({ kind: 'rect', x: m[0], y: m[1], w: 16, h: 7, angle: Math.atan2(ra[0], -ra[1]), color: INS.yellow, state: () => (this.drops[i].down ? 1 : 0) });
+      lamp({ id: `drop:${i + 1}`, kind: 'rect', x: m[0], y: m[1], w: 16, h: 7, angle: Math.atan2(ra[0], -ra[1]), color: INS.yellow, state: () => (this.drops[i].down ? 1 : 0) });
     });
     // Lock: the warning triangle on the Impound, and the lit-lock insert on the Skyway lane
-    lamp({ kind: 'tri', x: 56, y: 56 - lift(36), w: 16, h: 14, color: INS.red, state: () => (this.lockLit ? 3 : this.multiball === 'impound' ? 2 : 0) });
-    lamp({ kind: 'rect', x: 512, y: 594, w: 38, h: 13, color: INS.orange, label: 'LOCK', labelSize: 8, state: () => (this.lockLit ? 3 : 0) });
+    lamp({ id: 'lock:impound', kind: 'tri', x: 56, y: 56 - lift(36), w: 16, h: 14, color: INS.red, state: () => (this.lockLit ? 3 : this.multiball === 'impound' ? 2 : 0) });
+    lamp({ id: 'lock:skyway', kind: 'rect', x: 512, y: 594, w: 38, h: 13, color: INS.orange, label: 'LOCK', labelSize: 8, state: () => (this.lockLit ? 3 : 0) });
 
     // Black Market menu: the item on offer blinks; the one you can afford is solid
     ITEMS.forEach((it, i) =>
       lamp({
+        id: `shop:${it.key}`,
         kind: 'rect',
         x: 268 + i * 25,
         y: 548,
@@ -397,8 +399,8 @@ export class Psychosis extends Table {
     // The heist map
     const plaque = (k: ModeDef['key'], p: P) => {
       const def = MODES.find((m) => m.key === k)!;
-      lamp({ kind: 'rect', x: p[0], y: p[1], w: 74, h: 20, color: def.color, label: def.name, labelSize: 9.5, labelOff: '#e6e1d6', state: () => this.mapLamp(def) });
-      lamp({ kind: 'circle', x: p[0], y: p[1] - 17, w: 11, color: INS.white, state: () => (this.modeKey === def.key ? 3 : this.completed.has(def.key) ? 1 : 0) });
+      lamp({ id: `map:${k}`, kind: 'rect', x: p[0], y: p[1], w: 74, h: 20, color: def.color, label: def.name, labelSize: 9.5, labelOff: '#e6e1d6', state: () => this.mapLamp(def) });
+      lamp({ id: `map:${k}:dome`, kind: 'circle', x: p[0], y: p[1] - 17, w: 11, color: INS.white, state: () => (this.modeKey === def.key ? 3 : this.completed.has(def.key) ? 1 : 0) });
     };
     plaque('infiltrate', L.MAP.infiltrate);
     plaque('hack', L.MAP.hack);
@@ -406,6 +408,7 @@ export class Psychosis extends Table {
     plaque('payload', L.MAP.payload);
     plaque('extract', L.MAP.extract);
     lamp({
+      id: 'map:blackout',
       kind: 'shield',
       x: L.MAP.blackout[0],
       y: L.MAP.blackout[1],
@@ -424,10 +427,11 @@ export class Psychosis extends Table {
       [L.CX + 62, L.MAP.route[1] - 42],
       [L.CX, (L.MAP.hack[1] + L.MAP.payload[1]) / 2 - 12],
     ];
-    nodes.forEach(([x, y], i) => lamp({ kind: 'circle', x, y, w: 13, color: INS.red, state: () => (i < this.modesLit ? 2 : this.blackoutLit ? 1 : 0) }));
+    nodes.forEach(([x, y], i) => lamp({ id: `map:node:${i + 1}`, kind: 'circle', x, y, w: 13, color: INS.red, state: () => (i < this.modesLit ? 2 : this.blackoutLit ? 1 : 0) }));
     // mode clock: a bar of lamps under the map
     for (let i = 0; i < 12; i++)
       lamp({
+        id: `clock:${i + 1}`,
         kind: 'rect',
         x: L.CX - 66 + i * 12,
         y: 928,
@@ -445,10 +449,11 @@ export class Psychosis extends Table {
 
     // Bonus multiplier and R-A-G-E
     [2, 3, 4, 5, 6].forEach((n, i) =>
-      lamp({ kind: 'circle', x: L.CX - 64 + i * 32, y: 952, w: 17, color: INS.red, label: `${n}X`, labelSize: 7, state: () => (this.game.bonusMult >= n ? 1 : 0) }),
+      lamp({ id: `bonus:${n}x`, kind: 'circle', x: L.CX - 64 + i * 32, y: 952, w: 17, color: INS.red, label: `${n}X`, labelSize: 7, state: () => (this.game.bonusMult >= n ? 1 : 0) }),
     );
     ['R', 'A', 'G', 'E'].forEach((label, i) =>
       lamp({
+        id: `rage:${label}`,
         kind: 'tri',
         x: (L.ROLLOVERS[i][0] + L.ROLLOVERS[i][1]) / 2,
         y: 868,
@@ -460,8 +465,9 @@ export class Psychosis extends Table {
         state: () => (this.rage ? 2 : this.rageLit[i] ? 1 : 0),
       }),
     );
-    lamp({ kind: 'tri', x: 557.5, y: 960, w: 24, h: 21, color: INS.red, state: () => (this.skillT > 0 || this.skillArmed ? 3 : 0) });
+    lamp({ id: 'skill', kind: 'tri', x: 557.5, y: 960, w: 24, h: 21, color: INS.red, state: () => (this.skillT > 0 || this.skillArmed ? 3 : 0) });
     lamp({
+      id: 'shoot-again',
       kind: 'rect',
       x: L.CX,
       y: 1128,

@@ -115,6 +115,7 @@ npm run build      # typecheck + production build into dist/
 npm test           # rule tests for the heist, multiballs, Black Market, RAGE and the clocks
 npm run sim        # headless soak test: a bot plays and checks for physics leaks
 npx tsx scripts/shotmap.ts   # which shots each flipper can reach
+npm run template   # regenerate the art templates in art/template from the physics
 ```
 
 No game engine or runtime dependencies: TypeScript, Canvas 2D and Web Audio.

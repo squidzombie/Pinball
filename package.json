@@ -9,7 +9,8 @@
     "preview": "vite preview --host",
     "typecheck": "tsc --noEmit",
     "sim": "tsx scripts/sim.ts",
-    "test": "tsx scripts/rules.ts"
+    "test": "tsx scripts/rules.ts",
+    "template": "tsx scripts/template.ts"
   },
   "devDependencies": {
     "@types/node": "^26.6.5",

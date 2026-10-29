@@ -1,10 +1,11 @@
 # Cyber Psychosis — Design
 
-Status: **draft for review. Nothing in this document has been built yet.** It describes the
-table as it stands today (measured, not guessed) and the design we will rebuild towards.
-Where the target differs from the current build, the entry says **(change)**.
+Status: **Phase 1 reviewed.** Your decisions are recorded in section 8. The hotfix for the
+problems in section 0 is built and live; everything else here is still design, to be built in
+Phases 2–4. Where the target differs from the build, the entry says **(change)**.
 
 The art target is the concept sketch, saved as [`reference/sketch.png`](reference/sketch.png).
+The painted-art template and image-generator prompt are in [`art/`](art/).
 
 Measurements come from the headless tools in `scripts/` and the scratch probes used while
 writing this: launch-angle sweeps (which angle off each flipper makes which shot), 225
@@ -13,19 +14,27 @@ goes afterwards.
 
 ---
 
-## 0. Problems found while writing this
+## 0. Problems found, and the hotfix
 
-These are in the current build, and are the first things the rebuild fixes.
+All but P7 are fixed and live. Each fix was checked with the same 12-run follow-through
+simulations before shipping. "Caught" means a player holding the flipper up as the ball arrives
+catches it in the cradle.
 
-| # | Problem | Evidence | Fix |
-|---|---|---|---|
-| P1 | **The Skyway drains.** Its wireform drops the ball into the left **outlane**, not the inlane. | 12 of 12 follow-through runs drained. | End the wire inside the inlane (x 76–112) pointing down it, and switch the ball back to the floor at the very end, not 4 path points early. |
-| P2 | **The Black Market drains** the same way into the right outlane. | 12 of 12. | Same fix on the right (inlane x 443–480). |
-| P3 | **The Back Alley mostly drains.** A ball round the loop comes down into the pops and falls out down the right side into the right outlane. | 8 of 12 drained. | Restore the outlane guards the old layout had and route the loop's exit (see the shot map). |
-| P4 | **The Back Alley can't be aimed for.** Only the top flipper shoots it, and nothing the player can shoot on purpose feeds the top flipper. Several modes need it. | Top flipper is fed only by the plunge, Impound releases and stray balls from the pops. | Re-route the duct so a full-strength duct shot reaches the top flipper (section 1). |
-| P5 | **Two big dead zones.** Left flipper 60–69° and right flipper 108–120° hit plain walls. | Angle sweeps. | Add a flank target in each, or reshape (section 1). |
-| P6 | **No outlane guards.** The new layout dropped the posts the old one had at the outlane mouths, so anything rolling down the sides falls straight into the outlanes. | Right outlane drains from pops and the right flipper's centre shot (2 of 12 each). | Put the guards back. |
-| P7 | **The palette breaks the art direction.** Mode inserts are cyan, green, amber and orange, glows use additive halos, and the DMD is crisp neon red. | Code review. | Red-only inserts, tight glows, warm worn DMD (sections 4–6). |
+| # | Problem | Before | Fix (built) | After |
+|---|---|---|---|---|
+| P1 | The Skyway's wire dropped the ball into the left **outlane**. | Drained 12 of 12. | The wire ends in a straight 70-unit drop inside the inlane, and hands the ball back at the very end, travelling along the wire at no more than 900 u/s. | Left inlane → left flipper 12 of 12; caught 12 of 12. |
+| P2 | The Black Market's wire did the same on the right. | Drained 12 of 12. | Same fix on the right. | Right inlane → right flipper 12 of 12; caught 12 of 12. |
+| P3 | A ball round the Back Alley fell out through the pops into the right outlane. | Drained 8 of 12. | It now drops down a chute into the Black Market box and rides the market's wire to the right inlane. | Right inlane → right flipper 12 of 12; caught 12 of 12. |
+| P4 | Nothing the player could shoot on purpose fed the top flipper, so the Back Alley couldn't be aimed for. | Top flipper fed only by the plunge, Impound releases and strays. | A full-strength duct shot passes a one-way gate, turns under the Impound and lands on the top flipper. | Full-strength duct → top flipper 12 of 12. Caught and cradled there 50 of 50. From the cradle, the Back Alley is one contiguous timing window (flip 0.36–0.41 s after letting the ball roll). |
+| P5 | Dead zones: left 60–69° and right 108–120° hit plain walls. | Angle sweeps. | Standups in both: **VENT** on the Reactor's underside and **SAFE** on the machinery edge below the Breach. | VENT takes left shots at 60–68°, SAFE right shots at 110–120°. |
+| P6 | No outlane guards. | Wall-hugging balls fell into the outlanes. | Rubber guards and posts back at both side lanes. The right one is shortened so it doesn't clip the Skyway. | Wall-hugging balls stay out (new test). The Skyway window is a full 5° again. The right flipper's centre shot still loses 2 of 12 to the right outlane when a ball ricochets off the drops across to it: normal outlane risk, so the guard isn't meant to stop it. |
+| P7 | The palette breaks the art direction: candy mode inserts, additive glows, neon DMD. | Code review. | Phase 3 (art). | Not built yet. |
+
+**Other checks after the hotfix:**
+- Rules tests: 130 pass, including new ones for every wire return, catches, duct deliveries,
+  guards and the flank targets.
+- 500 s soak test: 0 leaks, 0 stuck balls. Ball saves fell from 9–11 in earlier soak runs to 2,
+  because shots no longer throw the ball away.
 
 ---
 
@@ -38,40 +47,34 @@ makes the shot. A real ramp is usually a 3–5° shot.
 
 | Shot | Flipper | Window / difficulty | Returns to | Role | Flags |
 |---|---|---|---|---|---|
-| **Skyway** ramp (up the lane beside the Reactor, deck to the upper left, wire down the left) | Left | 55–60° (4.5°), **medium**. 18 makes per 225 flips. | **Intended:** left inlane → left flipper. **Now:** drains (P1). | Impound lock (when lit), mode shot, combo engine, spinner. | Returning to the same flipper makes it repeatable, which is good for a Skyway combo, but it never sets up the right flipper. Keep, and lean into it with a "Sky run" combo. |
-| **Black Market** ramp (over the pops into the market box, wire down the right) | Middle | About 16% of flip timings, **medium**. 21 per 225. | **Intended:** right inlane → right flipper. **Now:** drains (P2). | Shop purchase, skill shot, mode shot. | Fine once fixed. Reached via the duct, so it is a two-step shot: duct, then Black Market. |
-| **Back Alley** loop (round the top behind the pops) | Top | About 16% of timings, **hard**. 15 per 225. | Down the right leg into the pops, then random; **often drains** (P3). | Mode shot, jackpot in multiballs. | **Unreachable on purpose** (P4) and a bad return. As built, it shouldn't be in any mode. |
-| **Breach** scoop (between the B-R-E-A-C-H banks) | Right | 102–108° (6.3°), **medium**. 6 per 225 (scoops forgive near misses that brush a standup). | Ejected down the channel: left flipper 8 of 12, right 4 of 12. | Mode start and selection, Hack brute force, Extract finale, Payload cash-out. | Good cross return (right → left). Keep. |
-| **Reactor**: 3 drop targets, then the captive ball | Left | 69–74° (5°), **easy–medium** for the drops; the captive ball is the same window once they're down. 11 drop hits per 225. | Rebounds: left 7, right 5. | Drops light the lock; core hits build heat; starts Blackout; super jackpots. | Return is random but safe. Fine. |
-| **Duct** (lane up the left, under the Skyway wire) | Right | 120–126° (5.5°), **medium**. | Middle flipper, 12 of 12. | The only aimed way to the upper flippers. | Not in the sketch, but the table doesn't flow without it. **(change)** Re-route its top so a full-strength shot lands on the **top** flipper. An unflipped ball then rolls off onto the middle flipper, so one duct shot offers both upper shots in turn. That fixes P4. |
-| **Pops** (centre shot into the bumper nest) | Left 77–84°, right 97–100°, **easy** | Mostly back to the flipper that shot it; sometimes drains right (P6). | Cash for the Black Market, Rage scoring. | Not a major shot; that's correct. |
+| **Skyway** ramp (up the lane beside the Reactor, deck to the upper left, wire down the left) | Left | 55–60° (5°), **medium**. 17 makes per 225 flips. | Left inlane → left flipper (12/12, catchable). | Impound lock (when lit), mode shot, combo engine, spinner. | Returns to the same flipper, so it's repeatable: lean into it with a "Sky run" combo. |
+| **Black Market** ramp (over the pops into the market box, wire down the right) | Middle | About 16% of flip timings, **medium**. 21 per 225. | Right inlane → right flipper (12/12, catchable). | Shop purchase, skill shot, mode shot. | Reached via the duct, so it's a two-step shot: duct, then Black Market. |
+| **Back Alley** loop (round the top behind the pops) | Top | One cradle-and-flip timing window, **hard**. 15 per 225 from random flips. | Down a chute into the Black Market box, then the market wire to the right inlane → right flipper (12/12, catchable). | Mode shot, multiball jackpot. | Fed by a full-strength duct shot (and the plunge, Impound releases). |
+| **Breach** scoop (between the B-R-E-A-C-H banks) | Right | 102–108° (6.3°), **medium**. 6 per 225. | Ejected down the channel: left flipper 8 of 12, right 4 of 12. | Mode start and selection, Hack brute force, Extract finale, Payload cash-out. | Good cross return (right → left). |
+| **Reactor**: 3 drop targets, then the captive ball | Left | 69–74° (5°), **easy–medium**. 11 drop hits per 225. | Rebounds: left 7, right 5. | Drops light the lock; core hits build heat; starts Blackout; super jackpots. | Return is random but safe. |
+| **Duct** (lane up the left, under the Skyway wire) | Right | 120–126° (5.5°), **medium**. 19 per 225. | Full strength → top flipper (12/12). Medium → falls back to the middle flipper. Weak → doesn't make it. | The aimed way up to the upper flippers. | Not in the sketch, but the table doesn't flow without it. An unflipped top-flipper ball rolls on to the middle flipper, so one strong duct shot offers both upper shots in turn. |
+| **SAFE** standup (machinery edge below the Breach) | Right | 110–120°, **easy**. 15 per 225. | Bounces back. | Hack remote key (section 2). Otherwise 25K + $10K. | New, filling the old right dead zone. |
+| **VENT** standup (the Reactor's underside) | Left | 60–68°, **easy**. 14 per 225. | Bounces back. | Hack remote key. Otherwise 25K + $10K. | New, filling the old left dead zone. |
+| **Pops** (centre shot into the bumper nest) | Left 77–84°, right 97–100°, **easy** | Mostly back to the flipper that shot it; the right one's ricochets reach the right outlane 2 of 12. | Cash for the Black Market, Rage scoring. | Not a major shot. |
 | **Impound lock** | (Skyway when lit) | As Skyway. | Locked ball is held; the next ball is served to the plunger. At multiball the balls drop out onto the top flipper. | Multiball. | Good. |
-| **In/outlanes** (R-A-G-E) | — | — | Inlanes feed the flippers; outlanes drain. | Rage, bonus X. | Guards missing (P6). |
-| **Spinner** (Skyway lane) | — | — | — | Small scores, cash. | Fine. |
-| **Skill shot** | Plunger | — | Plunge rides the Back Alley onto the top flipper. | 500K for the Black Market within 7 s. | **Not a skill shot today:** plunge strength doesn't matter, and the route is always the same. **(change)** Make it two-level, below. |
-| **Dead zones** | Left 60–69°, right 108–120° | — | Bounce back. | None. | P5. **(change)** Proposed: a red **VENT** standup on the Reactor's right flank (+1 reactor heat; a Hack key) and a **SAFE** standup on the Breach's outer bank face (cash; also a Hack key). Optional; needs your OK. |
+| **In/outlanes** (R-A-G-E) | — | — | Inlanes feed the flippers; outlanes drain. Guards at the side walls. | Rage, bonus X. | — |
+| **Spinner** (Skyway lane) | — | — | — | Small scores, cash. | — |
+| **Skill shot** | Plunger | — | Plunge rides the Back Alley onto the top flipper. | 500K for the Black Market within 7 s. | **(change)** Make it two-level, below. |
 
 ### Flow and combos
 
 ```
-left flipper  ── Skyway ──────────────────────────► left inlane ─► left flipper   (repeatable)
-left flipper  ── Reactor ─────────────────────────► rebound to either flipper
-right flipper ── Breach ──── eject ───────────────► left flipper (mostly)
-right flipper ── Duct ─► top flipper ── Back Alley ► (fixed exit, see below)
-                              └─ falls ► middle flipper ── Black Market ► right inlane ─► right flipper
+left flipper  ── Skyway ──────────────────────────────────────► left inlane ─► left flipper  (repeatable)
+left flipper  ── Reactor ─────────────────────────────────────► rebound to either flipper
+right flipper ── Breach ──── eject ───────────────────────────► left flipper (mostly)
+right flipper ── Duct (strong) ─► top flipper ── Back Alley ──► chute ─► market wire ─► right inlane ─► right flipper
+                 Duct (medium) ─┐     └─ not flipped: rolls on ┐
+                                └──────────────────────────────► middle flipper ── Black Market ─► right inlane ─► right flipper
 ```
 
 The designed combo loop: **Duct → (top) Back Alley or (middle) Black Market → right flipper →
 Duct again**, and **Skyway → Skyway** on the left. Crossing between the two loops happens
 through the Breach (right → left) and the Reactor rebound.
-
-**Back Alley exit (change, needs your call).** Options:
-
-- **(a) Recommended.** The ball comes down the right leg into the Black Market box and rides the
-  Black Market wire to the right inlane. Thematically the alley leads to the market. It gives a
-  controlled return to the right flipper, so the Back Alley chains into the duct loop.
-- (b) Keep the exit into the pops, but fix the drains with the outlane guards. Simpler, but the
-  return stays random.
 
 **Skill shot (change).** The plunge comes round the Back Alley onto the top flipper.
 
@@ -132,17 +135,21 @@ Values grow with each pass through the heist.
 ### Hack
 
 - **Starts:** Breach.
-- **Lights:** the six Breach standups become a keypad, and one key flashes.
+- **Lights:** a keypad of eight keys, with one flashing at a time:
+  - the six Breach standups
+  - two remote keys, **SAFE** (right flipper) and **VENT** (left flipper)
 - **Scoring:**
   - Each flashing key hit is 250K. Four keys crack a firewall: 1M, then 1.5M, then 2M.
+  - Every firewall's code includes one remote key, so cracking it means leaving the Breach
+    channel once, for a cross-table shot off the other flipper.
   - After each cracked firewall, the Reactor captive ball lights **BRUTE FORCE** for 10 s. Hit it
     for +2M, and the next firewall needs only two keys **(change)**.
   - Shooting the Breach scoop itself cracks the current firewall at half value.
 - **Timer:** 40 s.
 - **Ends:** three firewalls means **SYSTEM HACKED** (3M + time); the clock runs out otherwise.
 - **Reward:** the Hack node lights, and Payload and Extract open.
-- **Shooting style:** precise target work inside the Breach channel, with the Reactor as an
-  optional shortcut.
+- **Shooting style:** precise target work inside the Breach channel, broken up by one remote
+  shot per code, with the Reactor as an optional shortcut.
 
 ### Route
 
@@ -235,9 +242,18 @@ Values grow with each pass through the heist.
     - **TIME:** +15 s, during a timed job only; $30K.
     - **SAVE:** 15 s ball save; $50K.
     - **LOCK:** lights the lock, not during multiball; $40K.
-    - **10X:** your next major shot scores ten times; $75K. **(change)** I read your "10x" as
-      this, replacing today's +1X bonus. Say if you meant the bonus multiplier.
+    - **10X:** $75K, replacing today's +1X bonus item. Your next major shot scores ten
+      times. Rules:
+      - It counts that shot's own score: base value, combo and any mode award the shot pays.
+      - It doesn't apply to jackpots, supers, any Blackout scoring, job completion bonuses or
+        time bonuses. A jackpot shot uses it up without multiplying.
+      - It expires unused after **10 s**. The countdown pauses while the ball is held, like the
+        mode clock.
+      - While it's active, the DMD shows it (section 6) and the 10X menu insert strobes.
     - **X-BALL:** $200K, once a game.
+- **SAFE and VENT:** standups in the old dead zones, SAFE off the right flipper and VENT off
+  the left. Their rules job is Hack's remote keys. Otherwise each is a plain switch (25K and
+  $10K cash, a little more than most switches).
 - **Reactor:**
   - Each drop is 25K, and the full bank 150K. Clearing the bank lights the lock (when it can be
     lit) and exposes the captive ball.
@@ -409,8 +425,12 @@ The table is a **well-lit workshop**. Lights are physical inserts under red glas
 - **Lit:** `GLASS_ON` with a `GLASS_HOT` centre and a tight glow of **6 px at most**.
 - No light spills across the playfield, and there is no coloured GI. Flasher domes brighten in
   place with the same 6 px limit.
-- The only global light change is Blackout (floor to about 55%, inserts stay bright) and the
-  bonus count (floor to about 70%).
+- There are only two global light changes:
+  - **Blackout:** the floor art and plain steel dim to about 55% for the length of the
+    multiball. The ball, the flippers and every lit insert stay at full brightness and
+    readable; the ball keeps its hard highlight and dark outline. Lighting returns to normal
+    the moment Blackout ends: multiball over, drain or tilt.
+  - **The bonus count:** the floor dims to about 70%.
 
 Lamp states: off, on, slow blink (available), fast blink (hurry, under 6 s), strobe (super, last
 chance, under 3 s or in grace).
@@ -419,7 +439,7 @@ chance, under 3 s or in grace).
 
 | Insert | Meaning | States |
 |---|---|---|
-| Shot arrows (Skyway, Black Market, Back Alley, Breach, Reactor, Duct **(change: Duct added)**) | Something to collect there: a job shot, jackpot, lock or affordable purchase. | Slow = available, fast = under 6 s, strobe = super or grace. The watched shot in Infiltrate strobes. |
+| Shot arrows (Skyway, Black Market, Back Alley, Breach, Reactor, Duct) | Something to collect there: a job shot, jackpot, lock or affordable purchase. | Slow = available, fast = under 6 s, strobe = super or grace. The watched shot in Infiltrate strobes. |
 | JP lamps (one per shot) | Jackpot lit there in a multiball. | Fast blink. |
 | B-R-E-A-C-H letters (6) | Letters spelled. In Hack, the flashing key. | On = spelled, fast = the key to hit. |
 | Drop lamps (3) | Drop is down. | On. |
@@ -430,6 +450,9 @@ chance, under 3 s or in grace).
 | Bonus X (2×–6×) | Bonus multiplier. | On. |
 | R-A-G-E (4) | Lane letters. | On = lit; all slow-blink during Rage. |
 | SKILL (shooter lane) | Skill shot armed. | Fast until the plunge, then for 7 s. |
+| SAFE and VENT inserts | Hack remote keys. | Fast when the flashing key is that remote key; a short flash on any hit. |
+| Duct arrow | An upper-flipper shot is wanted (Back Alley or Black Market lit). | Slow. |
+| 10X (Black Market menu) | 10X bought and waiting to be used. | Strobe until used or expired. |
 | SHOOT AGAIN | Ball save running, or extra ball banked. | Slow = save, fast = save ending, on = extra ball. |
 
 ### Feedback moments
@@ -459,8 +482,13 @@ worn and slightly dirty:
 - soft dot edges, but no bloom beyond about one dot
 - a riveted steel bezel matching the cabinet
 
-**(change)** This replaces today's crisp neon red. Amber matches the warm workshop; red stays
+**(decided)** This replaces today's crisp neon red. Amber matches the warm workshop; red stays
 reserved for the table's lights.
+
+**10X indicator.** While 10X is active, the top-right corner shows an inverted **10X** box with
+the seconds left, on every screen including job screens, where the timer moves left to make
+room. When it's used, a one-second card shows **10X** and the multiplied value; when it expires,
+**10X GONE**.
 
 **Normal play.**
 - Score, large.
@@ -502,7 +530,10 @@ middle, and a job-specific bottom line:
 - **Cons:** reaching the sketch's hand-drawn density in code is slow, and it tends to look like
   vector art (the current miss).
 
-### Option B: painted playfield image plus dynamic elements in code (your preference; recommended if we can get the art)
+**Decision: B, painted art.** The template images and the image-generator prompt are in
+[`art/`](art/) (see `art/README.md`). Option C stays documented here as the fallback, not built.
+
+### Option B: painted playfield image plus dynamic elements in code (chosen)
 
 - **Static background:** `art/playfield.png`, a clean, unannotated top-down version of the
   sketch. All floor-level art: concrete, grime, plates, stencils, unlit inserts, the skull, the
@@ -532,36 +563,40 @@ middle, and a job-specific bottom line:
   - Light positions must match the art exactly, so we export an insert position list from
     `table.ts` for the artist.
 
-### Option C (fallback): a much stronger procedural pass, pre-rendered once
+### Option C (fallback, documented only): a much stronger procedural pass, pre-rendered once
 
 Jittered ink strokes, hatching instead of gradients, grime and wear layers, and stencil fonts,
 all baked into the static canvas. No assets needed, but it's the most code and will still be a
 step short of a real illustration.
 
-### What I need from you for B
+### Assets for B
 
 1. `art/playfield.png`: 1800 × 3600, top-down, clean (no labels or arrows), unlit inserts,
-   no ball and no flippers, framed to the table rectangle. I'll supply a template image of the
-   current geometry and insert positions to paint over or to give to an image tool.
+   no ball and no flippers, framed to the table rectangle.
 2. `art/overlay.png`: same size, transparent, ramps and wires only.
-3. Optional: sprite sheets for the pop canister, drop target face, standup face and flipper. I can
-   draw these in code to match if you don't have them.
+3. Optional: sprite sheets for the pop canister, drop target face, standup face and flipper.
+   Otherwise I draw these in code to match.
 
-If the art comes from an image generator, the template and a prompt that pins the camera
-straight down will matter more than anything else. I can write both.
+The templates in `art/template/` are generated from the live physics world, so they show
+exactly where every wall, lane, ramp entrance and insert is. Regenerate them with
+`npm run template` after any geometry change.
 
 ---
 
-## Decisions needed from you
+## 8. Decisions (29 October 2026)
 
-1. **Ramp drains (P1–P3, P6):** fix them now as a small hotfix, or wait for the rebuild? They make
-   the current phone build lose the ball on every ramp.
-2. **Back Alley access and exit:** re-route the duct to the top flipper, and send the Back Alley
-   exit to (a) the Black Market wire or (b) the pops?
-3. **Flank targets (P5):** add VENT and SAFE, or leave the dead zones?
-4. **Black Market "10x":** next shot ×10, as written here, or the bonus multiplier?
-5. **Rendering:** B with your art, or C? If B, can you supply the playfield and overlay at
-   1800 × 3600, or shall I prepare the template and prompt?
-6. **DMD colour:** warm amber, or keep red?
-7. **Blackout lighting:** OK to dim the floor to about 55% for the wizard mode, as the one
-   exception to the workshop lighting?
+1. **Ramp drains: hotfix now.** Done and live; results in section 0.
+2. **Back Alley: option (a).** It exits onto the Black Market wire to the right flipper, and a
+   full-strength duct shot reaches the top flipper. Both are built and confirmed by simulation
+   (section 0, P3 and P4).
+3. **Dead-zone targets: added, as Hack's remote keys.** This fits the rule sheet better than
+   cash: it makes Hack a cross-table mode, not just shooting inside the Breach channel. Outside
+   Hack they're plain switches that pay a little cash. Built as switches; the Hack role comes
+   with Hack in Phase 4.
+4. **10X: next major shot ×10.** It expires after 10 s, and doesn't apply to jackpots or
+   Blackout scoring; it's shown on the DMD while active (sections 2 and 6).
+5. **Rendering: painted art (B).** Template images and prompt prepared in `art/`. The
+   procedural fallback is documented, not built.
+6. **DMD: warm amber.**
+7. **Blackout: dim the floor.** The ball, flippers and lit inserts stay fully readable, and
+   lighting returns to normal when the mode ends (section 5).
