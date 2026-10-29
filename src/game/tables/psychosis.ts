@@ -116,7 +116,7 @@ export class Psychosis extends Table {
   constructor(game: Game) {
     super(game);
     const w = this.world;
-    this.flipperStyle = { body: '#f2f0ec', rubber: '#c41a1a' };
+    this.flipperStyle = { body: '#f2f0ec', rubber: '#c41a1a', ink: '#2a2622' };
 
     // Cabinet, shooter lane and the Back Alley loop
     poly(w, L.LEFT_LOW, { restitution: 0.4 });
@@ -302,10 +302,10 @@ export class Psychosis extends Table {
     arrow('skyway', 512, 676, 0);
     jp('skyway', 512, 634);
     const ba = L.BREACH_AXIS;
-    arrow('breach', L.BREACH[0] + ba[0] * 128, L.BREACH[1] + ba[1] * 128, dirAngle([-ba[0], -ba[1]]));
-    jp('breach', L.BREACH[0] + ba[0] * 92, L.BREACH[1] + ba[1] * 92);
+    arrow('breach', L.BREACH[0] + ba[0] * 150, L.BREACH[1] + ba[1] * 150, dirAngle([-ba[0], -ba[1]]));
+    jp('breach', L.BREACH[0] + ba[0] * 70, L.BREACH[1] + ba[1] * 70);
     const ra = L.REACTOR_AXIS;
-    arrow('reactor', L.REACTOR_MOUTH[0] - ra[0] * 44, L.REACTOR_MOUTH[1] - ra[1] * 44, dirAngle(ra));
+    arrow('reactor', L.REACTOR_MOUTH[0] - ra[0] * 74, L.REACTOR_MOUTH[1] - ra[1] * 74, dirAngle(ra));
 
     // B-R-E-A-C-H letters beside their standups, on the channel floor
     [L.BANK_L, L.BANK_R].forEach((bank, side) => {
@@ -316,9 +316,9 @@ export class Psychosis extends Table {
         const idx = side * 3 + i;
         lamp({
           kind: 'circle',
-          x: p[0] + toAxis[0] * 13,
-          y: p[1] + toAxis[1] * 13,
-          w: 15,
+          x: p[0] + toAxis[0] * 10,
+          y: p[1] + toAxis[1] * 10,
+          w: 13,
           color: INS.red,
           tint: () => (this.mode?.litStandup(idx) ? this.mode.color : INS.red),
           label: L.BREACH_LETTERS[idx],
@@ -341,11 +341,10 @@ export class Psychosis extends Table {
     ITEMS.forEach((it, i) =>
       lamp({
         kind: 'rect',
-        x: 312 + i * 31,
-        y: 466 + i * 7,
-        w: 28,
+        x: 268 + i * 25,
+        y: 548,
+        w: 23,
         h: 12,
-        angle: 0.22,
         color: INS.yellow,
         label: it.label,
         labelSize: 6.5,
@@ -356,7 +355,7 @@ export class Psychosis extends Table {
     // The heist map
     const plaque = (k: ModeDef['key'], p: P) => {
       const def = MODES.find((m) => m.key === k)!;
-      lamp({ kind: 'rect', x: p[0], y: p[1], w: 74, h: 20, color: def.color, label: def.name, labelSize: 9.5, state: () => this.mapLamp(def) });
+      lamp({ kind: 'rect', x: p[0], y: p[1], w: 74, h: 20, color: def.color, label: def.name, labelSize: 9.5, labelOff: '#e6e1d6', state: () => this.mapLamp(def) });
       lamp({ kind: 'circle', x: p[0], y: p[1] - 17, w: 11, color: INS.white, state: () => (this.modeKey === def.key ? 3 : this.completed.has(def.key) ? 1 : 0) });
     };
     plaque('infiltrate', L.MAP.infiltrate);
@@ -373,6 +372,7 @@ export class Psychosis extends Table {
       color: INS.red,
       label: 'BLACKOUT',
       labelSize: 11,
+      labelOff: '#f0b0a8',
       state: () => (this.wizard ? 3 : this.blackoutLit ? 2 : 0),
     });
     // Junction lights on the map: they show how many modes are lit

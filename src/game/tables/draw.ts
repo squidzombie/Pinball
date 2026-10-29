@@ -258,6 +258,8 @@ export interface Lamp {
   labelSize?: number;
   /** Rotate the label with the insert instead of keeping it upright. */
   labelTurns?: boolean;
+  /** Label colour while unlit (printed lettering that should stay readable). */
+  labelOff?: string;
   state: () => LampState;
 }
 
@@ -308,7 +310,7 @@ function lampSprite(l: Lamp, lit: boolean, color: string) {
   const R = Math.max(w, h);
   // Lit sprites carry their own halo so a lamp costs one blit.
   const S = lit ? R * 2.3 + 8 : R * 1.2 + 8;
-  return sprite(`lamp:${l.kind}:${w}:${h}:${l.angle ?? 0}:${l.label ?? ''}:${lit}:${color}`, S, S, (g) => {
+  return sprite(`lamp:${l.kind}:${w}:${h}:${l.angle ?? 0}:${l.label ?? ''}:${lit}:${color}:${l.labelOff ?? ''}`, S, S, (g) => {
     g.translate(S / 2, S / 2);
     if (lit) {
       const hg = g.createRadialGradient(0, 0, R * 0.2, 0, 0, S / 2);
@@ -356,7 +358,7 @@ function lampSprite(l: Lamp, lit: boolean, color: string) {
       g.font = `800 ${size}px "Arial Narrow", "Roboto Condensed", system-ui, sans-serif`;
       g.textAlign = 'center';
       g.textBaseline = 'middle';
-      g.fillStyle = lit ? 'rgba(20,12,6,0.85)' : withAlpha(mix(color, '#d8c8b0', 0.4), 0.42);
+      g.fillStyle = lit ? 'rgba(20,12,6,0.85)' : (l.labelOff ?? withAlpha(mix(color, '#d8c8b0', 0.4), 0.42));
       g.fillText(l.label, 0, l.kind === 'arrow' ? h * 0.18 : 0.5, w * 0.92);
     }
   });
@@ -582,6 +584,8 @@ export function drawBall(ctx: CanvasRenderingContext2D, b: Ball, z = 0) {
 export interface FlipperStyle {
   body: string;
   rubber: string;
+  /** Pen outline round the bat, for tables drawn in ink. */
+  ink?: string;
 }
 
 export function drawFlipper(ctx: CanvasRenderingContext2D, f: Flipper, st: FlipperStyle) {
@@ -613,6 +617,16 @@ export function drawFlipper(ctx: CanvasRenderingContext2D, f: Flipper, st: Flipp
   flipperPath(ctx, f.px, f.py - lh, tx, ty - lh, f.r0 - 3, f.r1 - 2.5);
   ctx.fillStyle = g;
   ctx.fill();
+  if (st.ink) {
+    ctx.strokeStyle = st.ink;
+    ctx.lineWidth = 0.9;
+    ctx.stroke();
+    flipperPath(ctx, f.px, f.py - lh, tx, ty - lh, f.r0, f.r1);
+    ctx.lineWidth = 1.4;
+    ctx.stroke();
+    flipperPath(ctx, f.px, f.py, tx, ty, f.r0, f.r1);
+    ctx.stroke();
+  }
   // pivot cap
   ctx.fillStyle = '#5a6068';
   ctx.beginPath();

@@ -1,8 +1,9 @@
 // Rule tests: drive Cyber Psychosis's switches directly and check the heist.
 // Usage: npm test
 import { Game } from '../src/game/game';
-import type { Ball } from '../src/engine/physics';
+import { RAMP, type Ball } from '../src/engine/physics';
 import { SHOTS, type Shot } from '../src/game/modes';
+import * as L from '../src/game/tables/psychosis-layout';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 let failures = 0;
@@ -78,6 +79,41 @@ function startMode(key: string) {
     for (let i = 0; i < 5 && ff.selecting > 0 && ff.available()[ff.selected].key !== key; i++) ff.onFlipperPress(1);
   });
   return { g, f };
+}
+
+/** Put a ball on the Skyway just short of its top bend, where a lit lock diverts it. */
+function skywayToBend(f: any, b: Ball) {
+  const i = L.SKYWAY.divertAt!;
+  [b.x, b.y] = L.SKYWAY.path[i];
+  b.captured = false;
+  b.layer = RAMP;
+  b.tags = { ramp: 1, ri: i - 1, made: 1 };
+  f.rampForce(b, 1 / 480);
+}
+
+/** Launch a ball and step the physics; returns the shots and switches it made, in order. */
+function launch(f: any, x: number, y: number, deg: number, speed: number, seconds: number, watch?: (b: Ball) => void) {
+  const made: string[] = [];
+  for (const [name, label] of [
+    ['majorShot', ''],
+    ['duct', 'duct'],
+    ['hitBumper', 'bumper'],
+  ] as const) {
+    const o = f[name].bind(f);
+    f[name] = (...a: unknown[]) => {
+      made.push(label || String(a[0]));
+      return o(...a);
+    };
+  }
+  f.world.balls = [];
+  const r = (deg * Math.PI) / 180;
+  const b: Ball = f.addBall(x, y, Math.cos(r) * speed, -Math.sin(r) * speed);
+  for (let t = 0; t < seconds; t += 1 / 480) {
+    f.world.step(1 / 480);
+    f.substep(1 / 480);
+    watch?.(b);
+  }
+  return { made, b };
 }
 
 const lit = (f: any, s: Shot) => f.mode?.lit(s) ?? 0;
@@ -203,11 +239,11 @@ console.log('ROUTE');
   const { g, f } = startMode('route');
   const m = f.mode;
   check('started', m?.name === 'ROUTE', m?.name);
-  check('only the right alley lit first', litShots(f).join() === 'alleyR');
+  check('only the Skyway lit first', litShots(f).join() === 'skyway');
   const a0 = m.total;
-  f.event('skyway');
+  f.event('market');
   check('out-of-order shots do nothing', m.total === a0);
-  const order: Shot[] = ['alleyR', 'market', 'alleyL', 'skyway'];
+  const order: Shot[] = ['skyway', 'alley', 'market', 'reactor'];
   for (const s of order) f.event(s);
   check('one lap pays 0.6+1.2+1.8+2.4M + 2.5M', m.total - a0 === 8_500_000, `${m.total - a0}`);
   for (const s of order) f.event(s);
@@ -252,8 +288,8 @@ console.log('EXTRACT');
   const v = m.value;
   f.event('skyway');
   check('a leg pays its current value', m.total - a0 === v, `${m.total - a0} vs ${v}`);
-  check('next leg: the left alley, worth more', litShots(f).join() === 'alleyL' && m.value > v);
-  f.event('alleyL');
+  check('next leg: the Black Market, worth more', litShots(f).join() === 'market' && m.value > v);
+  f.event('market');
   shootBreach(f);
   waitEject(g, f);
   check('three legs complete it', f.mode === null && f.completed.has('extract'));
@@ -276,9 +312,9 @@ console.log('BLACKOUT (wizard)');
   const a0 = w.total;
   f.event('skyway');
   check('every shot is a jackpot (2M at 1.5x for one completed mode)', w.total - a0 === 3_000_000, `${w.total - a0}`);
-  for (const s of ['alleyL', 'breach', 'market', 'alleyR'] as Shot[]) f.event(s);
+  for (const s of ['alley', 'breach', 'market'] as Shot[]) f.event(s);
   run(g, 0.1);
-  check('all five light the super at the Reactor', w.lit('reactor') === 4 && f.dropsDown());
+  check('all four light the super at the Reactor', w.lit('reactor') === 4 && f.dropsDown());
   f.endMultiball();
   check('BLACKOUT ends with the multiball', f.wizard === null);
   check('the heist starts over a level up', f.played.size === 0 && f.level === 1 && f.modesLit >= 1);
@@ -304,8 +340,8 @@ console.log('Reactor, lock and Impound multiball');
   f.world.gravity = 0;
   for (let i = 0; i < 3; i++) f.hitDrop(i, 100);
   check('drops down light the lock', f.lockLit && f.dropsDown());
-  f.alley('alleyL', b);
-  check('left alley locks the ball', f.locking?.b === b && !f.lockLit);
+  skywayToBend(f, b);
+  check('the Skyway feeds the lit lock', f.locking?.b === b && !f.lockLit);
   run(g, 1.6);
   check('ball rolls into the Impound', f.locked.length === 1 && !f.world.balls.includes(b));
   check('a new ball is served to the plunger', g.ballInShooter());
@@ -314,7 +350,7 @@ console.log('Reactor, lock and Impound multiball');
     const nb = park(f);
     nb.captured = false;
     for (let i = 0; i < 3; i++) f.hitDrop(i, 100);
-    f.alley('alleyL', nb);
+    skywayToBend(f, nb);
     run(g, 1.6);
   }
   check('third lock starts Impound multiball', f.multiball === 'impound', `${f.multiball} locked ${f.locked.length}`);
@@ -323,7 +359,7 @@ console.log('Reactor, lock and Impound multiball');
   const s0 = g.score;
   f.majorShot('skyway', 0);
   check('jackpot at the Skyway (1M)', g.score - s0 === 1_000_000, `${g.score - s0}`);
-  for (const s of ['market', 'alleyL', 'alleyR'] as Shot[]) f.majorShot(s, 0);
+  for (const s of ['market', 'alley', 'breach'] as Shot[]) f.majorShot(s, 0);
   run(g, 0.1);
   check('four jackpots light the super at the Reactor', f.impoundSuper && f.dropsDown() && f.shotLamp('reactor') === 3);
   const s1 = g.score;
@@ -466,6 +502,43 @@ console.log('Ball count');
   check('balls waiting in the Impound count as in play', g.ballsInPlay === 3, `${g.ballsInPlay}`);
 }
 
+console.log('Ball flow');
+{
+  // A plunge rides the Back Alley round the top and drops onto the top flipper.
+  const { g, f } = newGame();
+  f.world.balls = [];
+  const b: Ball = f.addBall(557.5, 1165);
+  (g as any).fire(0.8);
+  let near = Infinity;
+  for (let t = 0; t < 2; t += 1 / 480) {
+    f.world.step(1 / 480);
+    const tf = f.topFlipper;
+    near = Math.min(near, Math.hypot(b.x - (tf.px + tf.tipX) / 2, b.y - (tf.py + tf.tipY) / 2));
+  }
+  check('a plunge comes round the Back Alley onto the top flipper', near < 30, `closest ${near.toFixed(0)}`);
+}
+{
+  // Right flipper up the duct: the ball comes back down onto the Black Market flipper's guide.
+  const { f } = newGame();
+  let top = Infinity;
+  const { made, b } = launch(f, 241, 972, 123, 2600, 1.6, (ball) => (top = Math.min(top, ball.y)));
+  check('the right flipper makes the duct', made.includes('duct'), made.join());
+  check('...which climbs to the upper flippers', top < 260, `top ${top.toFixed(0)}`);
+  check('...and drops back down to the Black Market flipper', b.y > 260 && b.y < 345 && b.x < 270, `at (${b.x.toFixed(0)},${b.y.toFixed(0)})`);
+}
+{
+  const { f } = newGame();
+  check('the top flipper shoots the Back Alley', launch(f, 225, 166, 57, 2030, 1.2).made.includes('alley'));
+}
+{
+  const { f } = newGame();
+  check('the middle flipper shoots the Black Market', launch(f, 284, 284, 64, 1900, 1.2).made.includes('market'));
+}
+{
+  const { f } = newGame();
+  check('the left flipper shoots the Skyway', launch(f, 320, 972, 56, 2950, 1.6).made.includes('skyway'));
+}
+
 console.log('Flippers');
 {
   // A cradled ball must roll down the bat when the flipper drops (it once wedged against the pivot).
@@ -474,12 +547,13 @@ console.log('Flippers');
   for (const [name, fl, x0, y0] of [
     ['left', f.flipperL, 120, 990],
     ['right', f.flipperR, 435, 990],
-    ['upper', f.upper, 45, 318],
+    ['top', f.topFlipper, 152, 150],
+    ['Black Market', f.midFlipper, 232, 300],
   ] as const) {
     f.world.balls = [];
     const b: Ball = f.addBall(x0, y0);
     fl.pressed = true;
-    for (let t = 0; t < 2; t += 1 / 480) f.world.step(1 / 480);
+    for (let t = 0; t < 3; t += 1 / 480) f.world.step(1 / 480);
     check(`${name}: ball settles into the cradle`, b.speed < 5 && f.onHeldFlipper(b), `speed ${b.speed.toFixed(1)} at (${b.x.toFixed(0)},${b.y.toFixed(0)})`);
     const [cx, cy] = [b.x, b.y];
     fl.pressed = false;

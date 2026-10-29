@@ -27,6 +27,7 @@ wrap('hitStandup', () => 'standup');
 wrap('hitDrop', () => 'drop');
 wrap('hitBumper', () => 'bumper');
 wrap('enterBreach', () => 'breach');
+wrap('duct', () => 'duct');
 
 const w = m.world;
 const step = (f: () => boolean, max = 3) => {

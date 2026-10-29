@@ -6,25 +6,30 @@ wrapped as a native iPhone app later.
 
 ## Table 1: Cyber Psychosis
 
-An industrial cyberpunk heist. Brutal grey steel and cracked concrete, with red as the only real
-colour, hazard yellow where a shot wants attention, and a red neon skull over the flippers. It's
-drawn as a tilted 3D cabinet: the playfield leans away from you under an upright dot-matrix
-display, and every wall, post, bumper, target and ramp has height.
+An industrial cyberpunk heist, laid out and coloured after the concept sketch: pale cracked
+concrete and heavy riveted steel drawn in ink, brass pipes, glossy red lights, hazard stripes in
+muted ochre, and a grey stencil skull between the flippers. It's drawn as a tilted 3D cabinet:
+the playfield leans away from you under an upright dot-matrix display, and every wall, post,
+bumper, target and ramp has height.
 
 ### The playfield
 
-- **Skyway** (left flipper): a ramp that climbs from mid-table, sweeps over the top left and
-  drops back to the left inlane on a wireform.
-- **Black Market** (upper flipper): a ramp straight up from the upper-left flipper, over the top
-  and down the right side to the right inlane.
-- **Back Alley**: the orbit round the top, behind three pop bumpers. Shoot the left alley from the
-  right flipper or the right alley (with its spinner) from the left. Balls coming down the left
-  alley feed the upper flipper.
-- **The Breach**: a scoop between two banks of standups that spell **B-R-E-A-C-H**, shot from the
-  right flipper.
-- **The Reactor**: a captive ball behind three drop targets, shot from the left flipper. Knock the
-  drops down and slam the captive ball into the core.
-- **The Impound**: a three-ball lock in the top-left corner, fed by the left alley.
+- **Skyway** (left flipper): up the lane beside the Reactor (past its spinner), along the long deck
+  from the middle right to the upper left, and down the left side on a wireform to the left inlane.
+- **Two upper-left flippers**, both on the left button. The top one sits under the Impound; the
+  one below it, between the Skyway deck and the Breach, is the Black Market flipper.
+- **Back Alley** (top flipper): the loop round the top, behind three industrial pop bumpers. The
+  plunge rides it the other way and drops onto the top flipper; a ball shot round it comes down
+  the right side into the pops.
+- **Black Market** (middle flipper): a ramp up over the pops into the market box on the right,
+  then a wireform down the right side to the right inlane.
+- **The duct** (right flipper): a lane up the left side under the Skyway's wireform. It feeds the
+  Black Market flipper.
+- **The Breach** (right flipper): a scoop between two kite-shaped banks of standups that spell
+  **B-R-E-A-C-H**.
+- **The Reactor** (left flipper): a captive ball behind three drop targets. Knock the drops down
+  and slam the captive ball into the core.
+- **The Impound**: a three-ball lock in the top-left corner. The Skyway feeds it when the lock is lit.
 - **R-A-G-E**: the in/outlanes. The flippers move the lit lanes.
 
 ### The heist (modes)
@@ -42,11 +47,11 @@ Playing a final mode lights **BLACKOUT** at the Reactor.
 
 | Mode | Clock | What to shoot |
 | --- | --- | --- |
-| **Infiltrate** | 45 s | Sneak past the cameras. The Skyway, Black Market and both alleys are lit, and the camera watches one of them (strobing red). Make the others: 500K, +150K each. Make the watched one and you're **SPOTTED** (−5 s, and every later shot pays 100K less). Then shoot the Breach to get **INSIDE** (+3M). |
+| **Infiltrate** | 45 s | Sneak past the cameras. The Back Alley, Black Market, Skyway and Reactor are lit, and the camera watches one of them (strobing red). Make the others: 500K, +150K each. Make the watched one and you're **SPOTTED** (−5 s, and every later shot pays 100K less). Then shoot the Breach to get **INSIDE** (+3M). |
 | **Hack** | 40 s | The Breach standups become a keypad. Hit the flashing key, four to a code, 250K a key. Codes pay 1.5M, 3M and 4.5M. Shooting the Breach brute-forces a whole code. Three codes and you've **HACKED** it (+3M). |
-| **Route** | 45 s | Plot the escape: right alley, Black Market, left alley, Skyway, in order, twice. 600K a step, rising. **ROUTE SET** (+3M). |
+| **Route** | 45 s | Plot the escape: Skyway, Back Alley, Black Market, Reactor, in order, twice. 600K a step, rising. **ROUTE SET** (+3M). |
 | **Payload** | none, 2-ball multiball | Both ramps are jackpots (1.5M, +250K each). Three jackpots light the super at the Reactor (3× the jackpot). The drop targets fall by themselves to let you at it. Ends with the multiball. |
-| **Extract** | 35 s | The getaway: Skyway, left alley, Breach, in order. Each leg starts at 6M (+1M a leg) and bleeds 200K a second while you aim, down to 1.5M. **EXTRACTED** (+4M). |
+| **Extract** | 35 s | The getaway: Skyway, Black Market, Breach, in order. Each leg starts at 6M (+1M a leg) and bleeds 200K a second while you aim, down to 1.5M. **EXTRACTED** (+4M). |
 
 #### How the clocks work
 
@@ -65,7 +70,7 @@ The clocks follow conventions taken from real machines' rulesheets and from Free
 
 Play a final mode (Payload or Extract) to light **BLACKOUT**, then slam the Reactor's captive
 ball into the core. The lights die and it's a 3-ball multiball where the Skyway, Black Market,
-Breach and both alleys are each a jackpot (2M, +500K each). Collect all five to light the super
+Back Alley and Breach are each a jackpot (2M, +500K each). Collect all four to light the super
 at the Reactor (5× the jackpot). Every completed mode makes Blackout worth +0.5X, and completing
 all five makes it **TOTAL BLACKOUT** with a fourth ball. Afterwards the heist starts over, and
 everything is worth 0.5X more.
@@ -74,18 +79,19 @@ everything is worth 0.5X more.
 
 - **The Reactor**: knock down the three drops to expose the core and light the lock. Each time the
   captive ball hits the core, **reactor heat** goes up (100K, +50K a level) and the drops reset.
-- **The Impound** (ball lock): with the lock lit, shoot the left alley and the ball rolls into the
-  cage. Lock three for **Impound multiball**: jackpots at the Skyway, Black Market and both alleys
-  (1M, +250K each). Four jackpots light the super jackpot at the Reactor (3× the jackpot).
-- **The Black Market**: switches earn cash ($1K, bumpers $2K) and major shots $5K. The menu by the
-  Reactor rotates every 4 s, and making the Black Market ramp buys whatever is on offer if you can
+- **The Impound** (ball lock): with the lock lit, make the Skyway and its top bend diverts the
+  ball up a wire into the cage. Lock three for **Impound multiball**: the balls drop out onto the
+  top flipper, and the Skyway, Black Market, Back Alley and Breach are jackpots (1M, +250K each).
+  Four jackpots light the super jackpot at the Reactor (3× the jackpot).
+- **The Black Market**: switches earn cash ($1K, bumpers $2K) and major shots $5K. The menu between
+  the Breach and the Reactor rotates every 4 s, and making the Black Market ramp buys whatever is on offer if you can
   afford it: **+15 seconds** ($30K, during a timed mode), **ball save** ($50K), **light lock**
   ($40K), **bonus +1X** ($60K) or an **extra ball** ($200K, once a game).
 - **RAGE**: roll the **R-A-G-E** lanes to raise the bonus multiplier (up to 6X) and start a 20 s
   frenzy where every switch pays 100K (bumpers 150K) and every shot 250K. It runs alongside a mode,
   and relighting it adds 10 s.
-- **Skill shot**: the plunge rides round the Back Alley to the upper flipper. Make the Black Market
-  within 7 seconds for 500K and $50K.
+- **Skill shot**: the plunge rides round the Back Alley and drops onto the top flipper. Let it roll
+  down to the Black Market flipper and make the Black Market within 7 seconds for 500K and $50K.
 - **Combos**: major shots within 3.5 s of each other build combos (50K × the combo).
 
 ### Controls
