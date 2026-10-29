@@ -2,7 +2,7 @@ html,
 body {
   margin: 0;
   height: 100%;
-  background: radial-gradient(ellipse at 50% 40%, #1a1512 0%, #070605 70%) #070605;
+  background: radial-gradient(ellipse at 50% 40%, #15171a 0%, #060708 70%) #060708;
   overflow: hidden;
   overscroll-behavior: none;
   -webkit-user-select: none;
@@ -32,8 +32,8 @@ body {
   display: block;
   border-radius: 4px;
   box-shadow:
-    0 0 0 3px #1c1916,
-    0 0 0 5px #3a332c,
+    0 0 0 3px #1a1c20,
+    0 0 0 5px #3a3e45,
     0 8px 30px rgba(0, 0, 0, 0.8);
 }
 
@@ -43,8 +43,8 @@ body {
   align-items: center;
   justify-content: center;
   pointer-events: none;
-  background: rgba(4, 3, 2, 0.62);
-  color: #d9cdb8;
+  background: rgba(3, 4, 5, 0.62);
+  color: #d4d8de;
   text-align: center;
 }
 
@@ -67,20 +67,20 @@ body {
   margin: 0;
   font: 900 clamp(30px, 11vw, 64px) / 1 Impact, 'Arial Black', sans-serif;
   letter-spacing: 0.02em;
-  color: #cfc2ab;
+  color: #c9ced5;
   text-shadow:
-    0 3px 0 #3a2a1c,
+    0 3px 0 #23262b,
     0 6px 18px rgba(0, 0, 0, 0.9);
 }
 
 #overlay h1 .neon {
   display: block;
   font: italic 700 0.8em / 1 'Brush Script MT', 'Segoe Script', cursive;
-  color: #ffd6e4;
+  color: #ffd9d4;
   text-shadow:
-    0 0 6px #ff2d6f,
-    0 0 18px #ff2d6f,
-    0 0 36px #ff2d6f;
+    0 0 6px #ff2a1e,
+    0 0 18px #ff2a1e,
+    0 0 36px #e01e1e;
 }
 
 #overlay h2 {
@@ -92,7 +92,7 @@ body {
   margin: 10px 0 0;
   font-size: 11px;
   letter-spacing: 0.18em;
-  color: #9a8a74;
+  color: #8a9098;
 }
 
 #overlay .start {
@@ -100,7 +100,7 @@ body {
   font-weight: 800;
   font-size: 16px;
   letter-spacing: 0.08em;
-  color: #ffb347;
+  color: #ffd23f;
   animation: blink 1.1s ease-in-out infinite;
 }
 
@@ -116,14 +116,14 @@ body {
   margin-top: 6px;
   font-weight: 800;
   letter-spacing: 0.1em;
-  color: #b8a88f;
+  color: #a8aeb6;
   text-transform: uppercase;
   font-size: 10px;
 }
 
 #overlay dd {
   margin: 0;
-  color: #d9cdb8;
+  color: #d4d8de;
 }
 
 #overlay .rules {
@@ -131,11 +131,11 @@ body {
   max-width: 420px;
   font-size: 12px;
   line-height: 1.5;
-  color: #b8a88f;
+  color: #a8aeb6;
 }
 
 #overlay .rules b {
-  color: #ffb347;
+  color: #ffd23f;
 }
 
 @keyframes blink {
@@ -151,9 +151,9 @@ body {
   width: 32px;
   height: 32px;
   opacity: 0.5;
-  border: 1px solid #3a332c;
+  border: 1px solid #3a3e45;
   border-radius: 8px;
-  background: rgba(14, 12, 10, 0.75);
+  background: rgba(12, 13, 15, 0.75);
   color: #fff;
   font-size: 16px;
   cursor: pointer;

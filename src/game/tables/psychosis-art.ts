@@ -2,11 +2,12 @@
 // colour, hazard yellow where a shot wants attention, and a red neon skull.
 
 import { withAlpha } from '../../engine/fx';
-import type { LowerSection, P } from './geom';
+import { offsetPath, type LowerSection, type P } from './geom';
 import {
   GUIDE,
   art,
   cylinder,
+  drawBallAt,
   hazard,
   lift,
   mix,
@@ -274,9 +275,11 @@ function paintDecals(ctx: CanvasRenderingContext2D) {
   }
   ctx.restore();
 
-  // Chevrons pointing into the shots
-  chevrons(ctx, add(L.REACTOR_MOUTH, L.REACTOR_AXIS, -70), L.REACTOR_AXIS, 3);
-  chevrons(ctx, add(L.BREACH, L.BREACH_AXIS, 172), [-L.BREACH_AXIS[0], -L.BREACH_AXIS[1]], 3);
+
+  // Chevrons up the Skyway approach
+  const s0 = L.SKYWAY.path[0];
+  const sd = L.unit(L.sub(L.SKYWAY.path[3], s0));
+  chevrons(ctx, add(s0, sd, -92), sd, 3);
 
   // Stencils and graffiti
   stencil(ctx, 'SECTOR 9', 52, 500, 12, -Math.PI / 2, 0.22);
@@ -284,7 +287,7 @@ function paintDecals(ctx: CanvasRenderingContext2D) {
   stencil(ctx, 'NO WITNESSES', L.CX, 1012, 11, 0, 0.0);
   stencil(ctx, 'DANGER', 48, 1010, 12, -Math.PI / 2, 0.3, RED);
   stencil(ctx, 'DANGER', 507, 1010, 12, -Math.PI / 2, 0.3, RED);
-  sprayText(ctx, 'FLATLINE', 276, 590, 15, '#b81818', -0.18, 4);
+  sprayText(ctx, 'FLATLINE', 122, 722, 13, '#b81818', -1.35, 4);
   sprayText(ctx, 'NO GHOSTS', 430, 700, 11, '#cfd4da', -0.35, 8);
   splatter(ctx, 228, 470, 8, 6);
   splatter(ctx, 360, 640, 5, 12);
@@ -402,7 +405,7 @@ function paintLabels(ctx: CanvasRenderingContext2D) {
   };
   label('THE HEIST', L.CX, 650, 9, RED);
   label('BONUS', L.CX, 940, 8);
-  label('BLACK MARKET', 446, 372, 7.5, HAZ);
+  label('BLACK MARKET', 432, 372, 7.5, HAZ);
   label('LOCK', 52, 528, 7.5);
   label('SPINNER', 502, 500, 7);
   ctx.restore();
@@ -500,59 +503,109 @@ function block(ctx: CanvasRenderingContext2D, pts: P[], h: number, side: string,
   ctx.stroke();
 }
 
+const IMPOUND_H = 36;
+/** The recess in the cage top where locked balls sit. */
+const TROUGH: P[] = L.IMPOUND_BOX.map(([x, y]) => [66 + (x - 66) * 0.8, 72 + (y - 72) * 0.8]);
+
 function paintImpound(ctx: CanvasRenderingContext2D) {
-  const H = 36;
+  const H = IMPOUND_H;
   const lh = lift(H);
-  block(ctx, L.IMPOUND_BOX, H, '#1a1c20', '#2c2f35');
-  // grille over the lock trough: you see the balls through the bars
+  // Lock lane: twin steel rails climbing out of the orbit, over the cabinet wall, into the cage.
+  const lane = L.IMPOUND_LANE;
+  const z = (i: number) => lift((H * i) / (lane.length - 1));
+  const rails = offsetPath(lane, 15);
   ctx.save();
-  strokePath(ctx, L.IMPOUND_BOX, true, lh);
-  ctx.clip();
-  ctx.fillStyle = '#060607';
-  strokePath(ctx, L.IMPOUND_BOX.map(([x, y]) => [x * 0.86 + 159 * 0.14, y * 0.86 + 203 * 0.14] as P), true, lh);
-  ctx.fill();
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  for (let i = 1; i < lane.length; i++) {
+    // cross ties
+    const [l, r] = [rails.left[i], rails.right[i]];
+    ctx.strokeStyle = '#2a2d32';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(l[0], l[1] - z(i));
+    ctx.lineTo(r[0], r[1] - z(i));
+    ctx.stroke();
+  }
+  for (const side of [rails.left, rails.right]) {
+    ctx.beginPath();
+    side.forEach(([x, y], i) => (i ? ctx.lineTo(x, y - z(i)) : ctx.moveTo(x, y - z(i))));
+    ctx.strokeStyle = '#0a0b0d';
+    ctx.lineWidth = 5;
+    ctx.stroke();
+    ctx.strokeStyle = '#b8bec6';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
   ctx.restore();
-  // lock lane mouth
-  ctx.strokeStyle = '#4a4e55';
-  ctx.lineWidth = 3;
-  strokePath(ctx, L.IMPOUND_LANE, false, lift(20));
-  ctx.stroke();
-  // sign
+
+  block(ctx, L.IMPOUND_BOX, H, '#1a1c20', '#2c2f35');
+  // the trough, and a hazard rim around it
   ctx.save();
-  ctx.translate(166, 252 - lh);
-  ctx.rotate(-0.68);
-  ctx.fillStyle = '#d8dce2';
-  ctx.font = '900 11px Impact, "Arial Black", sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('IMPOUND', 18, 8);
-  ctx.fillStyle = RED;
-  ctx.beginPath();
-  ctx.moveTo(-28, 10);
-  ctx.lineTo(-22, 0);
-  ctx.lineTo(-16, 10);
-  ctx.closePath();
+  strokePath(ctx, TROUGH, true, lh);
+  ctx.fillStyle = '#050506';
   ctx.fill();
+  ctx.strokeStyle = withAlpha(HAZ, 0.55);
+  ctx.lineWidth = 3;
+  ctx.setLineDash([6, 5]);
+  ctx.stroke();
+  ctx.restore();
+  for (const [x, y] of L.IMPOUND_SLOTS) {
+    const g = ctx.createRadialGradient(x, y - lh, 2, x, y - lh, 16);
+    g.addColorStop(0, 'rgba(255,138,31,0.18)');
+    g.addColorStop(1, 'rgba(255,138,31,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(x - 16, y - lh - 16, 32, 32);
+  }
+  // sign on the angled front face
+  const [a, b] = [L.IMPOUND_BOX[3], L.IMPOUND_BOX[2]];
+  const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+  ctx.save();
+  ctx.transform((b[0] - a[0]) / len, (b[1] - a[1]) / len, 0, 1, (a[0] + b[0]) / 2, (a[1] + b[1]) / 2);
+  ctx.font = '900 12px Impact, "Arial Black", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = RED;
+  ctx.fillText('IMPOUND', 0, -lh / 2);
   ctx.restore();
 }
 
-/** The Impound's front bars, drawn over locked balls (cached sprite). */
-export function impoundBars(ctx: CanvasRenderingContext2D) {
-  const lh = lift(36);
-  const c = sprite('impound-bars', TABLE_W, 300, (g) => {
+/** Locked balls in the trough, behind the cage bars. */
+export function drawImpound(ctx: CanvasRenderingContext2D, locked: number) {
+  const lh = lift(IMPOUND_H);
+  ctx.save();
+  strokePath(ctx, TROUGH, true, lh);
+  ctx.clip();
+  for (let i = 0; i < locked; i++) {
+    const [x, y] = L.IMPOUND_SLOTS[i];
+    drawBallAt(ctx, x, y, 16);
+  }
+  ctx.restore();
+  const c = sprite('impound-bars', 160, 160, (g) => {
     g.save();
-    strokePath(g, L.IMPOUND_BOX, true, lh);
+    strokePath(g, TROUGH, true, lh);
     g.clip();
-    g.strokeStyle = '#7a8088';
-    g.lineWidth = 2.5;
-    for (let k = -60; k < 120; k += 11) {
-      g.beginPath();
-      g.moveTo(100 + k, 150 - lh);
-      g.lineTo(160 + k, 260 - lh);
-      g.stroke();
-    }
+    g.strokeStyle = '#0a0b0d';
+    g.lineWidth = 4;
+    const bars = () => {
+      for (let k = -150; k < 130; k += 11) {
+        g.beginPath();
+        g.moveTo(k, 0);
+        g.lineTo(k + 160, 160);
+        g.stroke();
+      }
+    };
+    bars();
+    g.strokeStyle = '#8a9098';
+    g.lineWidth = 2;
+    bars();
     g.restore();
+    g.strokeStyle = '#5a5f66';
+    g.lineWidth = 2.5;
+    strokePath(g, TROUGH, true, lh);
+    g.stroke();
   });
-  ctx.drawImage(c, 0, 0, TABLE_W, 300);
+  ctx.drawImage(c, 0, 0, 160, 160);
 }
 
 function paintBreach(ctx: CanvasRenderingContext2D) {

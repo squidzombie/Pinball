@@ -1,7 +1,8 @@
-// Rule tests: drive the Foundry's switches directly and check the mode system.
+// Rule tests: drive Cyber Psychosis's switches directly and check the heist.
 // Usage: npm test
 import { Game } from '../src/game/game';
 import type { Ball } from '../src/engine/physics';
+import { SHOTS, type Shot } from '../src/game/modes';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 let failures = 0;
@@ -27,7 +28,7 @@ function run(g: Game, seconds: number) {
 
 /** Park the ball mid-table, frozen, so the mode clock runs but nothing drains. */
 function park(f: any): Ball {
-  let b: Ball = f.world.balls[0];
+  let b: Ball = f.world.balls.find((x: Ball) => x !== f.breachBall);
   if (!b) b = f.addBall(280, 760);
   b.x = 280;
   b.y = 760;
@@ -36,82 +37,366 @@ function park(f: any): Ball {
   return b;
 }
 
-/** Put the (parked) ball into the scoop as if it had just been shot there. */
-function shootScoop(f: any): Ball {
-  const b: Ball = f.world.balls[0] ?? f.addBall(405, 425);
+/** Put the (parked) ball into the Breach as if it had just been shot there. */
+function shootBreach(f: any): Ball {
+  const b: Ball = f.world.balls[0] ?? f.addBall(196, 520);
   b.captured = false;
+  b.vx = b.vy = 0;
   b.tags.scoopIgnore = 0;
-  f.enterScoop(b);
+  f.enterBreach(b);
   return b;
 }
 
-/** Let the scoop kick the ball out, then park it before it can drain. */
+/** Let the Breach kick the ball out, then park it before it can drain. */
 function waitEject(g: Game, f: any) {
-  for (let t = 0; t < 10 && f.scoopBall; t += 1 / 60) g.update(1 / 60);
+  for (let t = 0; t < 10 && f.breachBall; t += 1 / 60) g.update(1 / 60);
   park(f);
 }
 
-/** Shoot the scoop and let it resolve (selection, intro and eject). */
-function scoop(g: Game, f: any, choose?: (f: any) => void) {
-  shootScoop(f);
+/** Shoot the Breach and let it resolve (selection, intro and eject). */
+function breach(g: Game, f: any, choose?: (f: any) => void) {
+  shootBreach(f);
   choose?.(f);
-  for (let t = 0; t < 10 && f.scoopBall; t += 1 / 60) g.update(1 / 60);
-  park(f);
+  waitEject(g, f);
 }
 
-const JOB_NAMES = ['SHAKEDOWN', 'HOT METAL', 'BLOOD MONEY', 'BLACKOUT', 'SABOTAGE'];
+const PREREQ: Record<string, string[]> = {
+  infiltrate: [],
+  hack: ['infiltrate'],
+  route: ['infiltrate'],
+  payload: ['infiltrate', 'hack'],
+  extract: ['infiltrate', 'route'],
+};
 
-function startJob(name: string) {
+/** A new game with the heist map open far enough, then start mode `key` at the Breach. */
+function startMode(key: string) {
   const { g, f } = newGame();
+  for (const k of PREREQ[key]) f.played.add(k);
+  f.modesLit = 1;
   park(f);
-  scoop(g, f, (ff) => {
-    for (let i = 0; i < 5 && JOB_NAMES[ff.selected] !== name; i++) ff.onFlipperPress(1);
+  breach(g, f, (ff) => {
+    for (let i = 0; i < 5 && ff.selecting > 0 && ff.available()[ff.selected].key !== key; i++) ff.onFlipperPress(1);
   });
   return { g, f };
 }
 
+const lit = (f: any, s: Shot) => f.mode?.lit(s) ?? 0;
+const litShots = (f: any) => SHOTS.filter((s) => lit(f, s));
 
-console.log('Mode start & selection');
+console.log('The Breach starts the heist');
 {
   const { g, f } = newGame();
-  check('first job comes lit', f.jobsLit === 1);
+  check('first mode comes lit', f.modesLit === 1);
+  check('Breach arrow flashes', f.shotLamp('breach') === 2);
+  check('only INFILTRATE is open', f.available().map((m: any) => m.key).join() === 'infiltrate');
   park(f);
-  const b = shootScoop(f);
-  check('scoop opens job selection', f.selecting > 0);
-  check('ball held while selecting', f.scoopBall === b);
-  f.onFlipperPress(1);
-  check('right flipper moves selection', f.selected === 1, `selected ${f.selected}`);
-  f.onFlipperPress(-1);
-  f.onFlipperPress(-1);
-  check('left flipper wraps', f.selected === 4, `selected ${f.selected}`);
-  run(g, 4.2);
-  check('selection times out into the job', f.job?.name === 'SABOTAGE', f.job?.name);
-  check('job consumes the lit start', f.jobsLit === 0);
-  const t0 = f.job.timer;
+  const b = shootBreach(f);
+  check('one choice: no selection, straight in', f.selecting <= 0 && f.mode?.name === 'INFILTRATE', f.mode?.name);
+  check('mode consumes the lit start', f.modesLit === 0);
+  check('ball held for the intro', f.breachBall === b);
+  const t0 = f.mode.timer;
   run(g, 1);
-  check('clock frozen during the intro hold', f.job.timer === t0);
-  for (let t = 0; t < 3 && f.scoopBall; t += 1 / 60) g.update(1 / 60);
-  check('ball kicked out after intro', f.scoopBall === null);
+  check('clock frozen during the intro hold', f.mode.timer === t0);
+  for (let t = 0; t < 3 && f.breachBall; t += 1 / 60) g.update(1 / 60);
+  check('ball kicked out after the intro', f.breachBall === null);
   park(f);
   run(g, 1);
-  check('clock waits for the ball to reach the playfield', f.job.timer === t0);
+  check('clock waits for the ball to reach the playfield', f.mode.timer === t0);
   run(g, 1.5);
-  check('...but no more than 2 s', f.job.timer < t0);
-  const t1 = f.job.timer;
+  check('...but no more than 2 s', f.mode.timer < t0);
+  const t1 = f.mode.timer;
   run(g, 11);
-  check('pinball seconds run slow (11 real s < 11 on the clock)', t1 - f.job.timer < 10.5 && t1 - f.job.timer > 9.5, `${(t1 - f.job.timer).toFixed(2)}`);
+  check('pinball seconds run slow (11 real s ≈ 10 on the clock)', t1 - f.mode.timer < 10.5 && t1 - f.mode.timer > 9.5, `${(t1 - f.mode.timer).toFixed(2)}`);
   run(g, 60);
-  check('job ends when the clock runs out', f.job === null);
-  check('played job is marked', f.played.has(4));
+  check('mode ends when the clock runs out', f.mode === null);
+  check('played but not completed', f.played.has('infiltrate') && !f.completed.has('infiltrate'));
+  check('HACK and ROUTE open up', f.available().map((m: any) => m.key).join() === 'hack,route');
+}
+
+console.log('B-R-E-A-C-H standups');
+{
+  const { g, f } = newGame();
+  f.modesLit = 0;
+  f.hitStandup(0);
+  f.hitStandup(1);
+  check('two letters lit', f.letters.filter(Boolean).length === 2);
+  const s0 = g.score;
+  f.hitStandup(1);
+  check('a lit letter pays only 5K', g.score - s0 === 5_000, `${g.score - s0}`);
+  for (let i = 2; i < 6; i++) f.hitStandup(i);
+  check('B-R-E-A-C-H lights a mode', f.modesLit === 1);
+  check('letters reset', f.letters.every((x: boolean) => !x));
+}
+
+console.log('Mode selection');
+{
+  const { g, f } = newGame();
+  f.played.add('infiltrate');
+  f.modesLit = 1;
+  park(f);
+  const b = shootBreach(f);
+  check('two choices open the selection', f.selecting > 0 && f.available().length === 2);
+  check('ball held while choosing', f.breachBall === b);
+  f.onFlipperPress(1);
+  check('right flipper moves the selection', f.selected === 1);
+  f.onFlipperPress(1);
+  check('...and wraps', f.selected === 0);
+  f.onFlipperPress(-1);
+  run(g, 4.2);
+  check('selection times out into the chosen mode', f.mode?.name === 'ROUTE', f.mode?.name);
+  check('tier 2 stays shut until a tier 1 mode is played', !f.available().some((m: any) => m.tier === 2));
+}
+
+console.log('INFILTRATE');
+{
+  const { g, f } = startMode('infiltrate');
+  const m = f.mode;
+  check('four sneak shots lit, Breach dark', litShots(f).length === 4 && !lit(f, 'breach'), litShots(f).join());
+  check('the camera watches one of them (strobing)', !!m.watched && lit(f, m.watched) === 4);
+  const t0 = m.timer;
+  const a0 = m.total;
+  f.event(m.watched);
+  check('making the watched shot gets you SPOTTED: -5 s, no award', m.timer < t0 - 4.9 && m.total === a0, `${t0.toFixed(1)} -> ${m.timer.toFixed(1)}`);
+  let first = true;
+  while (litShots(f).length && litShots(f).some((s) => s !== 'breach')) {
+    const s = litShots(f).find((x) => lit(f, x) === 2);
+    if (!s) break;
+    const before = m.total;
+    f.event(s);
+    if (first) check('sneaking past pays 400K after being spotted once', m.total - before === 400_000, `${m.total - before}`);
+    first = false;
+  }
+  check('all four lights the Breach', lit(f, 'breach') === 3 && litShots(f).length === 1);
+  run(g, 1);
+  const secs = Math.ceil(m.timer);
+  const before = m.total;
+  shootBreach(f);
+  check('the Breach completes it: 3M + 100K a second left', m.total - before === 3_000_000 + secs * 100_000, `${m.total - before} with ${secs}s`);
+  waitEject(g, f);
+  check('completed', f.mode === null && f.completed.has('infiltrate'));
+}
+
+console.log('HACK');
+{
+  const { g, f } = startMode('hack');
+  const m = f.mode;
+  check('started', m?.name === 'HACK', m?.name);
+  const key = () => m.code[m.pos];
+  check('exactly one key flashing', [0, 1, 2, 3, 4, 5].filter((i) => m.litStandup(i)).length === 1);
+  const wrong = [0, 1, 2, 3, 4, 5].find((i) => i !== key())!;
+  const a0 = m.total;
+  f.hitStandup(wrong);
+  check('a wrong key does nothing', m.total === a0);
+  for (let i = 0; i < 4; i++) f.hitStandup(key());
+  check('four keys crack the first code (4x250K + 1.5M)', m.total - a0 === 2_500_000, `${m.total - a0}`);
+  const a1 = m.total;
+  shootBreach(f);
+  check('the Breach brute-forces a whole code (3M)', m.total - a1 === 3_000_000, `${m.total - a1}`);
+  waitEject(g, f);
+  for (let i = 0; i < 4; i++) f.hitStandup(key());
+  run(g, 0.1);
+  check('third code completes it', f.mode === null && f.completed.has('hack'));
+}
+
+console.log('ROUTE');
+{
+  const { g, f } = startMode('route');
+  const m = f.mode;
+  check('started', m?.name === 'ROUTE', m?.name);
+  check('only the right alley lit first', litShots(f).join() === 'alleyR');
+  const a0 = m.total;
+  f.event('skyway');
+  check('out-of-order shots do nothing', m.total === a0);
+  const order: Shot[] = ['alleyR', 'market', 'alleyL', 'skyway'];
+  for (const s of order) f.event(s);
+  check('one lap pays 0.6+1.2+1.8+2.4M + 2.5M', m.total - a0 === 8_500_000, `${m.total - a0}`);
+  for (const s of order) f.event(s);
+  run(g, 0.1);
+  check('second lap completes it', f.mode === null && f.completed.has('route'));
+}
+
+console.log('PAYLOAD (multiball)');
+{
+  const { g, f } = startMode('payload');
+  const m = f.mode;
+  check('started', m?.name === 'PAYLOAD', m?.name);
+  check('it is a multiball with no clock', f.multiball === 'payload' && !m.timed);
+  check('a second ball joins', f.world.balls.length + (g as any).launchQueue >= 2, `balls ${f.world.balls.length}`);
+  check('both ramps lit', lit(f, 'skyway') === 3 && lit(f, 'market') === 3);
+  const a0 = m.total;
+  f.event('skyway');
+  f.event('market');
+  f.event('skyway');
+  check('ramp jackpots climb (1.5M+1.75M+2M)', m.total - a0 === 5_250_000, `${m.total - a0}`);
+  run(g, 0.1);
+  check('super lit at the Reactor, drops come down for it', lit(f, 'reactor') === 4 && f.dropsDown());
+  const a1 = m.total;
+  f.event('reactor');
+  check('super pays 3x the jackpot', m.total - a1 === 6_750_000, `${m.total - a1}`);
+  f.endMultiball();
+  check('mode ends with the multiball', f.mode === null && f.played.has('payload') && f.completed.has('payload'));
+  check('finishing a tier 2 mode lights BLACKOUT', f.blackoutLit);
+}
+
+console.log('EXTRACT');
+{
+  const { g, f } = startMode('extract');
+  const m = f.mode;
+  check('started', m?.name === 'EXTRACT', m?.name);
+  check('first leg is the Skyway', litShots(f).join() === 'skyway');
+  f.sw('sling');
+  const v0 = m.value;
+  run(g, 5);
+  check('the payout bleeds away while you run', m.value < v0 && m.value > v0 - 1_200_000, `${v0} -> ${m.value}`);
+  const a0 = m.total;
+  const v = m.value;
+  f.event('skyway');
+  check('a leg pays its current value', m.total - a0 === v, `${m.total - a0} vs ${v}`);
+  check('next leg: the left alley, worth more', litShots(f).join() === 'alleyL' && m.value > v);
+  f.event('alleyL');
+  shootBreach(f);
+  waitEject(g, f);
+  check('three legs complete it', f.mode === null && f.completed.has('extract'));
+  check('BLACKOUT lit', f.blackoutLit && f.shotLamp('reactor') === 3);
+}
+
+console.log('BLACKOUT (wizard)');
+{
+  const { g, f } = newGame();
+  park(f).captured = false; // the ball that just hit the Reactor
+  f.blackoutLit = true;
+  f.played.add('infiltrate');
+  f.completed.add('infiltrate');
+  f.reactorHit();
+  check('the Reactor starts BLACKOUT', f.wizard?.name === 'BLACKOUT');
+  check('3-ball multiball', f.multiball === 'blackout' && (g as any).launchQueue === 2, `queue ${(g as any).launchQueue}`);
+  run(g, 1);
+  check('the lights go out', f.giTarget < 0.2 && f.gi < 0.3, `gi ${f.gi.toFixed(2)}`);
+  const w = f.wizard;
+  const a0 = w.total;
+  f.event('skyway');
+  check('every shot is a jackpot (2M at 1.5x for one completed mode)', w.total - a0 === 3_000_000, `${w.total - a0}`);
+  for (const s of ['alleyL', 'breach', 'market', 'alleyR'] as Shot[]) f.event(s);
+  run(g, 0.1);
+  check('all five light the super at the Reactor', w.lit('reactor') === 4 && f.dropsDown());
+  f.endMultiball();
+  check('BLACKOUT ends with the multiball', f.wizard === null);
+  check('the heist starts over a level up', f.played.size === 0 && f.level === 1 && f.modesLit >= 1);
+  check('values scale up', f.modeMult === 1.5);
+}
+{
+  const { f } = newGame();
+  park(f).captured = false;
+  for (const k of ['infiltrate', 'hack', 'route', 'payload', 'extract']) {
+    f.played.add(k);
+    f.completed.add(k);
+  }
+  f.blackoutLit = true;
+  f.reactorHit();
+  check('a perfect heist makes it TOTAL BLACKOUT: 4 balls', f.wizard && (f.game as any).launchQueue === 3, `queue ${(f.game as any).launchQueue}`);
+}
+
+console.log('Reactor, lock and Impound multiball');
+{
+  const { g, f } = newGame();
+  const b = park(f);
+  b.captured = false;
+  f.world.gravity = 0;
+  for (let i = 0; i < 3; i++) f.hitDrop(i, 100);
+  check('drops down light the lock', f.lockLit && f.dropsDown());
+  f.alley('alleyL', b);
+  check('left alley locks the ball', f.locking?.b === b && !f.lockLit);
+  run(g, 1.6);
+  check('ball rolls into the Impound', f.locked.length === 1 && !f.world.balls.includes(b));
+  check('a new ball is served to the plunger', g.ballInShooter());
+  check('drops reset for the next lock', !f.dropsDown());
+  for (let n = 0; n < 2; n++) {
+    const nb = park(f);
+    nb.captured = false;
+    for (let i = 0; i < 3; i++) f.hitDrop(i, 100);
+    f.alley('alleyL', nb);
+    run(g, 1.6);
+  }
+  check('third lock starts Impound multiball', f.multiball === 'impound', `${f.multiball} locked ${f.locked.length}`);
+  run(g, 3);
+  check('the Impound lets all three balls out', f.locked.length === 0 && f.world.balls.length >= 3, `balls ${f.world.balls.length}`);
+  const s0 = g.score;
+  f.majorShot('skyway', 0);
+  check('jackpot at the Skyway (1M)', g.score - s0 === 1_000_000, `${g.score - s0}`);
+  for (const s of ['market', 'alleyL', 'alleyR'] as Shot[]) f.majorShot(s, 0);
+  run(g, 0.1);
+  check('four jackpots light the super at the Reactor', f.impoundSuper && f.dropsDown() && f.shotLamp('reactor') === 3);
+  const s1 = g.score;
+  f.reactorHit();
+  check('super pays 3x the jackpot', g.score - s1 >= 6_000_000, `${g.score - s1}`);
+  f.world.gravity = 2000;
+}
+
+console.log('Black Market');
+{
+  const { g, f } = newGame();
+  const b = park(f);
+  f.sw('bumper');
+  f.sw('sling');
+  check('switches pay cash', f.cash === 3_000, `${f.cash}`);
+  const o0 = f.offer()?.key;
+  run(g, 4.1);
+  check('the offer rotates', f.offer()?.key !== o0);
+  check('more time is only on offer during a timed mode', f.itemAvailable('time') === false);
+  f.cash = 10_000;
+  const it = f.offer();
+  f.rampMade('market', b);
+  check('too poor: nothing bought', f.cash > 0 && f.offer()?.key === it.key);
+  f.cash = 1_000_000;
+  while (f.offer()?.key !== 'bonus') f.offerIdx++;
+  const m0 = g.bonusMult;
+  f.rampMade('market', b);
+  check('buying BONUS +1X', g.bonusMult === m0 + 1);
+  check('...costs $60K plus what the ramp earned', f.cash === 1_000_000 - 60_000 + 5_000, `${f.cash}`);
+  while (f.offer()?.key !== 'xball') f.offerIdx++;
+  f.rampMade('market', b);
+  check('extra ball bought once', g.extraBalls === 1 && !f.itemAvailable('xball'));
+}
+
+console.log('Skill shot');
+{
+  const { g, f } = newGame();
+  check('armed at ball start', f.skillArmed);
+  (g as any).fire(0.8);
+  check('plunging lights the Black Market', f.skillT > 6 && f.shotLamp('market') === 4);
+  const s0 = g.score;
+  f.rampMade('market', f.world.balls[0]);
+  check('making it pays 500K (and $50K the Black Market can spend at once)', g.score - s0 >= 600_000, `${g.score - s0}`);
+  check('one shot only', f.skillT <= 0);
+}
+
+console.log('RAGE');
+{
+  const { g, f } = newGame();
+  park(f);
+  for (let i = 0; i < 4; i++) f.rollover(i);
+  check('R-A-G-E starts RAGE', f.rage?.name === 'RAGE');
+  check('...and bumps the bonus multiplier', g.bonusMult === 2);
+  const s0 = g.score;
+  f.sw('sling');
+  check('every switch pays 100K', g.score - s0 === 100_000, `${g.score - s0}`);
+  for (let i = 0; i < 4; i++) f.rollover(i);
+  check('relighting extends it', f.rage.timer > 25);
+  run(g, 45);
+  check('RAGE times out', f.rage === null);
+  f.rageLit = [true, false, false, false];
+  f.onFlipperPress(1);
+  check('lane change rotates the letters', f.rageLit[1] && !f.rageLit[0]);
 }
 
 console.log('Clock rules');
 {
-  const { g, f } = startJob('SHAKEDOWN');
+  const { g, f } = startMode('route');
+  const m = f.mode;
   f.sw('sling'); // any playfield switch validates
-  const t0 = f.job.timer;
+  const t0 = m.timer;
   run(g, 0.5);
-  check('a playfield switch starts the clock at once', f.job.timer < t0);
+  check('a playfield switch starts the clock at once', m.timer < t0);
   // Cradle: a free, motionless ball on a held flipper keeps the clock running and isn't ball-searched.
   const b: Ball = f.world.balls[0];
   f.flipperL.pressed = true;
@@ -121,9 +406,9 @@ console.log('Clock rules');
   b.y = lf.py + Math.sin(lf.angle) * 30 - 22;
   b.vx = b.vy = 0;
   b.captured = false;
-  const tc = f.job.timer;
+  const tc = m.timer;
   run(g, 6);
-  check('cradling does not stop the clock', f.job.timer < tc - 4, `${tc.toFixed(1)} -> ${f.job.timer.toFixed(1)}`);
+  check('cradling does not stop the clock', m.timer < tc - 4, `${tc.toFixed(1)} -> ${m.timer.toFixed(1)}`);
   check('a cradled ball is not ball-searched', f.onHeldFlipper(b) && b.vy > -600, `vy ${b.vy.toFixed(0)}`);
   f.flipperL.pressed = false;
   park(f);
@@ -134,208 +419,51 @@ console.log('Clock rules');
   b.y = 640;
   b.vx = b.vy = 0;
   run(g, 2);
-  const ts = f.job.timer;
+  const ts = m.timer;
   run(g, 1.5);
-  check('a stuck ball stops the clock', f.job.timer === ts);
+  check('a stuck ball stops the clock', m.timer === ts);
   f.world.gravity = 2000;
   park(f);
   // Grace and refresh.
-  f.job.timer = 0.5;
+  m.timer = 0.5;
   run(g, 1);
-  check('clock reaches zero but the mode is still running (grace)', f.job?.inGrace === true);
-  const lit = ['leftOrbit', 'ramp', 'hit', 'reactor', 'drops', 'rightOrbit'].find((s) => f.job.lit(s));
-  f.event(lit);
-  check('a lit shot in grace counts and tops the clock up to 10', f.job && !f.job.inGrace && f.job.timer >= 9.9, `${f.job?.timer}`);
-  f.job.timer = 0.2;
+  check('clock reaches zero but the mode is still running (grace)', f.mode?.inGrace === true);
+  f.event(litShots(f)[0]);
+  check('a lit shot in grace counts and tops the clock up to 10', f.mode && !m.inGrace && m.timer >= 9.9, `${m.timer}`);
+  m.timer = 0.2;
   run(g, 3);
-  check('grace runs out after ~2 s', f.job === null);
+  check('grace runs out after ~2 s', f.mode === null);
 }
-
-console.log('Time bonus and add-time');
 {
-  const { g, f } = startJob('SABOTAGE');
+  const { g, f } = startMode('route');
   f.sw('sling');
   run(g, 1);
-  const before = f.job.timer;
-  for (let i = 0; i < 3; i++) f.hitStandup(i);
-  check('H-I-T during a job adds 10 s', f.job.timer > before + 9.9, `${before.toFixed(1)} -> ${f.job.timer.toFixed(1)}`);
-  shootScoop(f);
-  waitEject(g, f);
-  const secs = Math.ceil(f.job.timer);
-  f.comboTimer = 0;
-  const s0 = g.score;
-  shootScoop(f);
-  check('finishing early pays 100K per second left', g.score - s0 === 1_500_000 + 3_000_000 + secs * 100_000, `${g.score - s0} with ${secs}s`);
-}
-
-console.log('H-I-T targets');
-{
-  const { f } = newGame();
-  f.jobsLit = 0;
-  f.hitStandup(0);
-  f.hitStandup(1);
-  check('two letters lit', f.hitLit.filter(Boolean).length === 2);
-  f.hitStandup(2);
-  check('H-I-T lights a job', f.jobsLit === 1);
-  check('letters reset', f.hitLit.every((x: boolean) => !x));
-}
-
-console.log('SHAKEDOWN');
-{
-  const { g, f } = startJob('SHAKEDOWN');
-  check('started', f.job?.name === 'SHAKEDOWN', f.job?.name);
-  const lit = () => ['leftOrbit', 'ramp', 'hit', 'reactor', 'drops', 'rightOrbit'].find((s) => f.job.lit(s));
-  check('exactly one shot lit', ['leftOrbit', 'ramp', 'hit', 'reactor', 'drops', 'rightOrbit'].filter((s) => f.job.lit(s)).length === 1);
-  const before = g.score;
-  f.event(lit());
-  check('lit shot pays 600K', g.score - before === 600_000, `${g.score - before}`);
-  const s1 = g.score;
-  f.event(lit());
-  check('second pays 900K', g.score - s1 === 900_000, `${g.score - s1}`);
-  const unlit = ['leftOrbit', 'ramp', 'hit', 'reactor', 'drops', 'rightOrbit'].find((s) => !f.job.lit(s))!;
-  const s2 = f.job.total;
-  f.event(unlit);
-  check('unlit shot pays nothing to the mode', f.job.total === s2);
-  const firstAt = lit();
-  run(g, 4.1);
-  check('lit shot moves on its own', lit() !== firstAt);
-  for (let i = 0; i < 3; i++) f.event(lit());
-  run(g, 0.1);
-  check('five collections complete it', f.job === null && f.played.has(0));
-}
-
-console.log('HOT METAL');
-{
-  const { g, f } = startJob('HOT METAL');
-  check('started', f.job?.name === 'HOT METAL', f.job?.name);
-  check('ramp + right orbit lit', f.job.lit('ramp') && f.job.lit('rightOrbit') && !f.job.lit('scoop'));
-  run(g, 5);
-  const v = f.job.value;
-  check('hurry-up cools', v < 5_000_000 && v >= 3_900_000, `${v}`);
-  const s0 = g.score;
-  f.event('ramp');
-  check('collect pays the hurry-up value', g.score - s0 === v, `${g.score - s0} vs ${v}`);
-  check('scoop lit to pour', f.job.lit('scoop') && !f.job.lit('ramp'));
-  const s1 = g.score;
-  shootScoop(f);
-  check('pour pays double', g.score - s1 >= v * 2, `${g.score - s1}`);
-  run(g, 0.1);
-  check('completed', f.job === null && f.played.has(1));
-}
-
-console.log('BLOOD MONEY');
-{
-  const { g, f } = startJob('BLOOD MONEY');
-  check('started', f.job?.name === 'BLOOD MONEY', f.job?.name);
-  const shots = ['leftOrbit', 'ramp', 'hit', 'reactor', 'drops', 'rightOrbit'];
-  check('all six lit', shots.every((s) => f.job.lit(s)));
-  check('untimed', !f.job.timed);
-  const s0 = g.score;
-  f.event('ramp');
-  f.event('ramp');
-  check('a shot only pays once', g.score - s0 === 1_500_000, `${g.score - s0}`);
-  check('collected shot goes dark', !f.job.lit('ramp'));
-  const v0 = f.job.value;
-  run(g, 10);
-  check('the payout bleeds while you aim', f.job.value < v0 && f.job.value > v0 - 300_000, `${v0} -> ${f.job.value}`);
-  run(g, 200);
-  check('...down to a floor, and the mode never times out', f.job?.value === 500_000);
-  const s1 = g.score;
-  f.event('hit');
-  check('floor value still pays', g.score - s1 === 500_000, `${g.score - s1}`);
-  for (const s of ['leftOrbit', 'reactor', 'drops', 'rightOrbit']) f.event(s);
-  run(g, 0.1);
-  check('clean sweep completes it', f.job === null && f.played.has(2));
-}
-
-console.log('BLACKOUT');
-{
-  const { g, f } = startJob('BLACKOUT');
-  check('started', f.job?.name === 'BLACKOUT', f.job?.name);
-  run(g, 1);
-  check('lights go out', f.giTarget < 0.2 && f.gi < 0.3, `gi ${f.gi.toFixed(2)}`);
-  const s0 = g.score;
-  f.event('leftOrbit');
-  f.event('ramp');
-  f.event('rightOrbit');
-  check('chained shots multiply (1M+2M+3M)', g.score - s0 === 6_000_000, `${g.score - s0}`);
-  run(g, 7);
-  const s1 = g.score;
-  f.event('reactor');
-  check('chain resets after a gap', g.score - s1 === 1_000_000, `${g.score - s1}`);
-}
-
-console.log('SABOTAGE');
-{
-  const { g, f } = startJob('SABOTAGE');
-  check('started', f.job?.name === 'SABOTAGE', f.job?.name);
-  f.hitStandup(0);
-  f.hitDrop(0, 100);
-  f.hitReactor();
-  const s0 = f.job.total;
-  shootScoop(f);
-  check('scoop detonates the charge (1M + 3x250K)', f.job.total - s0 === 1_750_000, `${f.job.total - s0}`);
-  run(g, 2);
-  park(f);
-  shootScoop(f);
-  run(g, 0.1);
-  check('second detonation completes it', f.job === null && f.played.has(4));
-}
-
-console.log('RIOT');
-{
-  const { g, f } = newGame();
-  park(f);
-  for (let i = 0; i < 4; i++) f.rollover(i);
-  check('R-I-O-T starts a riot', f.riot?.name === 'RIOT');
-  const s0 = g.score;
-  f.sw('sling');
-  check('every switch pays 100K', g.score - s0 === 100_000, `${g.score - s0}`);
-  for (let i = 0; i < 4; i++) f.rollover(i);
-  check('relighting extends it', f.riot.timer > 25);
-  run(g, 45);
-  check('riot times out', f.riot === null);
-  f.riotLit = [true, false, false, false];
-  f.onFlipperPress(1);
-  check('lane change rotates letters', f.riotLit[1] && !f.riotLit[0]);
+  const before = f.mode.timer;
+  for (let i = 0; i < 6; i++) f.hitStandup(i);
+  check('B-R-E-A-C-H during a mode adds 10 s', f.mode.timer > before + 9.9, `${before.toFixed(1)} -> ${f.mode.timer.toFixed(1)}`);
+  check('...and banks the next mode', f.modesLit === 1);
 }
 
 console.log('Priorities');
 {
-  const { g, f } = startJob('SHAKEDOWN');
-  f.pitLit = true;
-  shootScoop(f);
-  check('no trip to the Pit mid-job', g.active === g.main);
-  run(g, 2);
-  park(f);
+  const { g, f } = startMode('hack');
+  f.modesLit = 1;
+  shootBreach(f);
+  check('no second mode while one runs', f.mode?.name === 'HACK' && f.selecting <= 0);
+  waitEject(g, f);
   (g as any).endBall();
-  check('draining ends the job quietly', f.job === null);
+  check('draining ends the mode quietly', f.mode === null && f.played.has('hack'));
 }
 
-console.log('BURN IT DOWN (wizard)');
+console.log('Ball count');
 {
   const { g, f } = newGame();
-  park(f);
-  for (let i = 0; i < 5; i++) {
-    f.jobsLit = 1;
-    scoop(g, f, (ff) => (ff.selected = ff.nextJob()));
-    check(`job ${i + 1} started`, !!f.job, `played ${[...f.played]}`);
-    f.job.finished = true;
-    run(g, 0.1);
-  }
-  check('all five played lights the wizard', f.wizardLit);
-  shootScoop(f);
-  check('scoop starts BURN IT DOWN', f.wizard?.name === 'BURN IT DOWN');
-  check('wizard is a multiball', f.multiball && (g as any).launchQueue === 3);
-  const s0 = g.score;
-  f.event('ramp');
-  check('every shot is a jackpot (2M)', g.score - s0 === 2_000_000, `${g.score - s0}`);
-  for (const s of ['leftOrbit', 'hit', 'reactor', 'drops', 'rightOrbit']) f.event(s);
-  check('super lit after all six', !!f.wizard.lit('scoop'));
-  f.endMultiball();
-  check('wizard ends with the multiball', f.wizard === null);
-  check('board resets at a higher level', f.played.size === 0 && f.modeLevel === 1 && f.jobsLit >= 1);
-  check('values scale up', f.modeMult === 1.5);
+  park(f).captured = false;
+  f.locked = [f.addBall(46, 108), f.addBall(70, 82)];
+  for (const b of f.locked) f.removeBall(b);
+  f.addBalls(3);
+  check('a multiball takes locked balls first', f.releaseQueue === 2 && (g as any).launchQueue === 0, `release ${f.releaseQueue} launch ${(g as any).launchQueue}`);
+  check('balls waiting in the Impound count as in play', g.ballsInPlay === 3, `${g.ballsInPlay}`);
 }
 
 console.log('Flippers');
@@ -343,19 +471,20 @@ console.log('Flippers');
   // A cradled ball must roll down the bat when the flipper drops (it once wedged against the pivot).
   const { f } = newGame();
   f.world.zones = [];
-  for (const [fl, x0] of [
-    [f.flipperL, 120],
-    [f.flipperR, 435],
+  for (const [name, fl, x0, y0] of [
+    ['left', f.flipperL, 120, 990],
+    ['right', f.flipperR, 435, 990],
+    ['upper', f.upper, 45, 318],
   ] as const) {
     f.world.balls = [];
-    const b: Ball = f.addBall(x0, 990);
+    const b: Ball = f.addBall(x0, y0);
     fl.pressed = true;
     for (let t = 0; t < 2; t += 1 / 480) f.world.step(1 / 480);
-    check('ball settles into the cradle', b.speed < 5 && f.onHeldFlipper(b));
+    check(`${name}: ball settles into the cradle`, b.speed < 5 && f.onHeldFlipper(b), `speed ${b.speed.toFixed(1)} at (${b.x.toFixed(0)},${b.y.toFixed(0)})`);
     const [cx, cy] = [b.x, b.y];
     fl.pressed = false;
     for (let t = 0; t < 1; t += 1 / 480) f.world.step(1 / 480);
-    check('dropping the flipper rolls it off the bat', Math.hypot(b.x - cx, b.y - cy) > 30, `moved ${Math.hypot(b.x - cx, b.y - cy).toFixed(1)}`);
+    check(`${name}: dropping the flipper rolls it off the bat`, Math.hypot(b.x - cx, b.y - cy) > 30, `moved ${Math.hypot(b.x - cx, b.y - cy).toFixed(1)}`);
   }
 }
 

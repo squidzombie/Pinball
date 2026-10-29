@@ -4,74 +4,95 @@ Pinball tables for the [squidzombie.com](https://squidzombie.com) collection. Bu
 web app first (runs in any modern browser, installable on a phone), structured so it can be
 wrapped as a native iPhone app later.
 
-## Table 1: Neon Foundry
+## Table 1: Cyber Psychosis
 
-A grimy industrial table about a foundry run by the Syndicate, with an underground fight
-club below it. Rust, soot, sodium light and molten metal, with neon only where a real sign
-would be. It's drawn as a tilted 3D cabinet: the playfield leans away from you under an
-upright dot-matrix display, and every wall, post, bumper, target and ramp has height.
+An industrial cyberpunk heist. Brutal grey steel and cracked concrete, with red as the only real
+colour, hazard yellow where a shot wants attention, and a red neon skull over the flippers. It's
+drawn as a tilted 3D cabinet: the playfield leans away from you under an upright dot-matrix
+display, and every wall, post, bumper, target and ramp has height.
 
-### Jobs (modes)
+### The playfield
 
-Jobs work like the modes on a 90s machine. Light one, start it at the scoop, and the table
-changes. Specific shots light in the job's colour, a clock runs (shown on the DMD and in the
-ring of lamps on the job board), and the lit shots pay the job's own scaled values.
+- **Skyway** (left flipper): a ramp that climbs from mid-table, sweeps over the top left and
+  drops back to the left inlane on a wireform.
+- **Black Market** (upper flipper): a ramp straight up from the upper-left flipper, over the top
+  and down the right side to the right inlane.
+- **Back Alley**: the orbit round the top, behind three pop bumpers. Shoot the left alley from the
+  right flipper or the right alley (with its spinner) from the left. Balls coming down the left
+  alley feed the upper flipper.
+- **The Breach**: a scoop between two banks of standups that spell **B-R-E-A-C-H**, shot from the
+  right flipper.
+- **The Reactor**: a captive ball behind three drop targets, shot from the left flipper. Knock the
+  drops down and slam the captive ball into the core.
+- **The Impound**: a three-ball lock in the top-left corner, fed by the left alley.
+- **R-A-G-E**: the in/outlanes. The flippers move the lit lanes.
 
-1. **Light a job**: spell **H-I-T** on the three standups beside the ramp. The first job of each game comes lit.
-2. **Start it**: shoot the **scoop**. While the ball is held, the flippers choose which unplayed job to take.
+### The heist (modes)
+
+Modes work like the modes on a 90s machine. Light one, start it at the Breach, and the table
+changes. Specific shots light in the mode's colour, a clock runs (on the DMD and in the bar of
+lamps under the heist map), and the lit shots pay the mode's own scaled values.
+
+1. **Light a mode**: spell **B-R-E-A-C-H** on the standups. The first one of each game comes lit.
+2. **Start it**: shoot the **Breach**. If the map offers two modes, the flippers choose while the ball is held.
 3. **Play it**: hit the lit shots before the clock runs out. Finish the objective for a completion bonus.
 
-| Job | Style | What to shoot |
+The heist map runs **INFILTRATE**, then **HACK** or **ROUTE**, then **PAYLOAD** or **EXTRACT**.
+Playing a final mode lights **BLACKOUT** at the Reactor.
+
+| Mode | Clock | What to shoot |
 | --- | --- | --- |
-| **Shakedown** | moving target | One lit shot that moves every 4 s. 600K, +300K each. Collect 5 for **PAID IN FULL** (+2.5M). |
-| **Hot Metal** | hurry-up | Ramp or right orbit, starting at 5M and cooling toward 1M. Then **pour it** at the scoop for double. |
-| **Blood Money** | collect all, **no clock** | All six field shots are lit and each pays once. The payout bleeds away while you aim (1.5M, +250K per shot taken, −25K a second, never below 500K). Take all six for **CLEAN SWEEP** (+5M). Ends on completion or drain. |
-| **Blackout** | lights out | The GI goes dark. Chain the orbits, ramp and reactor within 6 s for 1M × chain (up to 5X). |
-| **Sabotage** | build & cash | Targets and bumpers build a charge, and the scoop detonates it. Detonate twice for **TOTAL SABOTAGE**. |
+| **Infiltrate** | 45 s | Sneak past the cameras. The Skyway, Black Market and both alleys are lit, and the camera watches one of them (strobing red). Make the others: 500K, +150K each. Make the watched one and you're **SPOTTED** (−5 s, and every later shot pays 100K less). Then shoot the Breach to get **INSIDE** (+3M). |
+| **Hack** | 40 s | The Breach standups become a keypad. Hit the flashing key, four to a code, 250K a key. Codes pay 1.5M, 3M and 4.5M. Shooting the Breach brute-forces a whole code. Three codes and you've **HACKED** it (+3M). |
+| **Route** | 45 s | Plot the escape: right alley, Black Market, left alley, Skyway, in order, twice. 600K a step, rising. **ROUTE SET** (+3M). |
+| **Payload** | none, 2-ball multiball | Both ramps are jackpots (1.5M, +250K each). Three jackpots light the super at the Reactor (3× the jackpot). The drop targets fall by themselves to let you at it. Ends with the multiball. |
+| **Extract** | 35 s | The getaway: Skyway, left alley, Breach, in order. Each leg starts at 6M (+1M a leg) and bleeds 200K a second while you aim, down to 1.5M. **EXTRACTED** (+4M). |
 
 #### How the clocks work
 
 The clocks follow conventions taken from real machines' rulesheets and from FreeWPC and the Mission Pinball Framework (open-source pinball control software):
 
 - **Pinball seconds.** Each second on the clock lasts about 1.1 real seconds. Real machines do the same; FreeWPC uses about 1.08.
-- **The clock waits** while the ball is held in the scoop (job intros and awards cost no time) and while no ball is on the table. It also waits after a kickout or plunge until the ball hits a playfield switch, for at most 2 s.
+- **The clock waits** while the ball is held in the Breach (mode intros and awards cost no time), while a ball rolls into the Impound, and while no ball is on the table. It also waits after a kickout or plunge until the ball hits a playfield switch, for at most 2 s.
 - **Stuck balls stop the clock.** If every ball has stopped somewhere other than a held flipper, the clock waits until ball search frees it.
 - **Cradling does not stop the clock.**
-- **Grace period.** When the clock hits 0, lit shots still count for 2 s, shown by the whole clock ring strobing.
-- **Progress keeps you alive.** Collecting a lit shot with under 10 s left tops the clock back up to 10. Spelling H-I-T during a job adds 10 s.
-- **Time bonus.** Finishing a job early pays 100K × the seconds left.
-- **Warnings.** There's an alarm and a "HURRY UP" message at 10 s, and ticks from 5 down to 1. The lit-shot arrows and the clock ring flash faster under 9, 6 and 3 seconds.
+- **Grace period.** When the clock hits 0, lit shots still count for 2 s, shown by the whole clock bar strobing.
+- **Progress keeps you alive.** Collecting a lit shot with under 10 s left tops the clock back up to 10. Spelling B-R-E-A-C-H during a mode adds 10 s (and banks the next mode).
+- **Time bonus.** Finishing a mode early pays 100K × the seconds left.
+- **Warnings.** There's an alarm and a "HURRY UP" message at 10 s, and ticks from 5 down to 1. The lit-shot arrows and the clock bar flash faster under 9, 6 and 3 seconds.
 
-- **RIOT** (lanes): roll the **R-I-O-T** in/outlanes (flippers change the lit lanes) to start a 20-second
-  frenzy where every switch scores. It runs alongside a job, and relighting it adds time.
-- **BURN IT DOWN** (wizard mode): play all five jobs to light it at the scoop. It's a 4-ball multiball where
-  every field shot is a jackpot and collecting all six lights a super jackpot at the scoop. Afterwards the
-  job board resets and everything is worth 1.5X more.
+#### Blackout (wizard mode)
 
-### The rest of the Foundry
+Play a final mode (Payload or Extract) to light **BLACKOUT**, then slam the Reactor's captive
+ball into the core. The lights die and it's a 3-ball multiball where the Skyway, Black Market,
+Breach and both alleys are each a jackpot (2M, +500K each). Collect all five to light the super
+at the Reactor (5× the jackpot). Every completed mode makes Blackout worth +0.5X, and completing
+all five makes it **TOTAL BLACKOUT** with a fourth ball. Afterwards the heist starts over, and
+everything is worth 0.5X more.
 
-- **A-M-P lanes**: roll through all three to raise the end-of-ball bonus multiplier (up to 6X). Flippers change the lit lanes.
-- **Skill shot**: plunge into the flashing top lane for 250K.
-- **Reactor bumpers** over the furnace: every 30 hits overloads the reactor and raises bumper value.
-- **Conveyor ramp** (right flipper): 3 ramps light **MELTDOWN**; shoot it again for 3-ball multiball.
-  During multiball, the ramp and both orbits score growing **jackpots**; 3 jackpots light the
-  **super jackpot** at the scoop.
-- **Orbits**: the left orbit (right flipper) and right orbit (left flipper). Major shots made in quick succession build **combos**.
-- **Drop targets**: complete the bank to **open the Pit**, then shoot the scoop (not during a job).
+### The rest of the table
 
-**The Pit (lower level)**: an underground street fight.
-- The fighter paces across the ring. Hitting him lands punches; knock his health to zero for a K.O.
-- **JAB / HOOK** targets charge the **SUPER** meter. A full meter makes your next hit a 3-damage super punch.
-- He telegraphs attacks (fists up, **INCOMING!**). Hit him during the wind-up to **COUNTER** for double
-  damage. If you don't, you lose a heart and the ball gets knocked back.
-- Three opponents: **Razor**, **Brick** and **Kingpin**. Beating Brick earns an extra ball. Draining or
-  losing all three hearts sends you back up to the Foundry; it doesn't cost you the ball.
+- **The Reactor**: knock down the three drops to expose the core and light the lock. Each time the
+  captive ball hits the core, **reactor heat** goes up (100K, +50K a level) and the drops reset.
+- **The Impound** (ball lock): with the lock lit, shoot the left alley and the ball rolls into the
+  cage. Lock three for **Impound multiball**: jackpots at the Skyway, Black Market and both alleys
+  (1M, +250K each). Four jackpots light the super jackpot at the Reactor (3× the jackpot).
+- **The Black Market**: switches earn cash ($1K, bumpers $2K) and major shots $5K. The menu by the
+  Reactor rotates every 4 s, and making the Black Market ramp buys whatever is on offer if you can
+  afford it: **+15 seconds** ($30K, during a timed mode), **ball save** ($50K), **light lock**
+  ($40K), **bonus +1X** ($60K) or an **extra ball** ($200K, once a game).
+- **RAGE**: roll the **R-A-G-E** lanes to raise the bonus multiplier (up to 6X) and start a 20 s
+  frenzy where every switch pays 100K (bumpers 150K) and every shot 250K. It runs alongside a mode,
+  and relighting it adds 10 s.
+- **Skill shot**: the plunge rides round the Back Alley to the upper flipper. Make the Black Market
+  within 7 seconds for 500K and $50K.
+- **Combos**: major shots within 3.5 s of each other build combos (50K × the combo).
 
 ### Controls
 
 | Action | Keyboard | Touch |
 | --- | --- | --- |
-| Left flipper | `Z`, `←`, left `Shift` | left half of screen |
+| Left flippers (lower and upper) | `Z`, `←`, left `Shift` | left half of screen |
 | Right flipper | `/`, `→`, right `Shift` | right half of screen |
 | Plunger | hold `Space` / `↓` / `Enter`, release | hold right half while ball is in the lane |
 | Start | `Enter` | tap |
@@ -85,7 +106,7 @@ The clocks follow conventions taken from real machines' rulesheets and from Free
 npm install
 npm run dev        # local dev server (also reachable from your phone on the same Wi-Fi)
 npm run build      # typecheck + production build into dist/
-npm test           # rule tests for the job / riot / wizard mode system
+npm test           # rule tests for the heist, multiballs, Black Market, RAGE and the clocks
 npm run sim        # headless soak test: a bot plays and checks for physics leaks
 npx tsx scripts/shotmap.ts   # which shots each flipper can reach
 ```
@@ -95,8 +116,8 @@ No game engine or runtime dependencies: TypeScript, Canvas 2D and Web Audio.
 ```
 src/
   engine/   physics (custom fixed-step pinball solver), dot-matrix display, synth audio, effects
-  game/     game flow, scoring, input, modes (jobs / riot / wizard)
-  game/tables/  one file per playfield: geometry + rules + art
+  game/     game flow, scoring, input, modes (the heist / RAGE / Blackout)
+  game/tables/  per table: layout geometry, rules and art (psychosis-layout.ts, psychosis.ts, psychosis-art.ts)
 ```
 
 The physics runs at 480 Hz with layered collision so ramps can pass over the floor, and kinematic

@@ -111,7 +111,7 @@ export class Game {
 
   /** Balls on the table or on their way to it. */
   get ballsInPlay() {
-    return this.main.world.balls.length + this.launchQueue;
+    return this.main.world.balls.length + this.launchQueue + this.main.releasing;
   }
 
   // ------------------------------------------------------------ input

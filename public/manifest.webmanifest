@@ -1,7 +1,7 @@
 {
-  "name": "Neon Foundry Pinball",
-  "short_name": "Neon Foundry",
-  "description": "Cyberpunk pinball with an underground fight club lower level.",
+  "name": "Cyber Psychosis Pinball",
+  "short_name": "Cyber Psychosis",
+  "description": "A brutal steel cyberpunk heist pinball table.",
   "start_url": "./",
   "display": "fullscreen",
   "orientation": "portrait",

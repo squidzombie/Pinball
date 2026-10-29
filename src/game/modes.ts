@@ -81,7 +81,7 @@ export abstract class Mode {
   }
 
   /**
-   * Advance the clock by `dt` real seconds. The Foundry only calls this while the
+   * Advance the clock by `dt` real seconds. The table only calls this while the
    * clock should run: a ball is on the playfield, not held, not stuck.
    */
   tick(dt: number) {
@@ -248,7 +248,8 @@ class Infiltrate extends Mode {
       sound.siren();
     } else {
       g.show('SNUCK PAST', `${this.sneak.size} TO GO  ${short(v)}`, 1.2);
-      if (s === this.watched || this.watched === null) this.sweep();
+      // the camera gives up on the last one
+      if (this.watched === null || this.sneak.size === 1) this.sweep();
     }
   }
 

@@ -8,7 +8,7 @@ import { Blackout, MODES, Rage, type Mode, type ModeDef, type Shot, type Switch 
 import { buildLowerSection, poly, type LowerSection, type P } from './geom';
 import { box, drawBallAt, drawBumper, drawShadow, lift, mix, type BumperStyle, type Lamp, type LampState } from './draw';
 import * as L from './psychosis-layout';
-import { INK, impoundBars, paintCameras, paintRamps, paintStatic } from './psychosis-art';
+import { INK, drawImpound, paintCameras, paintRamps, paintStatic } from './psychosis-art';
 import { Table, type Sprite } from './table';
 
 const INS = {
@@ -269,7 +269,7 @@ export class Psychosis extends Table {
       { x: 504, y: 112, r: 11, z: 40, color: INS.red, level: 0 },
       { x: L.BREACH[0] - L.BREACH_AXIS[0] * 34, y: L.BREACH[1] - L.BREACH_AXIS[1] * 34, r: 9, z: 30, color: INS.white, level: 0 },
       { x: L.REACTOR.core[0], y: L.REACTOR.core[1], r: 12, z: 34, color: INS.red, level: 0 },
-      { x: 106, y: 96, r: 9, z: 60, color: INS.orange, level: 0 },
+      { x: 40, y: 42, r: 9, z: 56, color: INS.orange, level: 0 },
     ];
     this.buildLamps();
   }
@@ -298,7 +298,7 @@ export class Psychosis extends Table {
     arrow('market', m0[0] - md[0] * 40, m0[1] - md[1] * 40, dirAngle(md));
     jp('market', m0[0] - md[0] * 40 - 8, m0[1] - md[1] * 40 + 26);
     const ba = L.BREACH_AXIS;
-    arrow('breach', L.BREACH[0] + ba[0] * 140, L.BREACH[1] + ba[1] * 140, dirAngle([-ba[0], -ba[1]]));
+    arrow('breach', L.BREACH[0] + ba[0] * 120, L.BREACH[1] + ba[1] * 120, dirAngle([-ba[0], -ba[1]]));
     const ra = L.REACTOR_AXIS;
     arrow('reactor', L.REACTOR_MOUTH[0] - ra[0] * 40, L.REACTOR_MOUTH[1] - ra[1] * 40, dirAngle(ra));
 
@@ -337,7 +337,7 @@ export class Psychosis extends Table {
     ITEMS.forEach((it, i) =>
       lamp({
         kind: 'rect',
-        x: 446,
+        x: 432,
         y: 386 + i * 17,
         w: 40,
         h: 13,
@@ -906,9 +906,16 @@ export class Psychosis extends Table {
     b.vx = b.vy = 0;
     this.lockLit = false;
     this.locking = { b, t: 0, slot: this.locked.length };
+    // The drops come back up: each lock has to be earned.
+    this.later(1, () => !this.wantsDropsDown() && this.dropsDown() && this.resetDrops());
     sound.scoop();
     this.flash(4);
     g.show(`BALL ${this.locked.length + 1} LOCKED`, this.locked.length + 1 < 3 ? 'IN THE IMPOUND' : 'IMPOUND BREAKOUT!', 1.8, true);
+  }
+
+  /** Locked balls already on their way out of the Impound. */
+  get releasing() {
+    return Math.min(this.releaseQueue, this.locked.length);
   }
 
   /** Put `total` balls in play, using locked balls first. */
@@ -1346,12 +1353,7 @@ export class Psychosis extends Table {
         if (glow > 0.05) drawGlow(ctx, core[0], core[1] - lift(30), 70, INS.red, glow);
       },
     });
-    // Locked balls behind the Impound grille
-    for (let i = 0; i < this.locked.length; i++) {
-      const [x, y] = L.IMPOUND_SLOTS[i];
-      out.push({ y, draw: (ctx) => drawBallAt(ctx, x, y, 16) });
-    }
-    out.push({ y: 253, draw: (ctx) => impoundBars(ctx) });
+    out.push({ y: 133, draw: (ctx) => drawImpound(ctx, this.locked.length) });
   }
 
   protected override drawTop(ctx: CanvasRenderingContext2D) {
