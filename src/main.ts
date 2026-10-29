@@ -1,7 +1,7 @@
 import { Game } from './game/game';
 import { bindInput } from './game/input';
 import { sound } from './engine/audio';
-import { TABLE_H, TABLE_W } from './game/tables/table';
+import { TABLE_H, TABLE_W, Table } from './game/tables/table';
 import './style.css';
 
 // The playfield canvas is tilted away from the player with a CSS 3D transform,
@@ -21,7 +21,9 @@ const tctx = tableCanvas.getContext('2d', { alpha: false })!;
 const dctx = dmdCanvas.getContext('2d', { alpha: false })!;
 const game = new Game();
 
-let tilted = !new URLSearchParams(location.search).has('flat');
+const params = new URLSearchParams(location.search);
+let tilted = !params.has('flat');
+Table.debug = params.has('debug');
 let dpr = 1;
 let tableW = 0;
 let dmdW = 0;

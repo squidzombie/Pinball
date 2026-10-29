@@ -1,48 +1,69 @@
-// Which shots can each flipper make? Rolls a ball down an inlane, flips at
-// varying delays and records the first feature it reaches.
+// Which shots can each flipper make? Feeds a ball to a flipper, cradles it,
+// flips at varying delays and records the first feature it reaches.
+// Usage: npx tsx scripts/shotmap.ts
 import { Game } from '../src/game/game';
+import type { Flipper } from '../src/engine/physics';
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 const g = new Game();
-const m = g.main as unknown as Record<string, (...a: unknown[]) => unknown>;
-(g as unknown as { startGame: () => void }).startGame();
+const m = g.main as any;
+(g as any).startGame();
+m.world.zones.forEach((z: any) => (z.enabled = true));
+// A shot that is made outranks the targets it brushed on the way.
 let first = '';
+const rank = (k: string) => ['', 'bumper', 'standup', 'drop'].indexOf(k) + 1 || 5;
 const note = (k: string) => {
-  if (!first) first = k;
+  if (rank(k) > rank(first)) first = k;
 };
-for (const name of ['shot', 'hitDrop', 'hitReactor', 'hitStandup', 'enterScoop', 'hitBumper', 'hitLane']) {
-  const orig = m[name].bind(g.main);
+const wrap = (name: string, label?: (a: unknown[]) => string) => {
+  const orig = m[name].bind(m);
   m[name] = (...a: unknown[]) => {
-    note(name === 'shot' ? String(a[0]) : name);
+    note(label ? label(a) : name);
     return orig(...a);
   };
-}
-const w = g.main.world;
+};
+wrap('majorShot', (a) => String(a[0]));
+wrap('hitStandup', () => 'standup');
+wrap('hitDrop', () => 'drop');
+wrap('hitBumper', () => 'bumper');
+wrap('enterBreach', () => 'breach');
+
+const w = m.world;
 const step = (f: () => boolean, max = 3) => {
   for (let t = 0; t < max && !f(); t += 1 / 480) w.step(1 / 480);
 };
-for (const side of ['left', 'right'] as const) {
+
+function map(name: string, f: Flipper, start: () => [number, number]) {
   const res: Record<string, number> = {};
-  const f = side === 'left' ? g.main.flipperL : g.main.flipperR;
-  for (let delay = 0; delay < 0.45; delay += 0.002) {
-    g.main.world.balls = [];
+  for (let delay = 0; delay < 0.9; delay += 0.004) {
+    w.balls = [];
+    m.drops.forEach((d: any) => {
+      d.down = false;
+      d.seg.enabled = true;
+    });
     first = '';
-    const x = side === 'left' ? 93 : 555 - 93;
-    const b = g.main.addBall(x, 900, 0, 200);
-    // cradle
+    const [x, y] = start();
+    const b = m.addBall(x, y, 0, 100);
     f.pressed = true;
-    step(() => b.speed < 2 && b.y > 990, 4);
-    // release, then flip after the delay
+    step(() => b.speed < 2 && m.onHeldFlipper(b), 4);
     f.pressed = false;
     let t = 0;
     step(() => {
       t += 1 / 480;
       if (t >= delay + 0.03) f.pressed = true;
-      return !!first || b.y > 1220;
+      return rank(first) > 4 || b.y > 1220;
     }, 4);
     f.pressed = false;
     step(() => f.angle === f.restAngle, 1);
     const k = first || (b.y >= 1220 ? 'drain' : 'none');
     res[k] = (res[k] ?? 0) + 1;
+    // breach/ lock captures hold the ball: release for the next run
+    m.breachBall = null;
   }
-  console.log(side, res);
+  const sorted = Object.entries(res).sort((a, b) => b[1] - a[1]);
+  console.log(name.padEnd(6), sorted.map(([k, v]) => `${k} ${v}`).join(', '));
 }
+
+map('left', m.flipperL, () => [93, 900]);
+map('right', m.flipperR, () => [462, 900]);
+map('upper', m.upper, () => [45, 318]);

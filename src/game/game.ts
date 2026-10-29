@@ -2,16 +2,15 @@ import { STEP, type Ball } from '../engine/physics';
 import { sound } from '../engine/audio';
 import { DMD } from '../engine/dmd';
 import { FX } from '../engine/fx';
-import { Foundry } from './tables/foundry';
-import { Pit } from './tables/pit';
+import { Psychosis } from './tables/psychosis';
 import { fmt, short } from './format';
-import { TABLE_H, TABLE_W, type Table } from './tables/table';
+import { TABLE_H, TABLE_W } from './tables/table';
 
 export type GameState = 'attract' | 'play' | 'bonus' | 'over';
 
 const BALLS_PER_GAME = 3;
 const BALL_SAVE_SECONDS = 12;
-const HS_KEY = 'sz-pinball.neon-foundry.high';
+const HS_KEY = 'sz-pinball.cyber-psychosis.high';
 
 interface Message {
   l1: string;
@@ -21,21 +20,10 @@ interface Message {
   big: boolean;
 }
 
-interface Transition {
-  t: number;
-  dur: number;
-  down: boolean;
-  mid: () => void;
-  midDone: boolean;
-}
-
-
 export class Game {
   fx = new FX();
   dmd = new DMD();
-  main: Foundry;
-  pit: Pit;
-  active: Table;
+  main: Psychosis;
   state: GameState = 'attract';
   paused = false;
 
@@ -47,7 +35,6 @@ export class Game {
   bonusMult = 1;
   ballSave = 0;
   private ballSaveArmed = false;
-  pitLevel = 0;
   tilted = false;
   private tiltMeter = 0;
   private nudgeCooldown = 0;
@@ -57,7 +44,6 @@ export class Game {
   private slowT = 0;
   private acc = 0;
   private msg: Message | null = null;
-  private transition: Transition | null = null;
   private launchQueue = 0;
   private launchDelay = 0;
   private autoLaunch: { ball: Ball; t: number }[] = [];
@@ -70,10 +56,9 @@ export class Game {
   time = 0;
 
   constructor() {
-    this.main = new Foundry(this);
-    this.pit = new Pit(this);
-    this.active = this.main;
+    this.main = new Psychosis(this);
     this.main.attract = true;
+    this.dmd.color = [255, 52, 36];
     try {
       this.highScore = Number(localStorage.getItem(HS_KEY)) || 0;
     } catch {
@@ -81,7 +66,7 @@ export class Game {
     }
   }
 
-  // ------------------------------------------------------------ public API used by tables
+  // ------------------------------------------------------------ public API used by the table
 
   addScore(n: number, x?: number, y?: number) {
     if (this.state !== 'play' || this.tilted) return;
@@ -118,43 +103,15 @@ export class Game {
     this.launchDelay = Math.max(0, Math.min(this.launchDelay, 0.6));
   }
 
-  canEnterPit() {
-    return !this.main.multiball && !this.tilted && this.main.world.balls.length === 1 && this.launchQueue === 0 && this.autoLaunch.length === 0;
+  /** Put a fresh ball in the shooter lane for the player to plunge (after a ball lock). */
+  serveBall() {
+    this.main.addBall(this.main.shooter!.x, this.main.shooter!.y);
+    this.main.armSkillShot();
   }
 
-  enterPit(ball: Ball) {
-    sound.descend();
-    this.show('DESCENDING', 'TO THE PIT', 1.6, true);
-    this.startTransition(true, () => {
-      this.main.removeBall(ball);
-      this.pit.start(this.pitLevel);
-      this.active = this.pit;
-      this.dmd.color = [255, 60, 70];
-      sound.playMusic('pit');
-    });
-  }
-
-  exitPit(won: boolean) {
-    sound.ascend();
-    this.startTransition(false, () => {
-      this.pit.world.balls = [];
-      this.active = this.main;
-      this.dmd.color = [255, 140, 26];
-      this.main.music();
-      if (won) {
-        this.pitLevel++;
-        if (this.pitLevel === 2) {
-          this.extraBalls++;
-          this.show('EXTRA BALL', 'EARNED IN THE PIT', 2.5, true);
-          sound.award();
-        } else {
-          this.show('VICTORY', 'RETURNING TO THE FOUNDRY', 1.8);
-        }
-      } else {
-        this.show('FIGHT LOST', 'LIGHT THE PIT AGAIN', 1.8);
-      }
-      this.main.spawnInScoop(1.4);
-    });
+  /** Balls on the table or on their way to it. */
+  get ballsInPlay() {
+    return this.main.world.balls.length + this.launchQueue;
   }
 
   // ------------------------------------------------------------ input
@@ -166,16 +123,16 @@ export class Game {
 
   setFlipper(side: -1 | 1, down: boolean) {
     sound.unlock();
-    const playing = this.state === 'play' && !this.tilted && !this.transition;
-    const f = side < 0 ? this.active.flipperL : this.active.flipperR;
+    const playing = this.state === 'play' && !this.tilted;
+    const fs = this.main.flippers(side);
     if (down && !playing) return;
-    if (down && !f.pressed) {
+    if (down && !fs[0].pressed) {
       sound.flipper();
-      if (this.active === this.main) this.main.onFlipperPress(side);
-    } else if (!down && f.pressed) {
+      this.main.onFlipperPress(side);
+    } else if (!down && fs[0].pressed) {
       sound.flipperDown();
     }
-    f.pressed = down;
+    for (const f of fs) f.pressed = down;
   }
 
   setPlunger(down: boolean) {
@@ -194,12 +151,12 @@ export class Game {
   }
 
   nudge() {
-    if (this.state !== 'play' || this.tilted || this.nudgeCooldown > 0 || this.transition) return;
+    if (this.state !== 'play' || this.tilted || this.nudgeCooldown > 0) return;
     this.nudgeCooldown = 0.6;
     this.tiltMeter += 1;
     this.doShake(7);
-    for (const b of this.active.world.balls) {
-      if (b.captured || this.active.inShooterLane(b)) continue;
+    for (const b of this.main.world.balls) {
+      if (b.captured || this.main.inShooterLane(b)) continue;
       b.vy -= 280;
       b.vx += (Math.random() - 0.5) * 260;
     }
@@ -227,21 +184,17 @@ export class Game {
     this.ball = 1;
     this.extraBalls = 0;
     this.bonusMult = 1;
-    this.pitLevel = 0;
     this.newHigh = false;
     this.main.attract = false;
     this.main.resetForGame();
     this.fx.particles = [];
     this.startBall();
-    this.show('NEON FOUNDRY', 'BALL 1', 2);
+    this.show('CYBER PSYCHOSIS', 'BALL 1', 2);
   }
 
   private startBall() {
     this.state = 'play';
-    this.active = this.main;
-    this.dmd.color = [255, 140, 26];
     this.main.world.balls = [];
-    this.pit.world.balls = [];
     this.bonus = 0;
     this.tilted = false;
     this.tiltMeter = 0;
@@ -250,16 +203,15 @@ export class Game {
     this.launchQueue = 0;
     this.autoLaunch = [];
     this.main.resetForBall();
-    this.main.multiball = false;
     this.flipperRelease();
-    this.main.addBall(this.main.shooter!.x, this.main.shooter!.y);
+    this.serveBall();
     this.main.music();
   }
 
   private fire(pull: number) {
     let fired = false;
     for (const b of this.main.world.balls) {
-      if (this.active === this.main && this.main.inShooterLane(b) && b.y > 1100 && b.speed < 80) {
+      if (this.main.inShooterLane(b) && b.y > 1100 && b.speed < 80) {
         b.vy = -(1250 + pull * 2050);
         b.vx = 0;
         fired = true;
@@ -267,6 +219,7 @@ export class Game {
     }
     if (fired) {
       sound.launch(pull);
+      this.main.onPlunge();
       if (this.ballSaveArmed) {
         this.ballSaveArmed = false;
         this.ballSave = BALL_SAVE_SECONDS;
@@ -274,26 +227,17 @@ export class Game {
     }
   }
 
-  private flipperRelease() {
-    for (const t of [this.main, this.pit]) {
-      t.flipperL.pressed = false;
-      t.flipperR.pressed = false;
-    }
+  /** Give a ball save from outside the start of a ball (Black Market purchase, multiball). */
+  grantBallSave(seconds: number) {
+    this.ballSave = Math.max(this.ballSave, seconds);
   }
 
-  private onDrain(table: Table) {
-    if (table === this.pit) {
-      if (this.pit.trySave()) {
-        this.show('SAVED', 'THE CROWD THROWS YOU BACK IN', 1.6);
-        sound.ballSave();
-      } else if (this.pit.forfeit()) {
-        this.show('DOWN THE DRAIN', 'FIGHT LOST', 1.6);
-        sound.drain();
-        this.exitPit(false);
-      }
-      return;
-    }
-    const remaining = this.main.world.balls.length + this.launchQueue;
+  private flipperRelease() {
+    for (const f of this.main.flippers()) f.pressed = false;
+  }
+
+  private onDrain() {
+    const remaining = this.ballsInPlay;
     if (!this.tilted && this.ballSave > 0) {
       this.show('BALL SAVED', '', 1.5, true);
       sound.ballSave();
@@ -351,11 +295,6 @@ export class Game {
     }
   }
 
-  private startTransition(down: boolean, mid: () => void) {
-    this.flipperRelease();
-    this.transition = { t: 0, dur: 1.5, down, mid, midDone: false };
-  }
-
   // ------------------------------------------------------------ update
 
   update(rawDt: number) {
@@ -384,20 +323,12 @@ export class Game {
     if (this.plungerHeld) this.plungerPull = Math.min(1, this.plungerPull + dt / 0.8);
     this.main.plungerPull = this.plungerPull;
 
-    if (this.transition) {
-      const tr = this.transition;
-      tr.t += dt;
-      if (!tr.midDone && tr.t >= tr.dur / 2) {
-        tr.midDone = true;
-        tr.mid();
-      }
-      if (tr.t >= tr.dur) this.transition = null;
-    } else if (this.state === 'play' || this.state === 'bonus') {
+    if (this.state === 'play' || this.state === 'bonus') {
       this.stepPhysics(sdt);
       this.updatePlay(dt);
     }
 
-    this.active.update(sdt);
+    this.main.update(sdt);
     this.fx.update(sdt);
 
     if (this.state === 'bonus' && this.stateT > 3) this.afterBonus();
@@ -408,7 +339,7 @@ export class Game {
   }
 
   private stepPhysics(dt: number) {
-    const t = this.active;
+    const t = this.main;
     this.acc += dt;
     let n = 0;
     while (this.acc >= STEP && n < 40) {
@@ -422,16 +353,16 @@ export class Game {
     const drained = t.world.balls.filter((b) => b.y > TABLE_H + 35 || b.x < -50 || b.x > TABLE_W + 50 || b.y < -100);
     for (const b of drained) {
       t.removeBall(b);
-      this.onDrain(t);
+      this.onDrain();
     }
   }
 
   private updatePlay(dt: number) {
     if (this.state !== 'play') return;
-    if (this.active === this.main && this.ballSave > 0 && !this.ballInShooter()) this.ballSave = Math.max(0, this.ballSave - dt);
+    if (this.ballSave > 0 && !this.ballInShooter()) this.ballSave = Math.max(0, this.ballSave - dt);
 
     // Auto-plunger for multiball / ball saves.
-    if (this.launchQueue > 0 && this.active === this.main) {
+    if (this.launchQueue > 0) {
       this.launchDelay -= dt;
       const laneBusy = this.main.world.balls.some((b) => this.main.inShooterLane(b) && b.y > 1000);
       if (this.launchDelay <= 0 && !laneBusy) {
@@ -451,9 +382,9 @@ export class Game {
     this.autoLaunch = this.autoLaunch.filter((a) => a.t > 0);
 
     // Ball search: free stuck balls. A ball cradled on a held flipper isn't stuck.
-    for (const b of this.active.world.balls) {
-      if (this.active.onHeldFlipper(b)) b.stillTime = 0;
-      if (b.stillTime > 4 && !b.captured && !this.active.inShooterLane(b)) {
+    for (const b of this.main.world.balls) {
+      if (this.main.onHeldFlipper(b)) b.stillTime = 0;
+      if (b.stillTime > 4 && !b.captured && !this.main.inShooterLane(b)) {
         b.stillTime = 0;
         b.vy = -700;
         b.vx = (Math.random() - 0.5) * 600;
@@ -473,7 +404,7 @@ export class Game {
     const sx = (Math.random() - 0.5) * this.shake;
     const sy = (Math.random() - 0.5) * this.shake;
     ctx.translate(sx, sy);
-    this.active.render(ctx, k);
+    this.main.render(ctx, k);
     this.fx.draw(ctx);
 
     if (this.flash.a > 0) {
@@ -484,7 +415,6 @@ export class Game {
       ctx.globalAlpha = 1;
       ctx.globalCompositeOperation = 'source-over';
     }
-    if (this.transition) this.renderTransition(ctx);
     ctx.restore();
   }
 
@@ -496,51 +426,6 @@ export class Game {
     this.composeDMD();
     const pad = Math.max(3, w * 0.015);
     this.dmd.render(ctx, pad, pad, w - pad * 2, h - pad * 2, dpr);
-  }
-
-  get transitioning() {
-    return !!this.transition;
-  }
-
-  private renderTransition(ctx: CanvasRenderingContext2D) {
-    const tr = this.transition!;
-    const p = tr.t / tr.dur;
-    const cover = p < 0.5 ? p * 2 : (1 - p) * 2; // 0 -> 1 -> 0
-    const e = cover * cover * (3 - 2 * cover);
-    const h = TABLE_H * e;
-    ctx.fillStyle = '#070606';
-    if (tr.down) ctx.fillRect(0, 0, TABLE_W, h);
-    else ctx.fillRect(0, TABLE_H - h, TABLE_W, h);
-    // freight elevator grate
-    ctx.fillStyle = '#2a2622';
-    for (let x = 10; x < TABLE_W; x += 40) {
-      if (tr.down) ctx.fillRect(x, 0, 14, h);
-      else ctx.fillRect(x, TABLE_H - h, 14, h);
-    }
-    ctx.fillStyle = '#4a4038';
-    for (let y = 30; y < TABLE_H; y += 120) {
-      if (tr.down ? y < h : y > TABLE_H - h) ctx.fillRect(0, y, TABLE_W, 6);
-    }
-    ctx.fillStyle = tr.down ? '#b3261e' : '#d9a441';
-    ctx.fillRect(0, tr.down ? h - 6 : TABLE_H - h, TABLE_W, 6);
-    if (e > 0.6) {
-      ctx.globalAlpha = (e - 0.6) / 0.4;
-      this.renderBanner(ctx, tr.down ? 'THE PIT' : 'THE FOUNDRY', tr.down ? 'UNDERGROUND FIGHT CLUB' : 'BACK TO THE SURFACE', true);
-      ctx.globalAlpha = 1;
-    }
-  }
-
-  private renderBanner(ctx: CanvasRenderingContext2D, title: string, sub: string, red = false) {
-    ctx.fillStyle = 'rgba(0,0,0,0.6)';
-    ctx.fillRect(0, 520, TABLE_W, 150);
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.font = '900 64px Impact, "Arial Black", system-ui, sans-serif';
-    ctx.fillStyle = red ? '#e8dccb' : '#fff';
-    ctx.fillText(title, TABLE_W / 2, 575);
-    ctx.font = '700 20px system-ui, sans-serif';
-    ctx.fillStyle = red ? '#d9a441' : '#c9d4e0';
-    ctx.fillText(sub, TABLE_W / 2, 635);
   }
 
   private composeDMD() {
@@ -562,15 +447,15 @@ export class Game {
     if (this.state === 'attract') {
       const page = Math.floor(this.time / 3) % (this.lastScore ? 5 : 4);
       if (page === 0) {
-        d.fitText('NEON FOUNDRY', 64, 3, 126, 2, { align: 'center' });
+        d.fitText('CYBER PSYCHOSIS', 64, 3, 126, 2, { align: 'center' });
         d.text('SQUIDZOMBIE PINBALL', 64, 22, { align: 'center', level: 2 });
       } else if (page === 1) {
         d.fitText('PRESS START', 64, 3, 126, 2, { align: 'center' });
         d.text('TAP OR PRESS ENTER', 64, 22, { align: 'center', level: 2 });
       } else if (page === 2) {
-        d.text('SPELL H-I-T FOR A JOB', 64, 4, { align: 'center', level: 3 });
-        d.text('FINISH ALL FIVE TO', 64, 14, { align: 'center', level: 2 });
-        d.text('BURN IT DOWN', 64, 23, { align: 'center', level: 3 });
+        d.text('SPELL B-R-E-A-C-H', 64, 4, { align: 'center', level: 3 });
+        d.text('RUN THE HEIST TO', 64, 14, { align: 'center', level: 2 });
+        d.text('BLACKOUT', 64, 23, { align: 'center', level: 3 });
       } else if (page === 3) {
         d.text('HIGH SCORE', 64, 2, { align: 'center', level: 2 });
         d.fitText(fmt(this.highScore), 64, 13, 124, 2, { align: 'center' });
@@ -590,10 +475,6 @@ export class Game {
     if (this.state === 'over') {
       d.text(this.newHigh ? 'NEW HIGH SCORE!' : 'GAME OVER', 64, 2, { align: 'center', level: Math.floor(this.time * 4) % 2 ? 3 : 2 });
       d.fitText(fmt(this.score), 64, 13, 124, 2, { align: 'center' });
-      return;
-    }
-    if (this.active === this.pit) {
-      this.pit.drawDMD(d, this.score);
       return;
     }
     this.main.drawDMD(d);

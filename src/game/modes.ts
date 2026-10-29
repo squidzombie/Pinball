@@ -1,20 +1,30 @@
-// Mode ("job") rules, in the style of a 90s rulesheet. A mode changes what the
-// table wants from you: it lights specific shots, runs a clock, and pays its own
-// scaled values. The Foundry table feeds it shots and switches and asks it which
-// inserts to light.
+// Mode rules, in the style of a 90s rulesheet. A mode changes what the table
+// wants from you: it lights specific shots, runs a clock, and pays its own scaled
+// values. The table feeds it shots and switches and asks it which inserts to light.
+//
+// Cyber Psychosis runs a heist: INFILTRATE, then HACK or ROUTE, then PAYLOAD or
+// EXTRACT, which lights BLACKOUT at the Reactor.
 
 import type { Ball } from '../engine/physics';
 import { sound } from '../engine/audio';
 import type { LampState } from './tables/draw';
-import type { Foundry } from './tables/foundry';
+import type { Psychosis } from './tables/psychosis';
 import { fmt, short } from './format';
 
-export type Shot = 'leftOrbit' | 'ramp' | 'hit' | 'reactor' | 'scoop' | 'drops' | 'rightOrbit';
-/** Left-to-right order of the shots a mode can light (the scoop starts modes, so it stays free). */
-export const FIELD_SHOTS: Shot[] = ['leftOrbit', 'ramp', 'hit', 'reactor', 'drops', 'rightOrbit'];
+export type Shot = 'alleyL' | 'skyway' | 'breach' | 'reactor' | 'market' | 'alleyR';
+/** The major shots, roughly left to right. */
+export const SHOTS: Shot[] = ['alleyL', 'skyway', 'breach', 'reactor', 'market', 'alleyR'];
+export const SHOT_NAME: Record<Shot, string> = {
+  alleyL: 'LEFT ALLEY',
+  skyway: 'SKYWAY',
+  breach: 'BREACH',
+  reactor: 'REACTOR',
+  market: 'BLACK MARKET',
+  alleyR: 'RIGHT ALLEY',
+};
 
 /** Minor switches: everything that isn't a shot. */
-export type Switch = 'bumper' | 'sling' | 'lane' | 'rollover' | 'spinner';
+export type Switch = 'bumper' | 'sling' | 'rollover' | 'spinner' | 'drop' | 'standup';
 
 // Clock conventions borrowed from real machines (see README, "How the clocks work"):
 // displayed seconds run a little slow, shots still count for a moment after zero,
@@ -42,11 +52,13 @@ export abstract class Mode {
   private grace = GRACE;
   total = 0;
   completed = false;
+  /** Multiball modes have no clock and end when the multiball does. */
+  multiball = false;
   /** Set when the mode should end, by success or by failure. */
   finished = false;
 
   constructor(
-    protected f: Foundry,
+    protected f: Psychosis,
     protected mult: number,
   ) {}
 
@@ -122,8 +134,21 @@ export abstract class Mode {
 
   onShot(_s: Shot, _b?: Ball) {}
   onSwitch(_s: Switch) {}
+  /** A Breach standup, 0-5 (B R E A C H). */
+  onStandup(_i: number) {}
   lit(_s: Shot): LampState {
     return 0;
+  }
+  /** Colour a lit shot's arrow takes; defaults to the mode's colour. */
+  tint(_s: Shot) {
+    return this.color;
+  }
+  litStandup(_i: number): LampState {
+    return 0;
+  }
+  /** Multiball modes keep the Reactor's drop targets down while they want the captive ball. */
+  wantsDropsDown() {
+    return false;
   }
   /** Bottom DMD line while running. */
   abstract status(): string;
@@ -156,264 +181,288 @@ export abstract class Mode {
   }
 }
 
-// ---------------------------------------------------------------- the jobs
+// ---------------------------------------------------------------- the heist
 
-/** Moving target: one lit shot that won't sit still. */
-class Shakedown extends Mode {
-  name = 'SHAKEDOWN';
-  color = '#3ddc84';
-  brief = 'HIT THE MOVING SHOT';
-  time = 40;
-  private at = 0;
-  private dir = 1;
-  private moveT = 4;
-  private paid = 0;
-
-  get value() {
-    return this.v(600_000 + this.paid * 300_000);
-  }
+/** Stealth: the cameras sweep the shots. Make the ones they aren't watching, then breach. */
+class Infiltrate extends Mode {
+  name = 'INFILTRATE';
+  color = '#7fd8ff';
+  brief = 'AVOID THE CAMERAS';
+  time = 45;
+  private sneak = new Set<Shot>(['alleyL', 'skyway', 'market', 'alleyR']);
+  /** The shot the cameras are watching right now. */
+  watched: Shot | null = null;
+  private sweepT = 0;
+  private spotted = 0;
 
   override start() {
     super.start();
-    this.at = Math.floor(Math.random() * FIELD_SHOTS.length);
+    this.sweep();
+  }
+
+  private sweep() {
+    const left = [...this.sneak].filter((s) => s !== this.watched);
+    this.watched = this.sneak.size > 1 && left.length ? left[Math.floor(Math.random() * left.length)] : null;
+    this.sweepT = 3.5;
   }
 
   override tick(dt: number) {
     super.tick(dt);
-    this.moveT -= dt;
-    if (this.moveT <= 0) this.move();
-  }
-
-  private move() {
-    this.moveT = 4;
-    if (this.at + this.dir < 0 || this.at + this.dir >= FIELD_SHOTS.length) this.dir *= -1;
-    this.at += this.dir;
+    this.sweepT -= dt;
+    if (this.sweepT <= 0) this.sweep();
   }
 
   override lit(s: Shot): LampState {
-    return s === FIELD_SHOTS[this.at] ? 3 : 0;
+    if (this.sneak.has(s)) return s === this.watched ? 4 : 2;
+    return s === 'breach' && this.sneak.size === 0 ? 3 : 0;
+  }
+
+  override tint(s: Shot) {
+    return s === this.watched ? '#ff2020' : this.color;
   }
 
   override onShot(s: Shot) {
-    if (s !== FIELD_SHOTS[this.at]) return;
-    this.award(this.value, s, `PAID ${this.paid + 1} OF 5`);
+    const g = this.f.game;
+    if (s === 'breach' && this.sneak.size === 0) {
+      this.f.hitFx(s, this.color);
+      return this.complete(this.v(3_000_000), 'YOU ARE INSIDE');
+    }
+    if (!this.sneak.has(s)) return;
+    if (s === this.watched) {
+      this.spotted++;
+      this.timer = Math.max(0.5, this.timer - 5);
+      g.show('SPOTTED!', '-5 SECONDS', 1.4, true);
+      g.doFlash('#ff2020', 0.4);
+      sound.alarm();
+      this.sweep();
+      return;
+    }
+    const v = this.v(Math.max(200_000, 500_000 + (4 - this.sneak.size) * 150_000 - this.spotted * 100_000));
+    this.award(v, s);
     this.f.hitFx(s, this.color);
-    this.paid++;
+    this.sneak.delete(s);
     this.progress();
-    if (this.paid >= 5) return this.complete(this.v(2_500_000), 'PAID IN FULL');
-    // Jump somewhere else so it can't be farmed.
-    let next = this.at;
-    while (next === this.at) next = Math.floor(Math.random() * FIELD_SHOTS.length);
-    this.at = next;
-    this.moveT = 4;
-  }
-
-  status() {
-    return `HIT LIT SHOT ${short(this.value)}`;
-  }
-}
-
-/** Hurry-up: the value cools while you aim, then pour it at the scoop for double. */
-class HotMetal extends Mode {
-  name = 'HOT METAL';
-  color = '#ff7a1a';
-  brief = 'RAMP OR RIGHT ORBIT';
-  time = 25;
-  private phase: 'heat' | 'pour' = 'heat';
-  private elapsed = 0;
-  private collected = 0;
-
-  get value() {
-    return this.v(Math.max(1_000_000, 5_000_000 - this.elapsed * 200_000));
-  }
-
-  override tick(dt: number) {
-    super.tick(dt);
-    if (this.phase === 'heat' && this.timer > 0) this.elapsed += dt;
-  }
-
-  override lit(s: Shot): LampState {
-    if (this.phase === 'heat') return s === 'ramp' || s === 'rightOrbit' ? 3 : 0;
-    return s === 'scoop' ? 3 : 0;
-  }
-
-  override onShot(s: Shot) {
-    if (this.phase === 'heat' && (s === 'ramp' || s === 'rightOrbit')) {
-      this.collected = this.value;
-      this.award(this.collected, s);
-      this.f.hitFx(s, this.color);
-      this.phase = 'pour';
-      this.setClock(15);
-      this.f.game.show('POUR IT', `SCOOP FOR ${short(this.collected * 2)}`, 2, true);
+    if (this.sneak.size === 0) {
+      this.watched = null;
+      g.show('NO ONE SAW YOU', 'SHOOT THE BREACH', 2, true);
       sound.siren();
-    } else if (this.phase === 'pour' && s === 'scoop') {
-      this.f.hitFx(s, this.color);
-      this.complete(this.collected * 2, 'POURED');
+    } else {
+      g.show('SNUCK PAST', `${this.sneak.size} TO GO  ${short(v)}`, 1.2);
+      if (s === this.watched || this.watched === null) this.sweep();
     }
   }
 
   status() {
-    return this.phase === 'heat' ? `HURRY-UP ${short(this.value)}` : `SCOOP ${short(this.collected * 2)}`;
+    return this.sneak.size ? `SNEAK PAST ${this.sneak.size} MORE` : 'SHOOT THE BREACH';
   }
 }
 
-/**
- * Collect every lit shot. No clock: the pressure is the payout bleeding away
- * while you aim. Each shot you take raises what the rest are worth.
- */
-class BloodMoney extends Mode {
-  name = 'BLOOD MONEY';
-  color = '#e0262b';
-  brief = 'COLLECT EVERY LIT SHOT';
-  time = Infinity;
-  private left = new Set<Shot>(FIELD_SHOTS);
-  private bled = 0;
-  private static START = 1_500_000;
-  private static STEP = 250_000;
-  private static FLOOR = 500_000;
-  /** Value lost per second of play. */
-  private static BLEED = 25_000;
+/** The six Breach standups become a keypad: hit the flashing one, four to a code. */
+class Hack extends Mode {
+  name = 'HACK';
+  color = '#3dff8a';
+  brief = 'HIT THE FLASHING KEYS';
+  time = 40;
+  private code: number[] = [];
+  private pos = 0;
+  private cracked = 0;
 
-  private get base() {
-    return BloodMoney.START + (FIELD_SHOTS.length - this.left.size) * BloodMoney.STEP;
+  override start() {
+    super.start();
+    this.newCode();
   }
 
-  get value() {
-    return this.v(Math.max(BloodMoney.FLOOR, this.base - this.bled));
+  private newCode() {
+    this.code = [];
+    for (let i = 0; i < 4; i++) {
+      let k = Math.floor(Math.random() * 6);
+      while (k === this.code[i - 1]) k = Math.floor(Math.random() * 6);
+      this.code.push(k);
+    }
+    this.pos = 0;
   }
 
-  override tick(dt: number) {
-    this.bled += BloodMoney.BLEED * dt;
-  }
-
-  override meter() {
-    return Math.max(0, (this.base - this.bled - BloodMoney.FLOOR) / (this.base - BloodMoney.FLOOR));
+  override litStandup(i: number): LampState {
+    return i === this.code[this.pos] ? 3 : 0;
   }
 
   override lit(s: Shot): LampState {
-    return this.left.has(s) ? 2 : 0;
+    return s === 'breach' ? 2 : 0;
+  }
+
+  override onStandup(i: number) {
+    if (i !== this.code[this.pos]) return;
+    this.pos++;
+    this.award(this.v(250_000), 'breach');
+    sound.tick();
+    if (this.pos >= this.code.length) this.crack();
   }
 
   override onShot(s: Shot) {
-    if (!this.left.has(s)) return;
+    // Brute force: the Breach itself cracks the whole code.
+    if (s === 'breach') this.crack();
+  }
+
+  private crack() {
+    this.cracked++;
+    const v = this.v(1_500_000 * this.cracked);
+    this.award(v, 'breach');
+    this.f.hitFx('breach', this.color);
+    this.progress();
+    if (this.cracked >= 3) return this.complete(this.v(3_000_000), 'SYSTEM HACKED');
+    this.f.game.show(`CODE ${this.cracked} CRACKED`, short(v), 1.4, true);
+    sound.award();
+    this.newCode();
+  }
+
+  status() {
+    return `CODE ${this.cracked + 1} OF 3  KEY ${this.pos + 1}/4`;
+  }
+}
+
+/** Plot the escape: four shots in order, twice. The flow runs through the upper flipper. */
+class Route extends Mode {
+  name = 'ROUTE';
+  color = '#ffd23f';
+  brief = 'SHOTS IN ORDER, TWICE';
+  time = 45;
+  private seq: Shot[] = ['alleyR', 'market', 'alleyL', 'skyway'];
+  private step = 0;
+  private laps = 0;
+
+  override lit(s: Shot): LampState {
+    return s === this.seq[this.step] ? 3 : 0;
+  }
+
+  override onShot(s: Shot) {
+    if (s !== this.seq[this.step]) return;
+    this.award(this.v(600_000 * (this.step + 1) + this.laps * 500_000), s);
+    this.f.hitFx(s, this.color);
+    this.step++;
+    this.progress();
+    if (this.step < this.seq.length) return;
+    this.step = 0;
+    this.laps++;
+    if (this.laps >= 2) return this.complete(this.v(3_000_000), 'ESCAPE ROUTE SET');
+    this.award(this.v(2_500_000));
+    this.f.game.show('ROUTE PLOTTED', 'ONE MORE LAP', 1.6, true);
+    sound.award();
+  }
+
+  status() {
+    return `NEXT ${SHOT_NAME[this.seq[this.step]]}`;
+  }
+}
+
+/** Multiball: bust the payload out. Ramps are jackpots; the Reactor is the super. */
+class Payload extends Mode {
+  name = 'PAYLOAD';
+  color = '#ff8a1f';
+  brief = 'RAMPS FOR JACKPOTS';
+  time = Infinity;
+  multiball = true;
+  private jp = 1_500_000;
+  private count = 0;
+  private superLit = false;
+
+  override lit(s: Shot): LampState {
+    if (s === 'skyway' || s === 'market') return 3;
+    return s === 'reactor' && this.superLit ? 4 : 0;
+  }
+
+  override wantsDropsDown() {
+    return this.superLit;
+  }
+
+  override onShot(s: Shot) {
+    const g = this.f.game;
+    if ((s === 'skyway' || s === 'market') && !this.superLit) {
+      this.award(this.v(this.jp), s, 'JACKPOT');
+      this.f.hitFx(s, this.color);
+      sound.jackpot();
+      this.jp += 250_000;
+      if (++this.count >= 3) {
+        this.superLit = true;
+        g.show('SUPER JACKPOT', 'IS LIT AT THE REACTOR', 2, true);
+      }
+    } else if (s === 'reactor' && this.superLit) {
+      this.award(this.v(this.jp * 3), s, 'SUPER JACKPOT');
+      this.f.celebrate(this.color);
+      sound.jackpot();
+      this.completed = true;
+      this.superLit = false;
+      this.count = 0;
+    }
+  }
+
+  status() {
+    return this.superLit ? 'SUPER AT THE REACTOR' : `JACKPOT ${short(this.v(this.jp))}`;
+  }
+}
+
+/** Hurry-up getaway: three legs in order, each worth a value that bleeds away. */
+class Extract extends Mode {
+  name = 'EXTRACT';
+  color = '#f4efe6';
+  brief = 'SKYWAY  ALLEY  BREACH';
+  time = 35;
+  private legs: Shot[] = ['skyway', 'alleyL', 'breach'];
+  private leg = 0;
+  private legT = 0;
+
+  get value() {
+    return this.v(Math.max(1_500_000, 6_000_000 + this.leg * 1_000_000 - this.legT * 200_000));
+  }
+
+  override tick(dt: number) {
+    super.tick(dt);
+    if (this.timer > 0) this.legT += dt;
+  }
+
+  override lit(s: Shot): LampState {
+    return s === this.legs[this.leg] ? 3 : 0;
+  }
+
+  override onShot(s: Shot) {
+    if (s !== this.legs[this.leg]) return;
     this.award(this.value, s);
     this.f.hitFx(s, this.color);
-    this.left.delete(s);
-    sound.award();
-    if (this.left.size === 0) this.complete(this.v(5_000_000), 'CLEAN SWEEP');
-    else this.f.game.show('BLOOD MONEY', `${this.left.size} TO GO  NEXT ${short(this.value)}`, 1.3);
-  }
-
-  status() {
-    return `${this.left.size} LEFT  ${short(this.value)}`;
-  }
-}
-
-/** Lights out. Chain the lit shots in the dark for a growing multiplier. */
-class Blackout extends Mode {
-  name = 'BLACKOUT';
-  color = '#9ec5ff';
-  brief = 'CHAIN SHOTS IN THE DARK';
-  time = 35;
-  private streak = 0;
-  private streakT = 0;
-  private hits = 0;
-  private static LIT: Shot[] = ['leftOrbit', 'ramp', 'reactor', 'rightOrbit'];
-
-  override tick(dt: number) {
-    super.tick(dt);
-    if (this.streakT > 0) this.streakT -= dt;
-  }
-
-  override gi() {
-    return 0.08;
-  }
-
-  override lit(s: Shot): LampState {
-    return Blackout.LIT.includes(s) ? (this.streakT > 0 ? 3 : 2) : 0;
-  }
-
-  override onShot(s: Shot) {
-    if (!Blackout.LIT.includes(s)) return;
-    this.streak = this.streakT > 0 ? Math.min(5, this.streak + 1) : 1;
-    this.streakT = 6;
-    this.hits++;
+    this.leg++;
+    this.legT = 0;
     this.progress();
-    this.award(this.v(1_000_000 * this.streak), s);
-    this.f.hitFx(s, this.color);
-    this.f.game.show(`${this.streak}X IN THE DARK`, short(this.v(1_000_000 * this.streak)), 1.2);
-    if (this.hits >= 6) this.complete(this.v(3_000_000), 'NO WITNESSES');
-  }
-
-  override onSwitch(s: Switch) {
-    if (s === 'spinner') this.award(this.v(20_000));
+    if (this.leg >= this.legs.length) return this.complete(this.v(4_000_000), 'EXTRACTED');
+    this.f.game.show('KEEP MOVING', `${SHOT_NAME[this.legs[this.leg]]}  ${short(this.value)}`, 1.4, true);
+    sound.siren();
   }
 
   status() {
-    return this.streakT > 0 ? `CHAIN ${this.streak}X  ${Math.ceil(this.streakT)}` : `${6 - this.hits} SHOTS TO GO`;
+    return `${SHOT_NAME[this.legs[this.leg]]} ${short(this.value)}`;
   }
 }
 
-/** Build the charge at the targets, then blow it at the scoop. */
-class Sabotage extends Mode {
-  name = 'SABOTAGE';
-  color = '#ffd23f';
-  brief = 'BUILD AT TARGETS, BLOW AT SCOOP';
-  time = 40;
-  private charge = 1_000_000;
-  private blown = 0;
-
-  override lit(s: Shot): LampState {
-    if (s === 'scoop') return 3;
-    return s === 'hit' || s === 'drops' || s === 'reactor' ? 1 : 0;
-  }
-
-  override onShot(s: Shot) {
-    if (s === 'scoop') {
-      this.award(this.v(this.charge), s, 'DETONATED');
-      this.f.hitFx(s, this.color);
-      this.f.game.doShake(12);
-      this.blown++;
-      this.progress();
-      this.charge = 1_000_000 + this.blown * 500_000;
-      if (this.blown >= 2) this.complete(this.v(3_000_000), 'TOTAL SABOTAGE');
-    } else if (s === 'hit' || s === 'drops' || s === 'reactor') {
-      this.charge += 250_000;
-      this.f.game.fx.popup(...this.f.shotPos(s), `+${short(this.v(250_000))} CHARGE`, this.color, 16);
-    }
-  }
-
-  override onSwitch(s: Switch) {
-    if (s === 'bumper') this.charge += 50_000;
-  }
-
-  status() {
-    return `SCOOP BLOWS ${short(this.v(this.charge))}`;
-  }
-}
-
-export interface JobDef {
+export interface ModeDef {
+  key: 'infiltrate' | 'hack' | 'route' | 'payload' | 'extract';
   name: string;
-  /** Label printed on the playfield insert. */
-  label: string;
+  /** 0: first, 1: needs a tier-0 mode played, 2: needs a tier-1 mode played. */
+  tier: 0 | 1 | 2;
   color: string;
-  make: (f: Foundry, mult: number) => Mode;
+  make: (f: Psychosis, mult: number) => Mode;
 }
 
-export const JOBS: JobDef[] = [
-  { name: 'SHAKEDOWN', label: 'SHAKEDOWN', color: '#3ddc84', make: (f, m) => new Shakedown(f, m) },
-  { name: 'HOT METAL', label: 'HOT METAL', color: '#ff7a1a', make: (f, m) => new HotMetal(f, m) },
-  { name: 'BLOOD MONEY', label: 'BLOOD $', color: '#e0262b', make: (f, m) => new BloodMoney(f, m) },
-  { name: 'BLACKOUT', label: 'BLACKOUT', color: '#9ec5ff', make: (f, m) => new Blackout(f, m) },
-  { name: 'SABOTAGE', label: 'SABOTAGE', color: '#ffd23f', make: (f, m) => new Sabotage(f, m) },
+export const MODES: ModeDef[] = [
+  { key: 'infiltrate', name: 'INFILTRATE', tier: 0, color: '#7fd8ff', make: (f, m) => new Infiltrate(f, m) },
+  { key: 'hack', name: 'HACK', tier: 1, color: '#3dff8a', make: (f, m) => new Hack(f, m) },
+  { key: 'route', name: 'ROUTE', tier: 1, color: '#ffd23f', make: (f, m) => new Route(f, m) },
+  { key: 'payload', name: 'PAYLOAD', tier: 2, color: '#ff8a1f', make: (f, m) => new Payload(f, m) },
+  { key: 'extract', name: 'EXTRACT', tier: 2, color: '#f4efe6', make: (f, m) => new Extract(f, m) },
 ];
 
 // ---------------------------------------------------------------- side modes
 
-/** Lane-started frenzy: every switch on the table pays. Runs alongside a job. */
-export class Riot extends Mode {
-  name = 'RIOT';
-  color = '#ff3b2f';
+/** Lane-started frenzy: every switch on the table pays. Runs alongside a mode. */
+export class Rage extends Mode {
+  name = 'RAGE';
+  color = '#ff4a1f';
   brief = 'EVERY SWITCH SCORES';
   time = 20;
 
@@ -426,34 +475,46 @@ export class Riot extends Mode {
   }
 
   status() {
-    return `RIOT ${Math.ceil(this.timer)}  ${short(this.total)}`;
+    return `RAGE ${Math.ceil(this.timer)}  ${short(this.total)}`;
   }
 }
 
-/** Wizard mode: multiball where every shot is a jackpot and the scoop is the super. */
-export class BurnItDown extends Mode {
-  name = 'BURN IT DOWN';
-  color = '#ff5a1a';
+/**
+ * The finale: overload the Reactor. GI dies, it's a multiball, and every major
+ * shot is a jackpot. Collect them all to light the super at the Reactor.
+ */
+export class Blackout extends Mode {
+  name = 'BLACKOUT';
+  color = '#ff2020';
   brief = 'EVERY SHOT IS A JACKPOT';
   /** No clock: it lasts as long as the multiball does. */
   time = Infinity;
-  private left = new Set<Shot>(FIELD_SHOTS);
+  multiball = true;
+  private left = new Set<Shot>(SHOTS.filter((s) => s !== 'reactor'));
   private jp = 2_000_000;
 
+  override gi() {
+    return 0.06;
+  }
+
   override lit(s: Shot): LampState {
-    if (s === 'scoop') return this.left.size === 0 ? 3 : 0;
+    if (s === 'reactor') return this.left.size === 0 ? 4 : 0;
     return this.left.has(s) ? 3 : 0;
+  }
+
+  override wantsDropsDown() {
+    return this.left.size === 0;
   }
 
   override onShot(s: Shot) {
     const g = this.f.game;
-    if (s === 'scoop' && this.left.size === 0) {
-      const v = this.v(this.jp * 5);
-      this.award(v, s, 'SUPER JACKPOT');
+    if (s === 'reactor' && this.left.size === 0) {
+      this.award(this.v(this.jp * 5), s, 'SUPER JACKPOT');
       this.f.celebrate(this.color);
       g.doShake(14);
       sound.jackpot();
-      this.left = new Set(FIELD_SHOTS);
+      this.completed = true;
+      this.left = new Set(SHOTS.filter((x) => x !== 'reactor'));
       return;
     }
     if (!this.left.has(s)) return;
@@ -462,7 +523,7 @@ export class BurnItDown extends Mode {
     this.f.hitFx(s, this.color);
     sound.jackpot();
     this.jp += 500_000;
-    if (this.left.size === 0) g.show('SUPER JACKPOT', 'IS LIT AT THE SCOOP', 2, true);
+    if (this.left.size === 0) g.show('SUPER JACKPOT', 'OVERLOAD THE REACTOR', 2, true);
   }
 
   status() {

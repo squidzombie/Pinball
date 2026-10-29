@@ -47,7 +47,7 @@ export function bindInput(game: Game, toggleView: () => void) {
       return;
     }
     const right = e.clientX > window.innerWidth / 2;
-    if (right && game.ballInShooter() && game.active === game.main) {
+    if (right && game.ballInShooter()) {
       active.set(e.pointerId, 'P');
       game.setPlunger(true);
     } else {

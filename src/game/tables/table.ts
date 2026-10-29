@@ -45,11 +45,15 @@ interface LampShow {
 const ATTRACT_SHOWS: ShowKind[] = ['chase', 'sweepUp', 'radial', 'wipe', 'sweepDown', 'strobe'];
 
 export abstract class Table {
+  /** Draw every collider and sensor over the art (?debug). */
+  static debug = false;
   world = new World();
   lamps: Lamp[] = [];
   flashers: Flasher[] = [];
   flipperL!: Flipper;
   flipperR!: Flipper;
+  /** Upper flippers etc., each driven by the left (-1) or right (1) button. */
+  extraFlippers: { f: Flipper; side: -1 | 1 }[] = [];
   shooter: Shooter | null = null;
   flipperStyle: FlipperStyle = { body: '#e9e2d0', rubber: '#b3261e' };
   time = 0;
@@ -116,9 +120,18 @@ export abstract class Table {
     for (let i = 0; i < this.flashers.length; i++) this.flash(i, level);
   }
 
+  /** Every flipper on one side (or all of them). */
+  flippers(side?: -1 | 1): Flipper[] {
+    const out: Flipper[] = [];
+    if (side !== 1) out.push(this.flipperL);
+    if (side !== -1) out.push(this.flipperR);
+    for (const x of this.extraFlippers) if (side === undefined || x.side === side) out.push(x.f);
+    return out;
+  }
+
   /** Ball resting on (or rolling along) a flipper that's being held up: a cradle. */
   onHeldFlipper(b: Ball) {
-    for (const f of [this.flipperL, this.flipperR]) {
+    for (const f of this.flippers()) {
       if (!f.pressed) continue;
       const ax = f.tipX - f.px;
       const ay = f.tipY - f.py;
@@ -234,8 +247,7 @@ export abstract class Table {
     // Raised objects fade into the dark when the GI drops.
     const dim = 0.25 + 0.75 * light;
     ctx.globalAlpha = dim;
-    drawFlipper(ctx, this.flipperL, this.flipperStyle);
-    drawFlipper(ctx, this.flipperR, this.flipperStyle);
+    for (const f of this.flippers()) drawFlipper(ctx, f, this.flipperStyle);
     const list: Sprite[] = [];
     this.sprites(list);
     for (const b of this.world.balls) if (b.layer === FLOOR) list.push({ y: b.y, draw: (c) => this.drawBallLit(c, b, 0, dim) });
@@ -248,6 +260,47 @@ export abstract class Table {
     this.drawTop(ctx);
     ctx.globalAlpha = 1;
     for (const f of this.flashers) drawFlasherLit(ctx, f);
+    if (Table.debug) this.drawColliders(ctx);
+  }
+
+  private drawColliders(ctx: CanvasRenderingContext2D) {
+    const w = this.world;
+    ctx.save();
+    ctx.lineWidth = 1.5;
+    for (const s of w.segments) {
+      if (!s.enabled) continue;
+      ctx.strokeStyle = s.oneWay ? '#ffe000' : s.layers & RAMP ? (s.layers & FLOOR ? '#ffffff' : '#ff40ff') : '#00ffff';
+      ctx.beginPath();
+      ctx.moveTo(s.ax, s.ay);
+      ctx.lineTo(s.bx, s.by);
+      ctx.stroke();
+    }
+    ctx.strokeStyle = '#00ff60';
+    for (const l of w.lineSensors) {
+      ctx.beginPath();
+      ctx.moveTo(l.ax, l.ay);
+      ctx.lineTo(l.bx, l.by);
+      ctx.stroke();
+    }
+    for (const z of w.zones) {
+      ctx.beginPath();
+      ctx.arc(z.x, z.y, z.r, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.strokeStyle = '#ff8000';
+    for (const c of w.circles) {
+      if (!c.enabled) continue;
+      ctx.beginPath();
+      ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    for (const f of w.flippers) {
+      ctx.beginPath();
+      ctx.moveTo(f.px, f.py);
+      ctx.lineTo(f.tipX, f.tipY);
+      ctx.stroke();
+    }
+    ctx.restore();
   }
 
   /** Balls never fade with the GI; they'd vanish in a blackout. */

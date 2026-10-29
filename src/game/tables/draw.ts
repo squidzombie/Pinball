@@ -548,6 +548,13 @@ function ballSprite() {
   });
 }
 
+/** A ball that isn't moving (captive, locked). */
+export function drawBallAt(ctx: CanvasRenderingContext2D, x: number, y: number, z = 0) {
+  const floorY = y - lift(z);
+  drawShadow(ctx, x + 2.5, floorY + 3, 14.7, 11.2, 0.7);
+  ctx.drawImage(ballSprite(), x - 15, floorY - lift(14) - 15, 30, 30);
+}
+
 /** z is the height of whatever the ball rolls on (0 for the floor). */
 export function drawBall(ctx: CanvasRenderingContext2D, b: Ball, z = 0) {
   const r = b.r;
