@@ -25,9 +25,22 @@ ring of lamps on the job board), and the lit shots pay the job's own scaled valu
 | --- | --- | --- |
 | **Shakedown** | moving target | One lit shot that moves every 4 s. 600K, +300K each. Collect 5 for **PAID IN FULL** (+2.5M). |
 | **Hot Metal** | hurry-up | Ramp or right orbit, starting at 5M and cooling toward 1M. Then **pour it** at the scoop for double. |
-| **Blood Money** | collect all | All six field shots are lit and each pays once, 750K climbing by 250K. Take all six for **CLEAN SWEEP** (+5M). |
+| **Blood Money** | collect all, **no clock** | All six field shots are lit and each pays once. The payout bleeds away while you aim (1.5M, +250K per shot taken, −25K a second, never below 500K). Take all six for **CLEAN SWEEP** (+5M). Ends on completion or drain. |
 | **Blackout** | lights out | The GI goes dark. Chain the orbits, ramp and reactor within 6 s for 1M × chain (up to 5X). |
 | **Sabotage** | build & cash | Targets and bumpers build a charge, and the scoop detonates it. Detonate twice for **TOTAL SABOTAGE**. |
+
+#### How the clocks work
+
+The clocks follow conventions taken from real machines' rulesheets and from FreeWPC and the Mission Pinball Framework (open-source pinball control software):
+
+- **Pinball seconds.** Each second on the clock lasts about 1.1 real seconds. Real machines do the same; FreeWPC uses about 1.08.
+- **The clock waits** while the ball is held in the scoop (job intros and awards cost no time) and while no ball is on the table. It also waits after a kickout or plunge until the ball hits a playfield switch, for at most 2 s.
+- **Stuck balls stop the clock.** If every ball has stopped somewhere other than a held flipper, the clock waits until ball search frees it.
+- **Cradling does not stop the clock.**
+- **Grace period.** When the clock hits 0, lit shots still count for 2 s, shown by the whole clock ring strobing.
+- **Progress keeps you alive.** Collecting a lit shot with under 10 s left tops the clock back up to 10. Spelling H-I-T during a job adds 10 s.
+- **Time bonus.** Finishing a job early pays 100K × the seconds left.
+- **Warnings.** There's an alarm and a "HURRY UP" message at 10 s, and ticks from 5 down to 1. The lit-shot arrows and the clock ring flash faster under 9, 6 and 3 seconds.
 
 - **RIOT** (lanes): roll the **R-I-O-T** in/outlanes (flippers change the lit lanes) to start a 20-second
   frenzy where every switch scores. It runs alongside a job, and relighting it adds time.

@@ -103,8 +103,10 @@ export function buildLowerSection(world: World, cx: number, onSling: (side: -1 |
     kickers.push(k);
     slings.push([A, B, C]);
   }
-  const left = new Flipper(cx - 99.5, 1050, 88, 0.52, -0.42);
-  const right = new Flipper(cx + 99.5, 1050, 88, Math.PI - 0.52, Math.PI + 0.42);
+  // Pivots sit low enough under the inlane guides that a cradled ball rolls
+  // down the bat when the flipper drops (at 1050 it wedged against the pivot).
+  const left = new Flipper(cx - 99.5, 1056, 88, 0.52, -0.42);
+  const right = new Flipper(cx + 99.5, 1056, 88, Math.PI - 0.52, Math.PI + 0.42);
   world.flippers.push(left, right);
   return { left, right, slingL: kickers[0], slingR: kickers[1], guides, slings };
 }

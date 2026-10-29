@@ -116,6 +116,18 @@ export abstract class Table {
     for (let i = 0; i < this.flashers.length; i++) this.flash(i, level);
   }
 
+  /** Ball resting on (or rolling along) a flipper that's being held up: a cradle. */
+  onHeldFlipper(b: Ball) {
+    for (const f of [this.flipperL, this.flipperR]) {
+      if (!f.pressed) continue;
+      const ax = f.tipX - f.px;
+      const ay = f.tipY - f.py;
+      const t = Math.max(0, Math.min(1, ((b.x - f.px) * ax + (b.y - f.py) * ay) / (ax * ax + ay * ay)));
+      if (Math.hypot(b.x - (f.px + ax * t), b.y - (f.py + ay * t)) < f.r0 + b.r + 6) return true;
+    }
+    return false;
+  }
+
   inShooterLane(b: Ball) {
     const s = this.shooter;
     return !!s && b.x > s.minX && b.x < s.maxX && b.y > s.minY;

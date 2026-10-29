@@ -45,6 +45,12 @@ function shootScoop(f: any): Ball {
   return b;
 }
 
+/** Let the scoop kick the ball out, then park it before it can drain. */
+function waitEject(g: Game, f: any) {
+  for (let t = 0; t < 10 && f.scoopBall; t += 1 / 60) g.update(1 / 60);
+  park(f);
+}
+
 /** Shoot the scoop and let it resolve (selection, intro and eject). */
 function scoop(g: Game, f: any, choose?: (f: any) => void) {
   shootScoop(f);
@@ -88,10 +94,78 @@ console.log('Mode start & selection');
   check('ball kicked out after intro', f.scoopBall === null);
   park(f);
   run(g, 1);
-  check('clock runs once the ball is in play', f.job.timer < t0);
-  run(g, 45);
+  check('clock waits for the ball to reach the playfield', f.job.timer === t0);
+  run(g, 1.5);
+  check('...but no more than 2 s', f.job.timer < t0);
+  const t1 = f.job.timer;
+  run(g, 11);
+  check('pinball seconds run slow (11 real s < 11 on the clock)', t1 - f.job.timer < 10.5 && t1 - f.job.timer > 9.5, `${(t1 - f.job.timer).toFixed(2)}`);
+  run(g, 60);
   check('job ends when the clock runs out', f.job === null);
   check('played job is marked', f.played.has(4));
+}
+
+console.log('Clock rules');
+{
+  const { g, f } = startJob('SHAKEDOWN');
+  f.sw('sling'); // any playfield switch validates
+  const t0 = f.job.timer;
+  run(g, 0.5);
+  check('a playfield switch starts the clock at once', f.job.timer < t0);
+  // Cradle: a free, motionless ball on a held flipper keeps the clock running and isn't ball-searched.
+  const b: Ball = f.world.balls[0];
+  f.flipperL.pressed = true;
+  for (let t = 0; t < 0.2; t += 1 / 60) g.update(1 / 60);
+  const lf = f.flipperL;
+  b.x = lf.px + Math.cos(lf.angle) * 30;
+  b.y = lf.py + Math.sin(lf.angle) * 30 - 22;
+  b.vx = b.vy = 0;
+  b.captured = false;
+  const tc = f.job.timer;
+  run(g, 6);
+  check('cradling does not stop the clock', f.job.timer < tc - 4, `${tc.toFixed(1)} -> ${f.job.timer.toFixed(1)}`);
+  check('a cradled ball is not ball-searched', f.onHeldFlipper(b) && b.vy > -600, `vy ${b.vy.toFixed(0)}`);
+  f.flipperL.pressed = false;
+  park(f);
+  // A stuck ball (not cradled) stops the clock.
+  b.captured = false;
+  f.world.gravity = 0;
+  b.x = 300;
+  b.y = 640;
+  b.vx = b.vy = 0;
+  run(g, 2);
+  const ts = f.job.timer;
+  run(g, 1.5);
+  check('a stuck ball stops the clock', f.job.timer === ts);
+  f.world.gravity = 2000;
+  park(f);
+  // Grace and refresh.
+  f.job.timer = 0.5;
+  run(g, 1);
+  check('clock reaches zero but the mode is still running (grace)', f.job?.inGrace === true);
+  const lit = ['leftOrbit', 'ramp', 'hit', 'reactor', 'drops', 'rightOrbit'].find((s) => f.job.lit(s));
+  f.event(lit);
+  check('a lit shot in grace counts and tops the clock up to 10', f.job && !f.job.inGrace && f.job.timer >= 9.9, `${f.job?.timer}`);
+  f.job.timer = 0.2;
+  run(g, 3);
+  check('grace runs out after ~2 s', f.job === null);
+}
+
+console.log('Time bonus and add-time');
+{
+  const { g, f } = startJob('SABOTAGE');
+  f.sw('sling');
+  run(g, 1);
+  const before = f.job.timer;
+  for (let i = 0; i < 3; i++) f.hitStandup(i);
+  check('H-I-T during a job adds 10 s', f.job.timer > before + 9.9, `${before.toFixed(1)} -> ${f.job.timer.toFixed(1)}`);
+  shootScoop(f);
+  waitEject(g, f);
+  const secs = Math.ceil(f.job.timer);
+  f.comboTimer = 0;
+  const s0 = g.score;
+  shootScoop(f);
+  check('finishing early pays 100K per second left', g.score - s0 === 1_500_000 + 3_000_000 + secs * 100_000, `${g.score - s0} with ${secs}s`);
 }
 
 console.log('H-I-T targets');
@@ -155,14 +229,20 @@ console.log('BLOOD MONEY');
   check('started', f.job?.name === 'BLOOD MONEY', f.job?.name);
   const shots = ['leftOrbit', 'ramp', 'hit', 'reactor', 'drops', 'rightOrbit'];
   check('all six lit', shots.every((s) => f.job.lit(s)));
+  check('untimed', !f.job.timed);
   const s0 = g.score;
   f.event('ramp');
   f.event('ramp');
-  check('a shot only pays once', g.score - s0 === 750_000, `${g.score - s0}`);
+  check('a shot only pays once', g.score - s0 === 1_500_000, `${g.score - s0}`);
   check('collected shot goes dark', !f.job.lit('ramp'));
+  const v0 = f.job.value;
+  run(g, 10);
+  check('the payout bleeds while you aim', f.job.value < v0 && f.job.value > v0 - 300_000, `${v0} -> ${f.job.value}`);
+  run(g, 200);
+  check('...down to a floor, and the mode never times out', f.job?.value === 500_000);
   const s1 = g.score;
   f.event('hit');
-  check('values climb', g.score - s1 === 1_000_000, `${g.score - s1}`);
+  check('floor value still pays', g.score - s1 === 500_000, `${g.score - s1}`);
   for (const s of ['leftOrbit', 'reactor', 'drops', 'rightOrbit']) f.event(s);
   run(g, 0.1);
   check('clean sweep completes it', f.job === null && f.played.has(2));
@@ -213,7 +293,7 @@ console.log('RIOT');
   check('every switch pays 100K', g.score - s0 === 100_000, `${g.score - s0}`);
   for (let i = 0; i < 4; i++) f.rollover(i);
   check('relighting extends it', f.riot.timer > 25);
-  run(g, 35);
+  run(g, 45);
   check('riot times out', f.riot === null);
   f.riotLit = [true, false, false, false];
   f.onFlipperPress(1);
@@ -256,6 +336,27 @@ console.log('BURN IT DOWN (wizard)');
   check('wizard ends with the multiball', f.wizard === null);
   check('board resets at a higher level', f.played.size === 0 && f.modeLevel === 1 && f.jobsLit >= 1);
   check('values scale up', f.modeMult === 1.5);
+}
+
+console.log('Flippers');
+{
+  // A cradled ball must roll down the bat when the flipper drops (it once wedged against the pivot).
+  const { f } = newGame();
+  f.world.zones = [];
+  for (const [fl, x0] of [
+    [f.flipperL, 120],
+    [f.flipperR, 435],
+  ] as const) {
+    f.world.balls = [];
+    const b: Ball = f.addBall(x0, 990);
+    fl.pressed = true;
+    for (let t = 0; t < 2; t += 1 / 480) f.world.step(1 / 480);
+    check('ball settles into the cradle', b.speed < 5 && f.onHeldFlipper(b));
+    const [cx, cy] = [b.x, b.y];
+    fl.pressed = false;
+    for (let t = 0; t < 1; t += 1 / 480) f.world.step(1 / 480);
+    check('dropping the flipper rolls it off the bat', Math.hypot(b.x - cx, b.y - cy) > 30, `moved ${Math.hypot(b.x - cx, b.y - cy).toFixed(1)}`);
+  }
 }
 
 console.log(`\n${passes} passed, ${failures} failed`);

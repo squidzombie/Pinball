@@ -260,6 +260,12 @@ export class Sound {
     if (completed) [523, 659, 784, 1046, 1318].forEach((f, i) => this.tone(f, 0.16, 'square', 0.08, undefined, i * 0.07));
     else [392, 330, 262, 196].forEach((f, i) => this.tone(f, 0.2, 'sawtooth', 0.08, undefined, i * 0.1));
   }
+  hurry() {
+    for (let i = 0; i < 3; i++) {
+      this.tone(988, 0.09, 'square', 0.09, undefined, i * 0.16);
+      this.tone(740, 0.09, 'square', 0.09, undefined, i * 0.16 + 0.08);
+    }
+  }
   tick() {
     this.tone(1500, 0.03, 'square', 0.05);
   }

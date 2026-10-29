@@ -450,8 +450,9 @@ export class Game {
     }
     this.autoLaunch = this.autoLaunch.filter((a) => a.t > 0);
 
-    // Ball search: free stuck balls.
+    // Ball search: free stuck balls. A ball cradled on a held flipper isn't stuck.
     for (const b of this.active.world.balls) {
+      if (this.active.onHeldFlipper(b)) b.stillTime = 0;
       if (b.stillTime > 4 && !b.captured && !this.active.inShooterLane(b)) {
         b.stillTime = 0;
         b.vy = -700;

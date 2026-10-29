@@ -243,6 +243,9 @@ export class Foundry extends Table {
   wizard: Mode | null = null;
   wizardLit = false;
   modeLevel = 0;
+  /** Single-ball play: the clock waits for the ball to reach the playfield after a kickout or plunge. */
+  private validated = true;
+  private validateT = 0;
 
   constructor(game: Game) {
     super(game);
@@ -467,8 +470,10 @@ export class Foundry extends Table {
         state: () => {
           const m = this.job ?? this.riot;
           if (!m) return 0;
-          const left = Math.ceil((Math.max(0, m.timer) / m.time) * DOTS);
-          return i < left ? (m.timer < 6 ? 3 : 1) : 0;
+          // Last chance: the whole ring strobes while shots still count at zero.
+          if (m.inGrace) return 4;
+          const left = Math.ceil(m.meter() * DOTS);
+          return i < left ? (m.timed ? this.urgency(m, 1) : 1) : 0;
         },
       });
     }
@@ -508,9 +513,18 @@ export class Foundry extends Table {
     return null;
   }
 
+  /** Lamps flash faster as a clock runs down (thresholds after FreeWPC's lamp timers). */
+  private urgency(m: Mode, base: LampState): LampState {
+    if (!m.timed) return base;
+    if (m.inGrace || m.timer < 3) return 4;
+    if (m.timer < 6) return 3;
+    if (m.timer < 9) return Math.max(base, 2) as LampState;
+    return base;
+  }
+
   private shotLamp(s: Shot): LampState {
     const m = this.modeFor(s);
-    if (m) return m.lit(s);
+    if (m) return this.urgency(m, m.lit(s));
     if (this.riot) return 2;
     if (s === 'ramp' && this.meltdownReady) return 3;
     if (s === 'scoop') return this.superLit || this.wizardLit || (this.jobsLit > 0 && this.canStartMode()) ? 2 : this.pitLit ? 2 : 0;
@@ -577,12 +591,14 @@ export class Foundry extends Table {
 
   /** Feed a shot to the running modes. */
   private event(s: Shot, b?: Ball) {
+    this.validated = true;
     this.job?.onShot(s, b);
     this.wizard?.onShot(s, b);
     this.riot?.onShot(s, b);
   }
 
   private sw(s: Switch) {
+    this.validated = true;
     this.job?.onSwitch(s);
     this.wizard?.onSwitch(s);
     this.riot?.onSwitch(s);
@@ -654,9 +670,10 @@ export class Foundry extends Table {
     }
     if (this.hitLit.every(Boolean)) {
       this.hitLit = [false, false, false];
+      if (this.job?.timed) this.job.addTime(10);
       if (this.unplayedLeft()) {
         this.jobsLit++;
-        g.show('JOB LIT', this.job ? 'FINISH THIS ONE FIRST' : 'SHOOT THE SCOOP', 2, true);
+        g.show('JOB LIT', this.job ? (this.job.timed ? '+10 SECONDS ON THE CLOCK' : 'FINISH THIS ONE FIRST') : 'SHOOT THE SCOOP', 2, true);
         this.flash(3);
         sound.award();
       } else {
@@ -894,7 +911,7 @@ export class Foundry extends Table {
   private startRiot() {
     const g = this.game;
     if (this.riot) {
-      this.riot.timer += 10;
+      this.riot.addTime(10);
       g.show('RIOT EXTENDED', '+10 SECONDS', 1.5, true);
       sound.award();
       return;
@@ -941,7 +958,8 @@ export class Foundry extends Table {
 
   music() {
     const j = this.job;
-    sound.playMusic(this.wizard ? 'wizard' : this.multiball ? 'multiball' : j ? (j.name === 'BLACKOUT' ? 'blackout' : 'mode') : 'main');
+    const jobMusic = j && !j.inGrace ? (j.name === 'BLACKOUT' ? 'blackout' : 'mode') : 'main';
+    sound.playMusic(this.wizard ? 'wizard' : this.multiball ? 'multiball' : jobMusic);
   }
 
   /** Feedback for a mode collecting a shot. */
@@ -1026,6 +1044,8 @@ export class Foundry extends Table {
     this.scoopBall = null;
     b.captured = false;
     b.tags.scoopIgnore = this.time + 0.6;
+    this.validated = false;
+    this.validateT = this.time;
     // Aim down toward the left flipper with a little randomness.
     const a = Math.atan2(530, -230) + (Math.random() - 0.5) * 0.12;
     b.vx = Math.cos(a) * 640;
@@ -1051,6 +1071,11 @@ export class Foundry extends Table {
       if (this.skillTimer > 4) this.skillActive = false;
     }
 
+    if (g.ballInShooter() && this.world.balls.length === 1) {
+      this.validated = false;
+      this.validateT = this.time;
+    }
+
     // Job selection while the ball waits in the scoop.
     if (this.selecting > 0) {
       this.selecting -= dt;
@@ -1058,8 +1083,7 @@ export class Foundry extends Table {
     }
 
     // Mode clocks only run while the ball is in play.
-    const clock = g.state === 'play' && !g.tilted && !g.transitioning && !this.scoopBall && !g.ballInShooter() && g.active === this;
-    if (clock) {
+    if (this.clockRunning()) {
       this.job?.tick(dt);
       this.riot?.tick(dt);
     }
@@ -1111,6 +1135,26 @@ export class Foundry extends Table {
     }
   }
 
+  /**
+   * When mode clocks tick. Following FreeWPC's defaults, the clock stops while:
+   * - any ball is held in the scoop (intros and awards don't cost time);
+   * - no ball is on the table (single ball waiting at the plunger, or a relaunch);
+   * - after a kickout or plunge, until the ball hits a playfield switch (2 s at most);
+   * - every ball on the table is stuck (what ball search is for).
+   * Cradling the ball does not stop the clock.
+   */
+  private clockRunning() {
+    const g = this.game;
+    if (g.state !== 'play' || g.tilted || g.transitioning || g.active !== this) return false;
+    if (this.scoopBall) return false;
+    const inPlay = this.world.balls.filter((b) => !this.inShooterLane(b));
+    if (inPlay.length === 0) return false;
+    if (inPlay.length === 1 && !this.validated && this.time - this.validateT < 2) return false;
+    const free = inPlay.filter((b) => !b.captured);
+    if (free.length > 0 && free.every((b) => b.stillTime > 1.5 && !this.onHeldFlipper(b))) return false;
+    return true;
+  }
+
   // ---------------------------------------------------------------- DMD
 
   drawDMD(d: DMD) {
@@ -1128,9 +1172,10 @@ export class Foundry extends Table {
     const m = this.wizard ?? this.job ?? this.riot;
     if (m) {
       d.text(m.name, 1, 0, { level: 3 });
-      if (Number.isFinite(m.time)) {
+      if (m.timed) {
         const secs = Math.max(0, Math.ceil(m.timer));
-        d.text(String(secs), 127, 0, { align: 'right', level: m.timer < 6 && Math.floor(t * 6) % 2 ? 1 : 3 });
+        const blink = m.inGrace ? Math.floor(t * 10) % 2 : m.timer < 6 && Math.floor(t * 6) % 2;
+        d.text(String(secs), 127, 0, { align: 'right', level: blink ? 1 : 3 });
       }
       d.fitText(fmt(g.score), 64, 9, 126, 2, { align: 'center' });
       let status = m.status();

@@ -241,7 +241,7 @@ export function box(ctx: CanvasRenderingContext2D, x: number, y: number, w: numb
 
 // ------------------------------------------------------------------ inserts (lamps)
 
-export type LampState = 0 | 1 | 2 | 3; // off, on, slow blink, fast blink
+export type LampState = 0 | 1 | 2 | 3 | 4; // off, on, slow blink, fast blink, strobe
 
 export interface Lamp {
   kind: 'arrow' | 'circle' | 'rect' | 'tri' | 'star' | 'shield';
@@ -262,7 +262,7 @@ export interface Lamp {
 }
 
 export function lampLit(s: LampState, t: number) {
-  return s === 1 || (s === 2 && Math.sin(t * 7) > -0.2) || (s === 3 && Math.sin(t * 22) > 0);
+  return s === 1 || (s === 2 && Math.sin(t * 7) > -0.2) || (s === 3 && Math.sin(t * 22) > 0) || (s === 4 && Math.sin(t * 60) > 0);
 }
 
 function insertPath(g: CanvasRenderingContext2D, kind: Lamp['kind'], w: number, h: number) {

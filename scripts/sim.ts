@@ -21,9 +21,20 @@ g.show = (l1: string, l2?: string, dur?: number, big?: boolean) => {
 
 anyG.startGame.call(g);
 
+const held = new Map<object, number>();
+const rest = new Map<object, number>();
 function bot(t: Table) {
   for (const f of [t.flipperL, t.flipperR]) {
     const isLeft = f === t.flipperL;
+    // Like a player, cradle briefly, then drop the flipper long enough for the ball to roll into a flip.
+    held.set(f, f.pressed ? (held.get(f) ?? 0) + DT : 0);
+    rest.set(f, Math.max(0, (rest.get(f) ?? 0) - DT));
+    if ((held.get(f) ?? 0) > 1 + Math.random()) {
+      f.pressed = false;
+      rest.set(f, 0.15 + Math.random() * 0.25);
+      continue;
+    }
+    if ((rest.get(f) ?? 0) > 0) continue;
     const want = t.world.balls.some((b) => {
       if (b.captured || b.y < 960 || b.y > 1110) return false;
       const dx = b.x - f.px;

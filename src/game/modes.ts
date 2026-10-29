@@ -16,14 +16,30 @@ export const FIELD_SHOTS: Shot[] = ['leftOrbit', 'ramp', 'hit', 'reactor', 'drop
 /** Minor switches: everything that isn't a shot. */
 export type Switch = 'bumper' | 'sling' | 'lane' | 'rollover' | 'spinner';
 
+// Clock conventions borrowed from real machines (see README, "How the clocks work"):
+// displayed seconds run a little slow, shots still count for a moment after zero,
+// and making progress tops the clock back up.
+
+/** One displayed second lasts this many real seconds (FreeWPC uses ~1.08). */
+const PINBALL_SECOND = 1.1;
+/** Real seconds after the clock shows 0 during which shots still count. */
+export const GRACE = 2;
+/** Making progress with less than this on the clock tops it back up to this. */
+const REFRESH = 10;
+/** Completion bonus per second left on the clock. */
+const TIME_BONUS = 100_000;
+
 export abstract class Mode {
   abstract readonly name: string;
   abstract readonly color: string;
   /** Second line of the DMD intro. */
   abstract readonly brief: string;
-  /** Seconds on the clock. */
+  /** Seconds on the clock; Infinity for an untimed mode (ends on completion or drain). */
   time = 30;
   timer = 0;
+  /** Full scale of the current clock, for the lamp ring. */
+  clockMax = 0;
+  private grace = GRACE;
   total = 0;
   completed = false;
   /** Set when the mode should end, by success or by failure. */
@@ -34,17 +50,74 @@ export abstract class Mode {
     protected mult: number,
   ) {}
 
-  start() {
-    this.timer = this.time;
+  get timed() {
+    return Number.isFinite(this.time);
   }
 
-  /** Called only while the mode clock runs (no ball held in the scoop or lane). */
+  /** The clock shows 0 but lit shots still count. */
+  get inGrace() {
+    return this.timed && this.timer <= 0 && !this.finished;
+  }
+
+  start() {
+    this.setClock(this.time);
+  }
+
+  protected setClock(seconds: number) {
+    this.timer = this.clockMax = seconds;
+    this.grace = GRACE;
+  }
+
+  /**
+   * Advance the clock by `dt` real seconds. The Foundry only calls this while the
+   * clock should run: a ball is on the playfield, not held, not stuck.
+   */
   tick(dt: number) {
-    const before = Math.ceil(this.timer);
-    this.timer -= dt;
-    const now = Math.ceil(this.timer);
-    if (now !== before && now <= 5 && now > 0) sound.tick();
-    if (this.timer <= 0) this.finished = true;
+    if (!this.timed) return;
+    if (this.timer > 0) {
+      const before = Math.ceil(this.timer);
+      this.timer = Math.max(0, this.timer - dt / PINBALL_SECOND);
+      const now = Math.ceil(this.timer);
+      if (now !== before) this.onSecond(now);
+    } else {
+      this.grace -= dt;
+      if (this.grace <= 0) this.finished = true;
+    }
+  }
+
+  private onSecond(s: number) {
+    if (s === 10) {
+      sound.hurry();
+      this.f.game.show('HURRY UP', `${this.name}  10 SECONDS`, 0.9);
+    } else if (s > 0 && s <= 5) {
+      sound.tick();
+    } else if (s === 0) {
+      this.f.music(); // mode music cuts out for the grace period
+    }
+  }
+
+  /** Progress keeps a timed mode alive: top the clock up and rescue it from grace. */
+  protected progress() {
+    if (!this.timed) return;
+    const wasGrace = this.inGrace;
+    if (this.timer < REFRESH) this.timer = REFRESH;
+    this.clockMax = Math.max(this.clockMax, this.timer);
+    this.grace = GRACE;
+    if (wasGrace) this.f.music();
+  }
+
+  addTime(seconds: number) {
+    if (!this.timed) return;
+    const wasGrace = this.inGrace;
+    this.timer += seconds;
+    this.clockMax = Math.max(this.clockMax, this.timer);
+    this.grace = GRACE;
+    if (wasGrace) this.f.music();
+  }
+
+  /** 0..1 for the lamp ring: time left, or whatever an untimed mode is racing against. */
+  meter() {
+    return this.timed ? Math.max(0, this.timer) / this.clockMax : 1;
   }
 
   onShot(_s: Shot, _b?: Ball) {}
@@ -72,10 +145,12 @@ export abstract class Mode {
   }
 
   protected complete(bonus: number, title: string) {
-    this.award(bonus);
+    const secs = this.timed ? Math.ceil(Math.max(0, this.timer)) : 0;
+    const tb = this.v(TIME_BONUS * secs);
+    this.award(bonus + tb);
     this.completed = true;
     this.finished = true;
-    this.f.game.show(title, `+${fmt(bonus)}`, 2.4, true);
+    this.f.game.show(title, tb ? `+${short(bonus)}  TIME +${short(tb)}` : `+${fmt(bonus)}`, 2.4, true);
     this.f.celebrate(this.color);
     sound.jackpot();
   }
@@ -124,6 +199,7 @@ class Shakedown extends Mode {
     this.award(this.value, s, `PAID ${this.paid + 1} OF 5`);
     this.f.hitFx(s, this.color);
     this.paid++;
+    this.progress();
     if (this.paid >= 5) return this.complete(this.v(2_500_000), 'PAID IN FULL');
     // Jump somewhere else so it can't be farmed.
     let next = this.at;
@@ -153,7 +229,7 @@ class HotMetal extends Mode {
 
   override tick(dt: number) {
     super.tick(dt);
-    if (this.phase === 'heat') this.elapsed += dt;
+    if (this.phase === 'heat' && this.timer > 0) this.elapsed += dt;
   }
 
   override lit(s: Shot): LampState {
@@ -167,7 +243,7 @@ class HotMetal extends Mode {
       this.award(this.collected, s);
       this.f.hitFx(s, this.color);
       this.phase = 'pour';
-      this.timer = 15;
+      this.setClock(15);
       this.f.game.show('POUR IT', `SCOOP FOR ${short(this.collected * 2)}`, 2, true);
       sound.siren();
     } else if (this.phase === 'pour' && s === 'scoop') {
@@ -181,16 +257,37 @@ class HotMetal extends Mode {
   }
 }
 
-/** Collect every lit shot; each one you take makes the rest worth more. */
+/**
+ * Collect every lit shot. No clock: the pressure is the payout bleeding away
+ * while you aim. Each shot you take raises what the rest are worth.
+ */
 class BloodMoney extends Mode {
   name = 'BLOOD MONEY';
   color = '#e0262b';
   brief = 'COLLECT EVERY LIT SHOT';
-  time = 45;
+  time = Infinity;
   private left = new Set<Shot>(FIELD_SHOTS);
+  private bled = 0;
+  private static START = 1_500_000;
+  private static STEP = 250_000;
+  private static FLOOR = 500_000;
+  /** Value lost per second of play. */
+  private static BLEED = 25_000;
+
+  private get base() {
+    return BloodMoney.START + (FIELD_SHOTS.length - this.left.size) * BloodMoney.STEP;
+  }
 
   get value() {
-    return this.v(750_000 + (FIELD_SHOTS.length - this.left.size) * 250_000);
+    return this.v(Math.max(BloodMoney.FLOOR, this.base - this.bled));
+  }
+
+  override tick(dt: number) {
+    this.bled += BloodMoney.BLEED * dt;
+  }
+
+  override meter() {
+    return Math.max(0, (this.base - this.bled - BloodMoney.FLOOR) / (this.base - BloodMoney.FLOOR));
   }
 
   override lit(s: Shot): LampState {
@@ -241,6 +338,7 @@ class Blackout extends Mode {
     this.streak = this.streakT > 0 ? Math.min(5, this.streak + 1) : 1;
     this.streakT = 6;
     this.hits++;
+    this.progress();
     this.award(this.v(1_000_000 * this.streak), s);
     this.f.hitFx(s, this.color);
     this.f.game.show(`${this.streak}X IN THE DARK`, short(this.v(1_000_000 * this.streak)), 1.2);
@@ -276,6 +374,7 @@ class Sabotage extends Mode {
       this.f.hitFx(s, this.color);
       this.f.game.doShake(12);
       this.blown++;
+      this.progress();
       this.charge = 1_000_000 + this.blown * 500_000;
       if (this.blown >= 2) this.complete(this.v(3_000_000), 'TOTAL SABOTAGE');
     } else if (s === 'hit' || s === 'drops' || s === 'reactor') {
@@ -336,13 +435,10 @@ export class BurnItDown extends Mode {
   name = 'BURN IT DOWN';
   color = '#ff5a1a';
   brief = 'EVERY SHOT IS A JACKPOT';
+  /** No clock: it lasts as long as the multiball does. */
   time = Infinity;
   private left = new Set<Shot>(FIELD_SHOTS);
   private jp = 2_000_000;
-
-  override tick() {
-    // No clock: it lasts as long as the multiball does.
-  }
 
   override lit(s: Shot): LampState {
     if (s === 'scoop') return this.left.size === 0 ? 3 : 0;
