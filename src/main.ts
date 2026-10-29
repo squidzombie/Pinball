@@ -1,41 +1,112 @@
 import { Game } from './game/game';
 import { bindInput } from './game/input';
 import { sound } from './engine/audio';
+import { TABLE_H, TABLE_W } from './game/tables/table';
 import './style.css';
 
-const canvas = document.getElementById('game') as HTMLCanvasElement;
-const ctx = canvas.getContext('2d', { alpha: false })!;
-const game = new Game();
-bindInput(game, canvas);
+// The playfield canvas is tilted away from the player with a CSS 3D transform,
+// like looking down a real cabinet. The DMD sits upright above it in the backbox.
+// Tall phone screens get a shallower tilt so the table fills the height.
+const TILT_MAX = (30 * Math.PI) / 180;
+const TILT_MIN = (20 * Math.PI) / 180;
+/** Camera distance, in table heights. Smaller = stronger perspective. */
+const CAMERA = 1.7;
+const DMD_ASPECT = 4;
 
-let cw = 0;
-let ch = 0;
-let dpr = 1;
-function resize() {
-  dpr = Math.min(window.devicePixelRatio || 1, 2.5);
-  cw = window.innerWidth;
-  ch = window.innerHeight;
-  canvas.width = Math.round(cw * dpr);
-  canvas.height = Math.round(ch * dpr);
-  canvas.style.width = `${cw}px`;
-  canvas.style.height = `${ch}px`;
-}
-window.addEventListener('resize', resize);
-resize();
-
+const tableCanvas = document.getElementById('table') as HTMLCanvasElement;
+const dmdCanvas = document.getElementById('dmd') as HTMLCanvasElement;
+const overlay = document.getElementById('overlay') as HTMLDivElement;
 const muteBtn = document.getElementById('mute') as HTMLButtonElement | null;
+const tctx = tableCanvas.getContext('2d', { alpha: false })!;
+const dctx = dmdCanvas.getContext('2d', { alpha: false })!;
+const game = new Game();
+
+let tilted = !new URLSearchParams(location.search).has('flat');
+let dpr = 1;
+let tableW = 0;
+let dmdW = 0;
+let dmdH = 0;
+
+function safeInsets() {
+  const probe = document.getElementById('safe')!;
+  const cs = getComputedStyle(probe);
+  return { top: parseFloat(cs.paddingTop) || 0, bottom: parseFloat(cs.paddingBottom) || 0 };
+}
+
+function layout() {
+  dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+  const cw = window.innerWidth;
+  const safe = safeInsets();
+  const MARGIN = 6;
+  const ch = window.innerHeight - safe.top - safe.bottom - MARGIN * 2;
+  const aspect = TABLE_H / TABLE_W;
+  const cam = CAMERA * aspect; // in table widths
+  const dmdRel = 1 / DMD_ASPECT;
+  const gap = 0.025;
+  /** Visible playfield height per unit of table width at a given tilt. */
+  const proj = (t: number) => aspect * Math.cos(t) * (cam / (cam + aspect * Math.sin(t)));
+  let tilt = TILT_MAX;
+  while (tilted && tilt > TILT_MIN && dmdRel + gap + proj(tilt - 0.01) <= ch / cw) tilt -= 0.01;
+  const projH = tilted ? proj(tilt) : aspect;
+  const W = Math.floor(Math.min(cw, ch / (dmdRel + gap + projH)));
+  const top = safe.top + MARGIN + Math.max(0, (ch - W * (dmdRel + gap + projH)) / 2);
+  const left = Math.round((cw - W) / 2);
+
+  dmdW = W;
+  dmdH = Math.round(W * dmdRel);
+  Object.assign(dmdCanvas.style, { left: `${left}px`, top: `${top}px`, width: `${dmdW}px`, height: `${dmdH}px` });
+  dmdCanvas.width = Math.round(dmdW * dpr);
+  dmdCanvas.height = Math.round(dmdH * dpr);
+
+  tableW = W;
+  const H = W * aspect;
+  const bottom = top + W * (dmdRel + gap + projH);
+  Object.assign(tableCanvas.style, {
+    left: `${left}px`,
+    top: `${bottom - H}px`,
+    width: `${W}px`,
+    height: `${H}px`,
+    transform: tilted ? `perspective(${cam * W}px) rotateX(${tilt}rad)` : 'none',
+  });
+  tableCanvas.width = Math.round(W * dpr);
+  tableCanvas.height = Math.round(H * dpr);
+
+  // Mute sits in the gap above the backbox if there is one, else in the corner.
+  if (muteBtn) muteBtn.style.top = top - safe.top >= 46 ? `${safe.top + 6}px` : '';
+
+  // The overlay covers the visible (projected) playfield.
+  Object.assign(overlay.style, { left: `${left}px`, top: `${top + W * (dmdRel + gap)}px`, width: `${W}px`, height: `${W * projH}px` });
+}
+window.addEventListener('resize', layout);
+layout();
+
+bindInput(game, () => {
+  tilted = !tilted;
+  layout();
+});
+
 muteBtn?.addEventListener('click', () => {
   sound.unlock();
   sound.setMuted(!sound.muted);
   muteBtn.textContent = sound.muted ? '🔇' : '🔊';
 });
 
+let overlayMode = '';
+function updateOverlay() {
+  const mode = game.state === 'attract' ? 'attract' : game.paused ? 'paused' : '';
+  if (mode === overlayMode) return;
+  overlayMode = mode;
+  overlay.className = mode;
+}
+
 let last = performance.now();
 function frame(now: number) {
   const dt = (now - last) / 1000;
   last = now;
   game.update(dt);
-  game.render(ctx, cw, ch, dpr);
+  game.renderTable(tctx, (tableW * dpr) / TABLE_W);
+  game.renderDMD(dctx, dmdW, dmdH, dpr);
+  updateOverlay();
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);

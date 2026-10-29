@@ -1,6 +1,19 @@
 import { Ball, FLOOR, RAMP, World, type Flipper } from '../../engine/physics';
 import type { Game } from '../game';
-import { drawBall, drawFlipper, drawLamp, type Lamp } from './draw';
+import {
+  art,
+  drawBall,
+  drawFlasherDome,
+  drawFlasherLit,
+  drawFlasherWash,
+  drawFlipper,
+  drawLampLit,
+  drawLampOff,
+  lampLit,
+  type Flasher,
+  type FlipperStyle,
+  type Lamp,
+} from './draw';
 
 export const TABLE_W = 600;
 export const TABLE_H = 1200;
@@ -13,39 +26,95 @@ export interface Shooter {
   minY: number;
 }
 
+/** Something with height that has to be depth-sorted against the balls. */
+export interface Sprite {
+  y: number;
+  draw: (ctx: CanvasRenderingContext2D) => void;
+}
+
+export type ShowKind = 'sweepUp' | 'sweepDown' | 'radial' | 'strobe' | 'wipe' | 'chase';
+
+interface LampShow {
+  kind: ShowKind;
+  t: number;
+  dur: number;
+  x: number;
+  y: number;
+}
+
+const ATTRACT_SHOWS: ShowKind[] = ['chase', 'sweepUp', 'radial', 'wipe', 'sweepDown', 'strobe'];
+
 export abstract class Table {
   world = new World();
   lamps: Lamp[] = [];
+  flashers: Flasher[] = [];
   flipperL!: Flipper;
   flipperR!: Flipper;
   shooter: Shooter | null = null;
-  flipperColor = '#00e5ff';
+  flipperStyle: FlipperStyle = { body: '#e9e2d0', rubber: '#b3261e' };
   time = 0;
   attract = false;
+
+  /** General illumination, 0 (dark) to 1. */
+  gi = 1;
+  giTarget = 1;
+  /** 0..1: how hard the GI flickers (riots, damage). */
+  giFlicker = 0;
+  private show: LampShow | null = null;
+  private attractShow = 0;
 
   private staticCanvas: HTMLCanvasElement | null = null;
   private rampCanvas: HTMLCanvasElement | null = null;
   private cacheK = 0;
 
-  constructor(protected game: Game) {}
+  constructor(public readonly game: Game) {}
 
-  /** Static floor art (rendered once into a cache). */
+  /** Static floor art (rendered once into a cache). Call drawInserts() where the inserts belong. */
   protected abstract drawStatic(ctx: CanvasRenderingContext2D): void;
   /** Ramps / plastics drawn above floor balls (cached). Return false if none. */
   protected drawRamps(_ctx: CanvasRenderingContext2D): boolean {
     return false;
   }
-  /** Animated things under the balls. */
+  /** Animated floor-level things (under the lamps and balls). */
   protected drawDynamic(_ctx: CanvasRenderingContext2D) {}
+  /** Raised animated things, depth-sorted with the balls. */
+  protected sprites(_out: Sprite[]) {}
   /** Animated things above everything. */
   protected drawTop(_ctx: CanvasRenderingContext2D) {}
+  /** Height of the surface under a ball (ramps). */
+  ballZ(_b: Ball) {
+    return 0;
+  }
 
   update(dt: number) {
     this.time += dt;
+    this.gi += (this.giTarget - this.gi) * Math.min(1, dt * 6);
+    for (const f of this.flashers) f.level = Math.max(0, f.level - dt * 4);
+    if (this.show) {
+      this.show.t += dt;
+      if (this.show.t >= this.show.dur) this.show = null;
+    }
+    if (this.attract && !this.show) {
+      this.attractShow = (this.attractShow + 1) % ATTRACT_SHOWS.length;
+      this.lampShow(ATTRACT_SHOWS[this.attractShow], 3.2);
+    }
   }
 
   /** Called every physics substep. */
   substep(_dt: number) {}
+
+  lampShow(kind: ShowKind, dur = 1, x = TABLE_W / 2, y = 600) {
+    this.show = { kind, t: 0, dur, x, y };
+  }
+
+  flash(i: number, level = 1) {
+    const f = this.flashers[i];
+    if (f) f.level = Math.max(f.level, level);
+  }
+
+  flashAll(level = 1) {
+    for (let i = 0; i < this.flashers.length; i++) this.flash(i, level);
+  }
 
   inShooterLane(b: Ball) {
     const s = this.shooter;
@@ -70,6 +139,14 @@ export abstract class Table {
     this.rampCanvas = null;
   }
 
+  protected drawInserts(ctx: CanvasRenderingContext2D) {
+    for (const l of this.lamps) drawLampOff(ctx, l);
+  }
+
+  protected drawFlasherDomes(ctx: CanvasRenderingContext2D) {
+    for (const f of this.flashers) drawFlasherDome(ctx, f);
+  }
+
   private cache(k: number, fn: (ctx: CanvasRenderingContext2D) => boolean | void): HTMLCanvasElement | null {
     const c = document.createElement('canvas');
     c.width = Math.ceil(TABLE_W * k);
@@ -80,24 +157,91 @@ export abstract class Table {
     return used === false ? null : c;
   }
 
+  /** Effective light level including flicker. */
+  get light() {
+    let l = this.gi;
+    if (this.giFlicker > 0) {
+      const n = Math.sin(this.time * 31) * Math.sin(this.time * 17.3 + 1);
+      if (n > 0.55) l *= 1 - this.giFlicker * 0.75;
+    }
+    return l;
+  }
+
+  private forced(l: Lamp, i: number): boolean | undefined {
+    const s = this.show;
+    if (!s) return undefined;
+    const p = s.t / s.dur;
+    switch (s.kind) {
+      case 'sweepUp': {
+        const band = TABLE_H * (1.15 - p * 1.3);
+        return Math.abs(l.y - band) < 110;
+      }
+      case 'sweepDown': {
+        const band = TABLE_H * (-0.15 + p * 1.3);
+        return Math.abs(l.y - band) < 110;
+      }
+      case 'wipe': {
+        const band = TABLE_W * (-0.2 + ((p * 2) % 1) * 1.4);
+        return Math.abs(l.x - band) < 70;
+      }
+      case 'radial': {
+        const d = Math.hypot(l.x - s.x, l.y - s.y);
+        const r = p * 900;
+        return d < r && d > r - 160;
+      }
+      case 'strobe':
+        return Math.floor(s.t * 12) % 2 === 0;
+      case 'chase':
+        return Math.sin(s.t * 6 - i * 0.55) > 0.4;
+    }
+  }
+
   render(ctx: CanvasRenderingContext2D, k: number) {
+    art.k = k;
     if (k !== this.cacheK || !this.staticCanvas) {
       this.cacheK = k;
       this.staticCanvas = this.cache(k, (c) => this.drawStatic(c));
       this.rampCanvas = this.cache(k, (c) => this.drawRamps(c));
     }
     ctx.drawImage(this.staticCanvas!, 0, 0, TABLE_W, TABLE_H);
+    this.drawDynamic(ctx);
+
+    const light = this.light;
+    if (light < 0.995) {
+      ctx.fillStyle = `rgba(2,2,3,${(1 - light) * 0.82})`;
+      ctx.fillRect(0, 0, TABLE_W, TABLE_H);
+    }
+
     const t = this.time;
     this.lamps.forEach((l, i) => {
-      const forced = this.attract ? Math.sin(t * 5 - i * 0.6) > 0.3 : undefined;
-      drawLamp(ctx, l, t, forced);
+      const f = this.forced(l, i);
+      if (f ?? lampLit(l.state(), t)) drawLampLit(ctx, l);
     });
-    this.drawDynamic(ctx);
-    drawFlipper(ctx, this.flipperL, this.flipperColor);
-    drawFlipper(ctx, this.flipperR, this.flipperColor);
-    for (const b of this.world.balls) if (b.layer === FLOOR) drawBall(ctx, b);
+    for (const f of this.flashers) drawFlasherWash(ctx, f);
+
+    // Raised objects fade into the dark when the GI drops.
+    const dim = 0.25 + 0.75 * light;
+    ctx.globalAlpha = dim;
+    drawFlipper(ctx, this.flipperL, this.flipperStyle);
+    drawFlipper(ctx, this.flipperR, this.flipperStyle);
+    const list: Sprite[] = [];
+    this.sprites(list);
+    for (const b of this.world.balls) if (b.layer === FLOOR) list.push({ y: b.y, draw: (c) => this.drawBallLit(c, b, 0, dim) });
+    list.sort((a, b) => a.y - b.y);
+    for (const s of list) s.draw(ctx);
     if (this.rampCanvas) ctx.drawImage(this.rampCanvas, 0, 0, TABLE_W, TABLE_H);
-    for (const b of this.world.balls) if (b.layer === RAMP) drawBall(ctx, b);
+    ctx.globalAlpha = 1;
+    for (const b of this.world.balls) if (b.layer === RAMP) drawBall(ctx, b, this.ballZ(b));
+    ctx.globalAlpha = dim;
     this.drawTop(ctx);
+    ctx.globalAlpha = 1;
+    for (const f of this.flashers) drawFlasherLit(ctx, f);
+  }
+
+  /** Balls never fade with the GI; they'd vanish in a blackout. */
+  private drawBallLit(ctx: CanvasRenderingContext2D, b: Ball, z: number, dim: number) {
+    ctx.globalAlpha = 1;
+    drawBall(ctx, b, z);
+    ctx.globalAlpha = dim;
   }
 }

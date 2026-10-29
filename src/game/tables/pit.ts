@@ -4,8 +4,8 @@ import { drawGlow, withAlpha } from '../../engine/fx';
 import type { DMD } from '../../engine/dmd';
 import type { Game } from '../game';
 import { buildLowerSection, poly, type LowerSection, type P } from './geom';
-import { neonRail, rng, rubber, strokePath, type Lamp } from './draw';
-import { Table, TABLE_H, TABLE_W } from './table';
+import { GUIDE, box, drawBumper, lift, post, rng, slingshot, sprayText, strokePath, wall, type BumperStyle, type Lamp, type WallStyle } from './draw';
+import { Table, TABLE_H, TABLE_W, type Sprite } from './table';
 
 const RED = '#ff2a3d';
 const SODIUM = '#ff9a2a';
@@ -13,6 +13,27 @@ const WHITE = '#f4f4f4';
 const TEAL = '#29ffc6';
 const CX = 300;
 const FIGHT_Y = 330;
+
+const CAGE: WallStyle = { h: 40, w: 12, side: '#141210', top: '#3a3631', hi: '#8a847c' };
+const CROWD_BUMPER: BumperStyle = {
+  name: 'crowd',
+  base: '#2a2422',
+  body: '#7a1010',
+  cap: '#3a1616',
+  art: (g, r, lit) => {
+    // crude skull stencil
+    g.fillStyle = lit ? '#ffd9c0' : 'rgba(216,200,180,0.55)';
+    g.beginPath();
+    g.arc(0, -r * 0.12, r * 0.48, 0, Math.PI * 2);
+    g.fill();
+    g.fillRect(-r * 0.28, r * 0.2, r * 0.56, r * 0.3);
+    g.fillStyle = lit ? '#5a0c0c' : '#1a0a0a';
+    g.beginPath();
+    g.arc(-r * 0.18, -r * 0.12, r * 0.13, 0, Math.PI * 2);
+    g.arc(r * 0.18, -r * 0.12, r * 0.13, 0, Math.PI * 2);
+    g.fill();
+  },
+};
 
 const WALLS: P[] = [
   [42.5, 1240],
@@ -82,7 +103,7 @@ export class Pit extends Table {
   constructor(game: Game) {
     super(game);
     const w = this.world;
-    this.flipperColor = RED;
+    this.flipperStyle = { body: '#d8d0c4', rubber: '#1a1a1a' };
     poly(w, WALLS, { restitution: 0.4 });
     this.lower = buildLowerSection(w, CX, () => {
       this.game.addScore(1_010);
@@ -285,6 +306,8 @@ export class Pit extends Table {
 
   override update(dt: number) {
     super.update(dt);
+    this.giTarget = this.game.tilted ? 0 : 1;
+    this.giFlicker = this.state === 'telegraph' ? 0.35 : 0;
     if (this.jabFlash > 0) this.jabFlash -= dt;
     if (this.hookFlash > 0) this.hookFlash -= dt;
     if (this.invuln > 0) this.invuln -= dt;
@@ -383,18 +406,27 @@ export class Pit extends Table {
 
     // Wet concrete
     const bg = ctx.createRadialGradient(CX, 500, 50, CX, 600, 700);
-    bg.addColorStop(0, '#2a2526');
-    bg.addColorStop(1, '#0d0b0c');
+    bg.addColorStop(0, '#2c2826');
+    bg.addColorStop(1, '#0d0b0a');
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, TABLE_W, TABLE_H);
-    for (let i = 0; i < 1400; i++) {
-      ctx.fillStyle = `rgba(${R() < 0.5 ? '255,255,255' : '0,0,0'},${R() * 0.06})`;
+    for (let i = 0; i < 1800; i++) {
+      ctx.fillStyle = `rgba(${R() < 0.5 ? '255,255,255' : '0,0,0'},${R() * 0.07})`;
       ctx.fillRect(R() * TABLE_W, R() * TABLE_H, 2 + R() * 3, 2 + R() * 3);
     }
+    // Expansion joints
+    ctx.strokeStyle = 'rgba(0,0,0,0.45)';
+    ctx.lineWidth = 2;
+    for (let y = 380; y < TABLE_H; y += 160) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(TABLE_W, y);
+      ctx.stroke();
+    }
     // Cracks
-    ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+    ctx.strokeStyle = 'rgba(0,0,0,0.55)';
     ctx.lineWidth = 1.5;
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 14; i++) {
       let x = R() * TABLE_W;
       let y = 200 + R() * 900;
       ctx.beginPath();
@@ -406,13 +438,26 @@ export class Pit extends Table {
       }
       ctx.stroke();
     }
-    // Puddles with neon reflections
+    // Old blood, mopped badly
+    for (let i = 0; i < 7; i++) {
+      const x = 130 + R() * 340;
+      const y = 420 + R() * 420;
+      const r = 10 + R() * 30;
+      const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+      g.addColorStop(0, 'rgba(70,6,6,0.5)');
+      g.addColorStop(1, 'rgba(70,6,6,0)');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.ellipse(x, y, r * 1.6, r, R() * 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    // Puddles reflecting the sodium lamps
     for (const [x, y, rx, ry, col] of [
-      [150, 880, 70, 22, RED],
+      [150, 880, 70, 22, SODIUM],
       [430, 460, 60, 18, SODIUM],
-      [300, 980, 50, 14, TEAL],
+      [300, 980, 50, 14, RED],
     ] as [number, number, number, number, string][]) {
-      ctx.fillStyle = 'rgba(5,6,10,0.75)';
+      ctx.fillStyle = 'rgba(5,6,8,0.8)';
       ctx.beginPath();
       ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
       ctx.fill();
@@ -420,46 +465,33 @@ export class Pit extends Table {
       ctx.beginPath();
       ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
       ctx.clip();
-      ctx.fillStyle = withAlpha(col, 0.25);
+      ctx.fillStyle = withAlpha(col, 0.22);
       ctx.fillRect(x - rx * 0.6, y - ry, rx * 0.25, ry * 2);
       ctx.fillRect(x + rx * 0.1, y - ry, rx * 0.1, ry * 2);
       ctx.restore();
     }
 
-    // Ring markings
-    ctx.strokeStyle = withAlpha(WHITE, 0.16);
+    // Ring markings, half scuffed away
+    ctx.strokeStyle = withAlpha(WHITE, 0.13);
     ctx.lineWidth = 5;
+    ctx.setLineDash([60, 8, 30, 12]);
     ctx.beginPath();
     ctx.arc(CX, 560, 180, 0, Math.PI * 2);
     ctx.stroke();
-    ctx.strokeStyle = withAlpha(RED, 0.25);
+    ctx.setLineDash([]);
+    ctx.strokeStyle = withAlpha(RED, 0.2);
     ctx.lineWidth = 3;
     ctx.beginPath();
     ctx.arc(CX, 560, 168, 0, Math.PI * 2);
     ctx.stroke();
 
-    // Graffiti
-    ctx.save();
-    ctx.translate(CX, 600);
-    ctx.rotate(-0.12);
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.font = '900 92px "Arial Black", Impact, system-ui, sans-serif';
-    ctx.fillStyle = withAlpha(RED, 0.18);
-    ctx.fillText('THE PIT', 4, 4);
-    ctx.shadowColor = RED;
-    ctx.shadowBlur = 20;
-    ctx.strokeStyle = withAlpha(RED, 0.75);
-    ctx.lineWidth = 3;
-    ctx.strokeText('THE PIT', 0, 0);
-    ctx.shadowBlur = 0;
-    ctx.font = '700 16px "Courier New", monospace';
-    ctx.fillStyle = withAlpha(SODIUM, 0.6);
-    ctx.fillText('NO RULES · NO REFS · NO WAY OUT', 0, 62);
-    ctx.restore();
+    // Spray paint
+    sprayText(ctx, 'THE PIT', CX, 600, 92, '#9a1a1a', -0.12, 2);
+    sprayText(ctx, 'NO RULES  NO REFS  NO WAY OUT', CX, 668, 15, '#c9a070', -0.12, 7);
+    sprayText(ctx, 'LOSER PAYS', 170, 980, 14, '#c9c0b0', 0.2, 11);
 
     // Chain-link fence along the top
-    ctx.strokeStyle = 'rgba(160,170,180,0.18)';
+    ctx.strokeStyle = 'rgba(170,165,155,0.2)';
     ctx.lineWidth = 1.2;
     for (let x = -200; x < 800; x += 16) {
       ctx.beginPath();
@@ -482,52 +514,46 @@ export class Pit extends Table {
     }
 
     // Sodium lights
-    drawGlowStatic(ctx, 60, 340, 200, SODIUM, 0.25);
-    drawGlowStatic(ctx, 540, 340, 200, SODIUM, 0.25);
-    drawGlowStatic(ctx, CX, 200, 260, RED, 0.18);
+    drawGlowStatic(ctx, 60, 340, 220, SODIUM, 0.28);
+    drawGlowStatic(ctx, 540, 340, 220, SODIUM, 0.28);
+    drawGlowStatic(ctx, CX, 200, 260, RED, 0.12);
+    drawGlowStatic(ctx, CX, 900, 260, SODIUM, 0.08);
+    this.drawInserts(ctx);
 
-    // Apron
-    ctx.fillStyle = '#100c0d';
-    ctx.beginPath();
-    ctx.moveTo(42, 1110);
-    ctx.lineTo(CX - 60, 1150);
-    ctx.lineTo(CX + 60, 1150);
-    ctx.lineTo(558, 1110);
-    ctx.lineTo(558, 1200);
-    ctx.lineTo(42, 1200);
-    ctx.fill();
-    ctx.fillStyle = withAlpha(RED, 0.8);
+    ctx.fillStyle = withAlpha(TEAL, 0.55);
     ctx.font = '800 11px system-ui, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('UNDERGROUND FIGHT CLUB', CX, 1182);
-    ctx.fillStyle = withAlpha(TEAL, 0.6);
     ctx.fillText('JAB', 92, 490);
     ctx.fillText('HOOK', 508, 490);
     ctx.fillText('SUPER', CX, 776);
     ctx.restore();
 
-    neonRail(ctx, WALLS, RED);
-    for (const g of this.lower.guides) neonRail(ctx, g, SODIUM, 8);
-    for (const s of this.lower.slings) rubber(ctx, s, true, RED);
-    for (const [x, y] of POSTS) {
-      ctx.fillStyle = '#111';
-      ctx.beginPath();
-      ctx.arc(x, y, 12, 0, Math.PI * 2);
+    wall(ctx, WALLS, CAGE, true);
+    for (const g of this.lower.guides) wall(ctx, g, GUIDE);
+    for (const s of this.lower.slings) slingshot(ctx, s, '#5a1010', '#140606');
+    for (const [x, y] of POSTS) post(ctx, x, y, 12, '#1a1a1a', '#8a847c');
+    this.drawApron(ctx);
+  }
+
+  private drawApron(ctx: CanvasRenderingContext2D) {
+    const pts: P[] = [
+      [42, 1110],
+      [CX - 60, 1150],
+      [CX + 60, 1150],
+      [558, 1110],
+      [558, 1200],
+      [42, 1200],
+    ];
+    const lh = lift(16);
+    for (let i = 0; i <= 8; i++) {
+      strokePath(ctx, pts, true, (lh * i) / 8);
+      ctx.fillStyle = i === 8 ? '#1e1a19' : '#0c0a0a';
       ctx.fill();
-      ctx.strokeStyle = SODIUM;
-      ctx.lineWidth = 4;
-      ctx.stroke();
     }
-    for (const seg of [JAB, HOOK]) {
-      ctx.strokeStyle = '#111';
-      ctx.lineWidth = 14;
-      ctx.lineCap = 'round';
-      strokePath(ctx, seg);
-      ctx.stroke();
-      ctx.strokeStyle = TEAL;
-      ctx.lineWidth = 8;
-      ctx.stroke();
-    }
+    ctx.fillStyle = withAlpha(RED, 0.75);
+    ctx.font = '800 11px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('UNDERGROUND FIGHT CLUB', CX, 1182 - lh);
   }
 
   /** Brick wall above the cage, where the fight card hangs. */
@@ -557,7 +583,7 @@ export class Pit extends Table {
     shade.addColorStop(1, 'rgba(0,0,0,0.75)');
     ctx.fillStyle = shade;
     ctx.fillRect(0, 0, TABLE_W, 330);
-    drawGlowStatic(ctx, CX, 90, 240, RED, 0.22);
+    drawGlowStatic(ctx, CX, 90, 240, RED, 0.18);
     // Sign board
     ctx.fillStyle = 'rgba(5,5,8,0.85)';
     ctx.fillRect(110, 22, 380, 128);
@@ -569,7 +595,7 @@ export class Pit extends Table {
 
   protected override drawDynamic(ctx: CanvasRenderingContext2D) {
     const t = this.time;
-    // Fight card
+    // Fight card: the one neon sign down here
     ctx.save();
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -578,9 +604,9 @@ export class Pit extends Table {
     ctx.font = '700 15px system-ui, sans-serif';
     ctx.fillStyle = SODIUM;
     ctx.fillText(`ROUND ${this.level + 1}  ·  TONIGHT ONLY`, CX, 44);
-    ctx.font = '900 46px "Arial Black", Impact, system-ui, sans-serif';
+    ctx.font = '900 46px Impact, "Arial Black", system-ui, sans-serif';
     ctx.shadowColor = this.def.color;
-    ctx.shadowBlur = 18;
+    ctx.shadowBlur = 14;
     ctx.strokeStyle = this.def.color;
     ctx.lineWidth = 2.5;
     ctx.strokeText(this.def.name, CX, 90);
@@ -590,34 +616,30 @@ export class Pit extends Table {
     ctx.fillText(this.def.title, CX, 130);
     ctx.restore();
 
-    for (const c of this.crowd) {
-      const hit = Math.max(0, 1 - c.lastHit / 0.18);
-      ctx.fillStyle = '#1a1214';
-      ctx.beginPath();
-      ctx.arc(c.x, c.y, c.r + 3, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = hit > 0 ? WHITE : SODIUM;
-      ctx.lineWidth = 4;
-      ctx.stroke();
-      ctx.fillStyle = hit > 0 ? WHITE : '#5a2a10';
-      ctx.beginPath();
-      ctx.arc(c.x, c.y, c.r - 8, 0, Math.PI * 2);
-      ctx.fill();
-      drawGlow(ctx, c.x, c.y, c.r * 2.5, SODIUM, 0.3 + hit);
-    }
     if (this.jabFlash > 0) drawGlow(ctx, 67, 545, 60, TEAL, this.jabFlash * 2);
     if (this.hookFlash > 0) drawGlow(ctx, 533, 545, 60, TEAL, this.hookFlash * 2);
     this.drawPlayerHp(ctx, t);
   }
 
-  protected override drawTop(ctx: CanvasRenderingContext2D) {
-    this.drawFighter(ctx, this.time);
+  protected override sprites(out: Sprite[]) {
+    for (const c of this.crowd) {
+      const hit = Math.max(0, 1 - c.lastHit / 0.18);
+      out.push({ y: c.y, draw: (ctx) => drawBumper(ctx, c.x, c.y, c.r, CROWD_BUMPER, hit, SODIUM) });
+    }
+    for (const [seg, lit] of [
+      [JAB, this.jabFlash > 0],
+      [HOOK, this.hookFlash > 0],
+    ] as [P[], boolean][]) {
+      const x = Math.min(seg[0][0], seg[1][0]) - 4;
+      out.push({ y: seg[1][1], draw: (ctx) => box(ctx, x, seg[0][1], 18, seg[1][1] - seg[0][1], 22, lit ? '#d8fff2' : '#2a8a74', '#0c3a30') });
+    }
+    out.push({ y: FIGHT_Y + 34, draw: (ctx) => this.drawFighter(ctx, this.time) });
   }
 
   private drawPlayerHp(ctx: CanvasRenderingContext2D, t: number) {
     for (let i = 0; i < 3; i++) {
       const x = CX - 30 + i * 30;
-      const y = 1132;
+      const y = 1132 - lift(16);
       const on = i < this.playerHp;
       ctx.save();
       ctx.translate(x, y);

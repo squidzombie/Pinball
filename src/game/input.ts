@@ -5,7 +5,8 @@ const LEFT = new Set(['KeyZ', 'ShiftLeft', 'ArrowLeft', 'KeyA']);
 const RIGHT = new Set(['Slash', 'ShiftRight', 'ArrowRight', 'KeyL']);
 const PLUNGER = new Set(['Space', 'ArrowDown', 'Enter', 'NumpadEnter']);
 
-export function bindInput(game: Game, canvas: HTMLCanvasElement) {
+/** `toggleView` flips between the tilted cabinet view and a flat top-down one. */
+export function bindInput(game: Game, toggleView: () => void) {
   window.addEventListener('keydown', (e) => {
     if (e.repeat) {
       if (LEFT.has(e.code) || RIGHT.has(e.code) || PLUNGER.has(e.code)) e.preventDefault();
@@ -20,6 +21,7 @@ export function bindInput(game: Game, canvas: HTMLCanvasElement) {
     else if (e.code === 'KeyM') sound.setMuted(!sound.muted);
     else if (e.code === 'KeyP' || e.code === 'Escape') game.togglePause();
     else if (e.code === 'KeyS') game.start();
+    else if (e.code === 'KeyV') toggleView();
     else return;
     e.preventDefault();
   });
@@ -29,12 +31,12 @@ export function bindInput(game: Game, canvas: HTMLCanvasElement) {
     else if (PLUNGER.has(e.code)) game.setPlunger(false);
   });
 
-  // Touch / mouse: left half = left flipper, right half = right flipper.
+  // Touch / mouse anywhere on screen: left half = left flipper, right half = right flipper.
   // While a ball waits in the shooter lane, the right half pulls the plunger.
   const active = new Map<number, 'L' | 'R' | 'P'>();
-  canvas.addEventListener('pointerdown', (e) => {
+  window.addEventListener('pointerdown', (e) => {
+    if ((e.target as Element | null)?.closest?.('button')) return;
     e.preventDefault();
-    canvas.setPointerCapture(e.pointerId);
     sound.unlock();
     if (game.paused) {
       game.togglePause();
@@ -44,8 +46,7 @@ export function bindInput(game: Game, canvas: HTMLCanvasElement) {
       game.start();
       return;
     }
-    const rect = canvas.getBoundingClientRect();
-    const right = e.clientX - rect.left > rect.width / 2;
+    const right = e.clientX > window.innerWidth / 2;
     if (right && game.ballInShooter() && game.active === game.main) {
       active.set(e.pointerId, 'P');
       game.setPlunger(true);
@@ -61,9 +62,9 @@ export function bindInput(game: Game, canvas: HTMLCanvasElement) {
     if (what === 'P') game.setPlunger(false);
     else if (![...active.values()].includes(what)) game.setFlipper(what === 'L' ? -1 : 1, false);
   };
-  canvas.addEventListener('pointerup', release);
-  canvas.addEventListener('pointercancel', release);
-  canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+  window.addEventListener('pointerup', release);
+  window.addEventListener('pointercancel', release);
+  window.addEventListener('contextmenu', (e) => e.preventDefault());
 
   // Shake the phone to nudge.
   let lastShake = 0;

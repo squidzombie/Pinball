@@ -4,14 +4,10 @@ import { DMD } from '../engine/dmd';
 import { FX } from '../engine/fx';
 import { Foundry } from './tables/foundry';
 import { Pit } from './tables/pit';
+import { fmt, short } from './format';
 import { TABLE_H, TABLE_W, type Table } from './tables/table';
 
 export type GameState = 'attract' | 'play' | 'bonus' | 'over';
-
-export const VIEW_W = TABLE_W;
-export const DMD_H_PX = 150;
-export const TABLE_Y = 160;
-export const VIEW_H = TABLE_Y + TABLE_H;
 
 const BALLS_PER_GAME = 3;
 const BALL_SAVE_SECONDS = 12;
@@ -33,8 +29,6 @@ interface Transition {
   midDone: boolean;
 }
 
-const fmt = (n: number) => n.toLocaleString('en-US');
-const short = (n: number) => (n >= 1e6 ? `${+(n / 1e6).toFixed(1)}M` : n >= 1000 ? `${Math.round(n / 1000)}K` : `${n}`);
 
 export class Game {
   fx = new FX();
@@ -146,7 +140,7 @@ export class Game {
       this.pit.world.balls = [];
       this.active = this.main;
       this.dmd.color = [255, 140, 26];
-      sound.playMusic('main');
+      this.main.music();
       if (won) {
         this.pitLevel++;
         if (this.pitLevel === 2) {
@@ -212,6 +206,7 @@ export class Game {
     if (this.tiltMeter > 3.6) {
       this.tilted = true;
       this.flipperRelease();
+      this.main.endModes(true);
       this.show('TILT', 'BALL LOST', 3, true);
       sound.drain();
     } else if (this.tiltMeter > 2.4) {
@@ -258,7 +253,7 @@ export class Game {
     this.main.multiball = false;
     this.flipperRelease();
     this.main.addBall(this.main.shooter!.x, this.main.shooter!.y);
-    sound.playMusic('main');
+    this.main.music();
   }
 
   private fire(pull: number) {
@@ -313,6 +308,7 @@ export class Game {
   }
 
   private endBall() {
+    this.main.endModes(true);
     this.main.endMultiball();
     this.state = 'bonus';
     this.stateT = 0;
@@ -467,45 +463,42 @@ export class Game {
 
   // ------------------------------------------------------------ render
 
-  render(ctx: CanvasRenderingContext2D, cw: number, ch: number, dpr: number) {
-    const scale = Math.min(cw / VIEW_W, ch / VIEW_H);
-    const ox = (cw - VIEW_W * scale) / 2;
-    const oy = (ch - VIEW_H * scale) / 2;
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
+  /** Draw the playfield into a canvas of TABLE_W x TABLE_H units at k device px per unit. */
+  renderTable(ctx: CanvasRenderingContext2D, k: number) {
+    ctx.setTransform(k, 0, 0, k, 0, 0);
     ctx.fillStyle = '#000';
-    ctx.fillRect(0, 0, cw * dpr, ch * dpr);
-    ctx.setTransform(scale * dpr, 0, 0, scale * dpr, ox * dpr, oy * dpr);
-    const k = scale * dpr;
-
-    // DMD
-    ctx.fillStyle = '#0b0b0d';
-    ctx.fillRect(0, 0, VIEW_W, DMD_H_PX);
-    this.renderDMD();
-    this.dmd.render(ctx, 8, 6, VIEW_W - 16, DMD_H_PX - 12, k);
-
-    // Table
+    ctx.fillRect(0, 0, TABLE_W, TABLE_H);
     ctx.save();
-    ctx.beginPath();
-    ctx.rect(0, TABLE_Y, TABLE_W, TABLE_H);
-    ctx.clip();
     const sx = (Math.random() - 0.5) * this.shake;
     const sy = (Math.random() - 0.5) * this.shake;
-    ctx.translate(sx, TABLE_Y + sy);
+    ctx.translate(sx, sy);
     this.active.render(ctx, k);
     this.fx.draw(ctx);
 
     if (this.flash.a > 0) {
       ctx.globalCompositeOperation = 'lighter';
-      ctx.globalAlpha = this.flash.a * 0.5;
+      ctx.globalAlpha = this.flash.a * 0.45;
       ctx.fillStyle = this.flash.color;
       ctx.fillRect(-20, -20, TABLE_W + 40, TABLE_H + 40);
       ctx.globalAlpha = 1;
       ctx.globalCompositeOperation = 'source-over';
     }
     if (this.transition) this.renderTransition(ctx);
-    if (this.state === 'attract') this.renderAttract(ctx);
-    if (this.paused) this.renderBanner(ctx, 'PAUSED', 'P / tap to resume');
     ctx.restore();
+  }
+
+  /** Draw the dot-matrix display into a w x h CSS-pixel area. */
+  renderDMD(ctx: CanvasRenderingContext2D, w: number, h: number, dpr: number) {
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.fillStyle = '#060606';
+    ctx.fillRect(0, 0, w, h);
+    this.composeDMD();
+    const pad = Math.max(3, w * 0.015);
+    this.dmd.render(ctx, pad, pad, w - pad * 2, h - pad * 2, dpr);
+  }
+
+  get transitioning() {
+    return !!this.transition;
   }
 
   private renderTransition(ctx: CanvasRenderingContext2D) {
@@ -514,16 +507,20 @@ export class Game {
     const cover = p < 0.5 ? p * 2 : (1 - p) * 2; // 0 -> 1 -> 0
     const e = cover * cover * (3 - 2 * cover);
     const h = TABLE_H * e;
-    ctx.fillStyle = '#050507';
+    ctx.fillStyle = '#070606';
     if (tr.down) ctx.fillRect(0, 0, TABLE_W, h);
     else ctx.fillRect(0, TABLE_H - h, TABLE_W, h);
-    // grate bars
-    ctx.fillStyle = '#1b1f26';
+    // freight elevator grate
+    ctx.fillStyle = '#2a2622';
     for (let x = 10; x < TABLE_W; x += 40) {
       if (tr.down) ctx.fillRect(x, 0, 14, h);
       else ctx.fillRect(x, TABLE_H - h, 14, h);
     }
-    ctx.fillStyle = tr.down ? '#ff2a3d' : '#00e5ff';
+    ctx.fillStyle = '#4a4038';
+    for (let y = 30; y < TABLE_H; y += 120) {
+      if (tr.down ? y < h : y > TABLE_H - h) ctx.fillRect(0, y, TABLE_W, 6);
+    }
+    ctx.fillStyle = tr.down ? '#b3261e' : '#d9a441';
     ctx.fillRect(0, tr.down ? h - 6 : TABLE_H - h, TABLE_W, 6);
     if (e > 0.6) {
       ctx.globalAlpha = (e - 0.6) / 0.4;
@@ -532,54 +529,20 @@ export class Game {
     }
   }
 
-  private renderAttract(ctx: CanvasRenderingContext2D) {
-    const a = 0.5 + 0.5 * Math.sin(this.time * 3);
-    ctx.fillStyle = 'rgba(0,0,0,0.62)';
-    ctx.fillRect(0, 0, TABLE_W, TABLE_H);
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.font = '900 64px "Arial Black", Impact, system-ui, sans-serif';
-    ctx.shadowColor = '#ff2bd6';
-    ctx.shadowBlur = 30;
-    ctx.fillStyle = '#ffffff';
-    ctx.fillText('NEON', TABLE_W / 2, 420);
-    ctx.shadowColor = '#00e5ff';
-    ctx.font = '900 54px "Arial Black", Impact, system-ui, sans-serif';
-    ctx.fillText('FOUNDRY', TABLE_W / 2, 485);
-    ctx.shadowBlur = 0;
-    ctx.globalAlpha = 0.4 + a * 0.6;
-    ctx.font = '800 24px system-ui, sans-serif';
-    ctx.fillStyle = '#ffd000';
-    ctx.fillText('TAP OR PRESS ENTER TO PLAY', TABLE_W / 2, 600);
-    ctx.globalAlpha = 1;
-    ctx.font = '600 16px system-ui, sans-serif';
-    ctx.fillStyle = '#c9d4e0';
-    const lines = [
-      'FLIPPERS  ·  Z / ← / left Shift   and   / / → / right Shift',
-      'PLUNGER  ·  hold Space or ↓, release to launch',
-      'NUDGE  ·  X        MUTE  ·  M        PAUSE  ·  P',
-      'TOUCH  ·  left / right half of the screen',
-    ];
-    lines.forEach((l, i) => ctx.fillText(l, TABLE_W / 2, 680 + i * 28));
-  }
-
   private renderBanner(ctx: CanvasRenderingContext2D, title: string, sub: string, red = false) {
     ctx.fillStyle = 'rgba(0,0,0,0.6)';
     ctx.fillRect(0, 520, TABLE_W, 150);
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.font = '900 60px "Arial Black", Impact, system-ui, sans-serif';
-    ctx.shadowColor = red ? '#ff2a3d' : '#00e5ff';
-    ctx.shadowBlur = 24;
-    ctx.fillStyle = '#fff';
+    ctx.font = '900 64px Impact, "Arial Black", system-ui, sans-serif';
+    ctx.fillStyle = red ? '#e8dccb' : '#fff';
     ctx.fillText(title, TABLE_W / 2, 575);
-    ctx.shadowBlur = 0;
     ctx.font = '700 20px system-ui, sans-serif';
-    ctx.fillStyle = red ? '#ff9a2a' : '#c9d4e0';
+    ctx.fillStyle = red ? '#d9a441' : '#c9d4e0';
     ctx.fillText(sub, TABLE_W / 2, 635);
   }
 
-  private renderDMD() {
+  private composeDMD() {
     const d = this.dmd;
     d.clear();
     const m = this.msg;
@@ -596,7 +559,7 @@ export class Game {
       return;
     }
     if (this.state === 'attract') {
-      const page = Math.floor(this.time / 3) % (this.lastScore ? 4 : 3);
+      const page = Math.floor(this.time / 3) % (this.lastScore ? 5 : 4);
       if (page === 0) {
         d.fitText('NEON FOUNDRY', 64, 3, 126, 2, { align: 'center' });
         d.text('SQUIDZOMBIE PINBALL', 64, 22, { align: 'center', level: 2 });
@@ -604,6 +567,10 @@ export class Game {
         d.fitText('PRESS START', 64, 3, 126, 2, { align: 'center' });
         d.text('TAP OR PRESS ENTER', 64, 22, { align: 'center', level: 2 });
       } else if (page === 2) {
+        d.text('SPELL H-I-T FOR A JOB', 64, 4, { align: 'center', level: 3 });
+        d.text('FINISH ALL FIVE TO', 64, 14, { align: 'center', level: 2 });
+        d.text('BURN IT DOWN', 64, 23, { align: 'center', level: 3 });
+      } else if (page === 3) {
         d.text('HIGH SCORE', 64, 2, { align: 'center', level: 2 });
         d.fitText(fmt(this.highScore), 64, 13, 124, 2, { align: 'center' });
       } else {
@@ -628,19 +595,6 @@ export class Game {
       this.pit.drawDMD(d, this.score);
       return;
     }
-    d.fitText(fmt(this.score), 64, 3, 126, 2, { align: 'center' });
-    d.text(`BALL ${this.ball}`, 1, 24, { level: 2 });
-    const f = this.main;
-    const status = f.multiball
-      ? `JP ${short(f.jackpot)}`
-      : f.meltdownReady
-        ? 'MELTDOWN'
-        : f.pitLit
-          ? 'PIT OPEN'
-          : this.ballSave > 0 && !this.ballInShooter()
-            ? 'SAVE'
-            : `${this.bonusMult}X`;
-    d.text(status, 127, 24, { align: 'right', level: 2 });
-    if (this.ballInShooter()) d.text('LAUNCH', 64, 24, { align: 'center', level: Math.floor(this.time * 3) % 2 ? 3 : 1 });
+    this.main.drawDMD(d);
   }
 }

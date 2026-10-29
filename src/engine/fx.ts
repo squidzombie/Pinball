@@ -95,6 +95,22 @@ export class FX {
     });
   }
 
+  /** Glowing ember drifting up off molten metal. */
+  ember(x: number, y: number) {
+    this.particles.push({
+      x,
+      y,
+      vx: (Math.random() - 0.5) * 30,
+      vy: -20 - Math.random() * 40,
+      life: 0,
+      max: 0.8 + Math.random() * 1.2,
+      color: Math.random() < 0.7 ? '#ff8a2a' : '#ffd27a',
+      size: 1.2 + Math.random() * 1.6,
+      drag: 0.4,
+      grav: -15,
+    });
+  }
+
   popup(x: number, y: number, text: string, color = '#ffffff', size = 22) {
     this.popups.push({ x, y, text, color, life: 0, size });
   }

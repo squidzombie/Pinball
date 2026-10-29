@@ -34,6 +34,35 @@ const TRACKS: Record<string, Track> = {
     drive: 14,
     cutoff: 900,
   },
+  mode: {
+    bpm: 120,
+    bass: [26, null, 26, 26, 38, null, 26, null, 29, null, 29, 41, null, 31, 33, null],
+    lead: [null, null, 62, null, null, 65, null, null, 69, null, 68, null, 65, null, null, null],
+    kick: 'x...x...x...x...',
+    snare: '....x.......x..x',
+    hat: 'x.x.x.x.x.x.x.xx',
+    drive: 18,
+    cutoff: 700,
+  },
+  blackout: {
+    bpm: 96,
+    bass: [24, null, null, null, null, null, 24, null, 27, null, null, null, 26, null, null, null],
+    kick: 'x.......x..x....',
+    snare: '........x.......',
+    hat: '..x...x...x...x.',
+    drive: 4,
+    cutoff: 300,
+  },
+  wizard: {
+    bpm: 144,
+    bass: [28, 28, 40, 28, 31, 31, 43, 31, 33, 33, 45, 33, 35, 35, 47, 38],
+    lead: [76, 74, 71, 74, 76, null, 79, 76, 81, null, 79, 76, 74, null, 71, 69],
+    kick: 'x.x.x.x.x.x.x.x.',
+    snare: '....x.......x...',
+    hat: 'xxxxxxxxxxxxxxxx',
+    drive: 30,
+    cutoff: 1400,
+  },
   pit: {
     bpm: 140,
     bass: [33, null, 33, 33, 45, null, 33, null, 36, null, 36, 48, null, 34, 35, null],
@@ -221,6 +250,15 @@ export class Sound {
   }
   ascend() {
     this.tone(80, 0.9, 'sawtooth', 0.1, 700);
+  }
+  modeStart() {
+    this.tone(55, 0.6, 'sawtooth', 0.22, 40);
+    this.noise(0.5, 0.3, 200, 'lowpass', 1);
+    [196, 247, 294, 392].forEach((f, i) => this.tone(f, 0.18, 'square', 0.08, undefined, 0.15 + i * 0.09));
+  }
+  modeEnd(completed: boolean) {
+    if (completed) [523, 659, 784, 1046, 1318].forEach((f, i) => this.tone(f, 0.16, 'square', 0.08, undefined, i * 0.07));
+    else [392, 330, 262, 196].forEach((f, i) => this.tone(f, 0.2, 'sawtooth', 0.08, undefined, i * 0.1));
   }
   tick() {
     this.tone(1500, 0.03, 'square', 0.05);

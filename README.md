@@ -6,17 +6,45 @@ wrapped as a native iPhone app later.
 
 ## Table 1: Neon Foundry
 
-An industrial cyberpunk table with a second, underground level.
+A grimy industrial table about a foundry run by the Syndicate, with an underground fight
+club below it. Rust, soot, sodium light and molten metal, with neon only where a real sign
+would be. It's drawn as a tilted 3D cabinet: the playfield leans away from you under an
+upright dot-matrix display, and every wall, post, bumper, target and ramp has height.
 
-**The Foundry (main playfield)**
+### Jobs (modes)
+
+Jobs work like the modes on a 90s machine. Light one, start it at the scoop, and the table
+changes. Specific shots light in the job's colour, a clock runs (shown on the DMD and in the
+ring of lamps on the job board), and the lit shots pay the job's own scaled values.
+
+1. **Light a job**: spell **H-I-T** on the three standups beside the ramp. The first job of each game comes lit.
+2. **Start it**: shoot the **scoop**. While the ball is held, the flippers choose which unplayed job to take.
+3. **Play it**: hit the lit shots before the clock runs out. Finish the objective for a completion bonus.
+
+| Job | Style | What to shoot |
+| --- | --- | --- |
+| **Shakedown** | moving target | One lit shot that moves every 4 s. 600K, +300K each. Collect 5 for **PAID IN FULL** (+2.5M). |
+| **Hot Metal** | hurry-up | Ramp or right orbit, starting at 5M and cooling toward 1M. Then **pour it** at the scoop for double. |
+| **Blood Money** | collect all | All six field shots are lit and each pays once, 750K climbing by 250K. Take all six for **CLEAN SWEEP** (+5M). |
+| **Blackout** | lights out | The GI goes dark. Chain the orbits, ramp and reactor within 6 s for 1M × chain (up to 5X). |
+| **Sabotage** | build & cash | Targets and bumpers build a charge, and the scoop detonates it. Detonate twice for **TOTAL SABOTAGE**. |
+
+- **RIOT** (lanes): roll the **R-I-O-T** in/outlanes (flippers change the lit lanes) to start a 20-second
+  frenzy where every switch scores. It runs alongside a job, and relighting it adds time.
+- **BURN IT DOWN** (wizard mode): play all five jobs to light it at the scoop. It's a 4-ball multiball where
+  every field shot is a jackpot and collecting all six lights a super jackpot at the scoop. Afterwards the
+  job board resets and everything is worth 1.5X more.
+
+### The rest of the Foundry
+
 - **A-M-P lanes**: roll through all three to raise the end-of-ball bonus multiplier (up to 6X). Flippers change the lit lanes.
 - **Skill shot**: plunge into the flashing top lane for 250K.
-- **Reactor bumpers**: every 30 hits overloads the reactor and raises bumper value.
+- **Reactor bumpers** over the furnace: every 30 hits overloads the reactor and raises bumper value.
 - **Conveyor ramp** (right flipper): 3 ramps light **MELTDOWN**; shoot it again for 3-ball multiball.
   During multiball, the ramp and both orbits score growing **jackpots**; 3 jackpots light the
   **super jackpot** at the scoop.
 - **Orbits**: the left orbit (right flipper) and right orbit (left flipper). Major shots made in quick succession build **combos**.
-- **Drop targets**: complete the bank to **open the Pit**, then shoot the scoop.
+- **Drop targets**: complete the bank to **open the Pit**, then shoot the scoop (not during a job).
 
 **The Pit (lower level)**: an underground street fight.
 - The fighter paces across the ring. Hitting him lands punches; knock his health to zero for a K.O.
@@ -36,6 +64,7 @@ An industrial cyberpunk table with a second, underground level.
 | Start | `Enter` | tap |
 | Nudge | `X` | shake the phone |
 | Mute / Pause | `M` / `P` | 🔊 button |
+| Flat / tilted view | `V` (or add `?flat` to the URL) | |
 
 ## Development
 
@@ -43,6 +72,7 @@ An industrial cyberpunk table with a second, underground level.
 npm install
 npm run dev        # local dev server (also reachable from your phone on the same Wi-Fi)
 npm run build      # typecheck + production build into dist/
+npm test           # rule tests for the job / riot / wizard mode system
 npm run sim        # headless soak test: a bot plays and checks for physics leaks
 npx tsx scripts/shotmap.ts   # which shots each flipper can reach
 ```
@@ -52,13 +82,17 @@ No game engine or runtime dependencies: TypeScript, Canvas 2D and Web Audio.
 ```
 src/
   engine/   physics (custom fixed-step pinball solver), dot-matrix display, synth audio, effects
-  game/     game flow, scoring, input
+  game/     game flow, scoring, input, modes (jobs / riot / wizard)
   game/tables/  one file per playfield: geometry + rules + art
 ```
 
 The physics runs at 480 Hz with layered collision so ramps can pass over the floor, and kinematic
-flippers transfer real surface velocity to the ball. All art and sound is generated in code. There
-are no asset files yet, so swapping in real artwork later is straightforward.
+flippers transfer real surface velocity to the ball. Physics is flat 2D. The renderer fakes height
+with an oblique 3/4 projection (`lift()` in `draw.ts`), and the CSS 3D tilt in `main.ts` supplies the
+perspective. Raised objects are depth-sorted against the ball, and the lighting is layered:
+general illumination (which modes can dim or flicker), insert lamps with lamp shows, and flashers.
+All art and sound is generated in code. There are no asset files yet, so swapping in real artwork
+later is straightforward.
 
 ## Putting it on squidzombie.com
 

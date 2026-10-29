@@ -9,7 +9,7 @@ let first = '';
 const note = (k: string) => {
   if (!first) first = k;
 };
-for (const name of ['shot', 'hitDrop', 'hitReactor', 'enterScoop', 'hitBumper', 'hitLane']) {
+for (const name of ['shot', 'hitDrop', 'hitReactor', 'hitStandup', 'enterScoop', 'hitBumper', 'hitLane']) {
   const orig = m[name].bind(g.main);
   m[name] = (...a: unknown[]) => {
     note(name === 'shot' ? String(a[0]) : name);
