@@ -31,6 +31,9 @@ const SHOT_POS: Record<Shot, P> = {
 
 /** Ramp layer for each ramp: the Black Market crosses above the Skyway's footprint, so it gets its own. */
 const RAMP_LAYER = [RAMP, RAMP2];
+/** Everything a ball's `tags.ramp` can point at (1-based): the two ramps, then the Back Alley's exit chute. */
+const RAMP_DEFS = [...L.RAMPS, L.ALLEY_EXIT];
+const EXIT_RAMP = RAMP_DEFS.length;
 
 interface Drop {
   seg: Segment;
@@ -57,6 +60,9 @@ export class Psychosis extends Table {
   bumpers: Circle[] = [];
   drops: Drop[] = [];
   standups: Segment[] = [];
+  /** SAFE (under the Breach) and VENT (under the Reactor). */
+  flanks: Segment[] = [];
+  private flankFlash = [0, 0];
   /** Captive ball in the Reactor channel: position along the axis and speed. */
   captive: { c: Circle; s: number; v: number };
   private coreFlash = 0;
@@ -131,9 +137,19 @@ export class Psychosis extends Table {
     poly(w, L.IMPOUND_BOX, { restitution: 0.3 }, true);
     poly(w, L.MACHINE, { restitution: 0.3 }, true);
     poly(w, L.UPPER_LEFT, { restitution: 0.3 });
+    w.seg(L.TOP_GATE[0][0], L.TOP_GATE[0][1], L.TOP_GATE[1][0], L.TOP_GATE[1][1], { oneWay: true, restitution: 0.25 });
     poly(w, L.TOP_GUIDE, { restitution: 0.25 });
-    poly(w, L.LEFT_MASS, { restitution: 0.35 }, true);
+    poly(w, L.LEFT_MASS_WALL, { restitution: 0.35 });
     w.seg(L.DUCT_GATE[0][0], L.DUCT_GATE[0][1], L.DUCT_GATE[1][0], L.DUCT_GATE[1][1], { oneWay: true, restitution: 0.25 });
+    // Guards at the side lanes
+    for (const g of [L.GUARD_L, L.GUARD_R]) {
+      poly(w, g, { restitution: 0.6 });
+      w.circle(g[1][0], g[1][1], 4, { restitution: 0.6 });
+    }
+    // Flank standups in what used to be dead zones: SAFE under the Breach, VENT under the Reactor
+    [L.SAFE, L.REACTOR.vent].forEach(([a, b], i) => {
+      this.flanks.push(w.seg(a[0], a[1], b[0], b[1], { restitution: 0.35, onHit: (h) => h.speed > 70 && this.hitFlank(i) }));
+    });
 
     // Breach: cup, the scoop housing, and two banks of standups
     poly(w, L.BREACH_CUP, { restitution: 0.25 });
@@ -154,7 +170,8 @@ export class Psychosis extends Table {
 
     // Reactor: shell, funnel, captive ball channel, drop targets across the mouth
     const R = L.REACTOR;
-    poly(w, R.shell, { restitution: 0.4 });
+    poly(w, [...R.shell.slice(0, -1), R.vent[0]], { restitution: 0.4 });
+    poly(w, [R.vent[1], R.shell[R.shell.length - 1]], { restitution: 0.4 });
     poly(w, [R.mouthL, R.channelL0, R.lipL], { restitution: 0.3 });
     poly(w, [R.mouthR, R.channelR0, R.lipR], { restitution: 0.3 });
     poly(w, [R.channelL0, R.channelL1, R.channelR1, R.channelR0], { restitution: 0.3 });
@@ -178,7 +195,7 @@ export class Psychosis extends Table {
     // Ramps: their walls live on their own layer; their foot blocks the floor.
     L.RAMPS.forEach((r, idx) => {
       const layer = RAMP_LAYER[idx];
-      poly(w, r.walls.left, { layers: layer, restitution: 0.3, friction: 0.02 });
+      for (const part of r === L.MARKET ? L.MARKET_OUTER : [r.walls.left]) poly(w, part, { layers: layer, restitution: 0.3, friction: 0.02 });
       poly(w, r.walls.right, { layers: layer, restitution: 0.3, friction: 0.02 });
       poly(w, r.walls.left.slice(0, r.baseTo + 1), { restitution: 0.35 });
       poly(w, r.walls.right.slice(0, r.baseTo + 1), { restitution: 0.35 });
@@ -210,6 +227,21 @@ export class Psychosis extends Table {
         ),
       );
     });
+
+    // Back Alley exit: a ball falling down the right leg drops into the chute to the market's wire.
+    poly(w, L.CHUTE.left, { layers: RAMP2, restitution: 0.3, friction: 0.02 });
+    poly(w, L.CHUTE.right, { layers: RAMP2, restitution: 0.3, friction: 0.02 });
+    const [ca, cb] = L.CHUTE.entry;
+    w.lineSensors.push(
+      new LineSensor(ca[0], ca[1], cb[0], cb[1], (b, dir) => {
+        if (dir < 0 && b.layer === FLOOR) {
+          b.layer = RAMP2;
+          b.tags.ramp = EXIT_RAMP;
+          b.tags.ri = 0;
+          b.tags.made = 1;
+        }
+      }),
+    );
 
     this.lower = buildLowerSection(w, L.CX, () => {
       this.game.addScore(1_010);
@@ -304,6 +336,16 @@ export class Psychosis extends Table {
     const ba = L.BREACH_AXIS;
     arrow('breach', L.BREACH[0] + ba[0] * 150, L.BREACH[1] + ba[1] * 150, dirAngle([-ba[0], -ba[1]]));
     jp('breach', L.BREACH[0] + ba[0] * 70, L.BREACH[1] + ba[1] * 70);
+    // Duct: lit when an upper flipper shot is wanted
+    lamp({ kind: 'arrow', x: 43, y: 620, w: 22, h: 30, angle: 0, color: INS.white, state: () => (this.shotLamp('alley') || this.shotLamp('market') ? 2 : 0) });
+    // SAFE and VENT inserts in front of their targets
+    [L.SAFE, L.REACTOR.vent].forEach(([a, b], i) => {
+      const mx = (a[0] + b[0]) / 2;
+      const my = (a[1] + b[1]) / 2;
+      const nx = (b[1] - a[1]) / Math.hypot(b[0] - a[0], b[1] - a[1]);
+      const ny = -(b[0] - a[0]) / Math.hypot(b[0] - a[0], b[1] - a[1]);
+      lamp({ kind: 'circle', x: mx + nx * 16, y: my + ny * 16, w: 13, color: INS.red, label: i === 0 ? 'S' : 'V', labelSize: 8, state: () => (this.flankFlash[i] > 0 ? 3 : 0) });
+    });
     const ra = L.REACTOR_AXIS;
     arrow('reactor', L.REACTOR_MOUTH[0] - ra[0] * 74, L.REACTOR_MOUTH[1] - ra[1] * 74, dirAngle(ra));
 
@@ -599,6 +641,19 @@ export class Psychosis extends Table {
     this.flash(4, 0.7);
     this.flash(0, 0.5);
     this.majorShot('alley', 75_000, b);
+  }
+
+  /** SAFE or VENT: an ordinary switch for now; Hack will use them as remote keys. */
+  private hitFlank(i: number) {
+    this.flankFlash[i] = 0.5;
+    this.sw('standup');
+    const [a, b] = i === 0 ? L.SAFE : L.REACTOR.vent;
+    const x = (a[0] + b[0]) / 2;
+    const y = (a[1] + b[1]) / 2;
+    this.game.addScore(25_000, x, y);
+    this.cash += 10_000;
+    this.game.fx.sparks(x, y, INS.red, 8, 300);
+    sound.target();
   }
 
   /** Up the duct to the upper flippers. */
@@ -1073,7 +1128,7 @@ export class Psychosis extends Table {
   private rampForce(b: Ball, dt: number) {
     const idx = (b.tags.ramp ?? 0) - 1;
     if (b.layer === FLOOR || idx < 0) return;
-    const r = L.RAMPS[idx];
+    const r = RAMP_DEFS[idx];
     const path = r.path;
     let i = b.tags.ri ?? 0;
     // walk the nearest path index (balls move a few units per step)
@@ -1098,7 +1153,15 @@ export class Psychosis extends Table {
       b.tags.diverted = 1;
       if (this.canLock()) this.lockBall(b);
     }
-    if (i >= path.length - 4) {
+    if (i >= path.length - L.RAMP_LANDING) {
+      // Off the wire and down the inlane, moving the way the wire was pointing.
+      const n = path.length;
+      const dx = path[n - 1][0] - path[n - 3][0];
+      const dy = path[n - 1][1] - path[n - 3][1];
+      const dl = Math.hypot(dx, dy) || 1;
+      const sp = Math.min(L.LANDING_SPEED, Math.max(0, (b.vx * dx + b.vy * dy) / dl));
+      b.vx = (dx / dl) * sp;
+      b.vy = (dy / dl) * sp;
       b.layer = FLOOR;
       b.tags.ramp = 0;
       b.tags.diverted = 0;
@@ -1108,7 +1171,7 @@ export class Psychosis extends Table {
   override ballZ(b: Ball) {
     const idx = (b.tags.ramp ?? 0) - 1;
     if (idx < 0) return 0;
-    return L.RAMPS[idx].z[b.tags.ri ?? 0] ?? 0;
+    return RAMP_DEFS[idx].z[b.tags.ri ?? 0] ?? 0;
   }
 
   override substep(dt: number) {
@@ -1155,6 +1218,7 @@ export class Psychosis extends Table {
     if (this.coreFlash > 0) this.coreFlash = Math.max(0, this.coreFlash - dt * 3);
     if (this.skillT > 0) this.skillT -= dt;
     for (let i = 0; i < 6; i++) this.standupWobble[i] = Math.max(0, this.standupWobble[i] - dt * 4);
+    for (let i = 0; i < 2; i++) this.flankFlash[i] = Math.max(0, this.flankFlash[i] - dt);
     for (const d of this.drops) d.anim += ((d.down ? 1 : 0) - d.anim) * Math.min(1, dt * 18);
     for (const x of this.timers) x.t -= dt;
     const due = this.timers.filter((x) => x.t <= 0);
@@ -1344,6 +1408,9 @@ export class Psychosis extends Table {
       const wob = Math.sin(this.time * 60) * this.standupWobble[i] * 1.5;
       const lit = this.letters[i] || !!this.mode?.litStandup(i);
       out.push({ y: Math.max(s.ay, s.by), draw: (ctx) => drawStandup(ctx, [s.ax + wob, s.ay], [s.bx + wob, s.by], lit) });
+    });
+    this.flanks.forEach((s, i) => {
+      out.push({ y: Math.max(s.ay, s.by), draw: (ctx) => drawStandup(ctx, [s.ax, s.ay], [s.bx, s.by], this.flankFlash[i] > 0) });
     });
     // Captive ball and the Reactor's eye
     const cap = this.captive.c;

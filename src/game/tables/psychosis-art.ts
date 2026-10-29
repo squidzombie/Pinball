@@ -996,6 +996,13 @@ function paintLanes(ctx: CanvasRenderingContext2D, lower: LowerSection) {
   rail(ctx, L.GATE, 18, 4, '#e8e4dc');
   rail(ctx, L.UPPER_LEFT, 28, 8);
   rail(ctx, L.TOP_GUIDE, 16, 6);
+  rail(ctx, L.TOP_GATE, 10, 4, '#e8e4dc');
+  // rubber guards at the side lanes
+  for (const g of [L.GUARD_L, L.GUARD_R]) {
+    rail(ctx, g, 14, 8, '#3a3633');
+    can(ctx, g[1][0], g[1][1], 5, 0, 18, '#36322e', '#5a554f');
+    bolt(ctx, g[1][0], g[1][1] - lift(18), 2.6);
+  }
   rail(ctx, L.DUCT_GATE, 10, 4, '#e8e4dc');
   rail(ctx, L.LANE_ROOF, 22, 7);
   rail(
@@ -1468,7 +1475,38 @@ function paintCameraBody(ctx: CanvasRenderingContext2D) {
 
 export function paintRamps(ctx: CanvasRenderingContext2D) {
   paintSkyway(ctx);
+  paintAlleyChute(ctx);
   paintMarket(ctx);
+}
+
+/** The Back Alley's exit: a short steel chute from the right leg down into the market box. */
+function paintAlleyChute(ctx: CanvasRenderingContext2D) {
+  const r = L.ALLEY_EXIT;
+  const head = 5;
+  const left = L.CHUTE.left[0][0];
+  const right = L.CHUTE.right[0][0];
+  ctx.save();
+  ctx.beginPath();
+  for (let i = 0; i < head; i++) ctx.lineTo(left, r.path[i][1] - zAt(r, i));
+  for (let i = head - 1; i >= 0; i--) ctx.lineTo(right, r.path[i][1] - zAt(r, i));
+  ctx.closePath();
+  ctx.fillStyle = '#a9a69e';
+  ctx.fill();
+  inkLine(ctx, 1.4);
+  ctx.stroke();
+  ctx.restore();
+  for (const x of [left, right]) {
+    ctx.save();
+    ctx.beginPath();
+    for (let i = 0; i < head; i++) ctx.lineTo(x, r.path[i][1] - zAt(r, i) - lift(10));
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = 4.4;
+    ctx.stroke();
+    ctx.strokeStyle = STEEL_L;
+    ctx.lineWidth = 2.4;
+    ctx.stroke();
+    ctx.restore();
+  }
 }
 
 const zAt = (r: L.RampDef, i: number) => lift(r.z[Math.min(r.z.length - 1, i)]);

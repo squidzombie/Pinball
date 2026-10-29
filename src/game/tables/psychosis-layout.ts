@@ -124,10 +124,19 @@ export const UPPER_LEFT: P[] = [
   [34, 140],
   [42, 140],
 ];
-/** Guides run tangent over the flipper pivots so a ball rolls onto the bat instead of sitting in a pocket at the pivot. */
+/**
+ * Guide to the top flipper. It runs tangent over the pivot so a ball rolls onto the bat
+ * instead of sitting in a pocket at the pivot. The part over the duct is one-way: a
+ * full-strength duct shot passes up through it, turns under the Impound and lands on the
+ * guide; a weak one falls back to the Black Market flipper.
+ */
+export const TOP_GATE: P[] = [
+  [20, 170],
+  [66, 174],
+];
 export const TOP_GUIDE: P[] = [
-  [34, 140],
-  [141, 176],
+  [66, 174],
+  [141, 178],
 ];
 export const TOP_FLIPPER = { x: 150, y: 192, len: 60, rest: 0.48, up: -0.38, r0: 10, r1: 6 };
 export const MID_FLIPPER = { x: 212, y: 330, len: 66, rest: 0.38, up: -0.45, r0: 11, r1: 6 };
@@ -146,6 +155,14 @@ export const LEFT_MASS: P[] = [
   [86, 700],
   [66, 640],
 ];
+const along = (a: P, b: P, t: number): P => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+/**
+ * SAFE: a standup on the machinery's edge below the Breach, where right flipper shots at
+ * 113-119° used to hit plain wall. A Hack remote key; otherwise an ordinary switch.
+ */
+export const SAFE: [P, P] = [along(LEFT_MASS[5], LEFT_MASS[6], 0.06), along(LEFT_MASS[5], LEFT_MASS[6], 0.9)];
+/** The machinery outline as walls, open where the SAFE target sits. */
+export const LEFT_MASS_WALL: P[] = [SAFE[1], ...LEFT_MASS.slice(6), ...LEFT_MASS.slice(0, 6), SAFE[0]];
 /**
  * The duct: a lane up the left side under the Skyway's wireform, shot from the right
  * flipper. One-way at the top, so the ball comes back down onto the guide and rolls
@@ -210,6 +227,8 @@ export const REACTOR = {
   pos: (s: number): P => r(s, 0),
   /** Housing, bolted to the Skyway lane wall with a roof that sheds balls to the left. */
   shell: [r(0, -32), r(58, -38), r(100, -26), [SKY_LANE_X, 470], [SKY_LANE_X, 640], r(0, 32)] as P[],
+  /** VENT: a standup on the housing's underside, where left flipper shots at 60-69° used to hit plain wall. */
+  vent: [along([SKY_LANE_X, 640], r(0, 32), 0.15), along([SKY_LANE_X, 640], r(0, 32), 0.8)] as [P, P],
   /** Centre of the round housing and its red eye, for the art. */
   eye: r(84, 0),
 };
@@ -311,10 +330,12 @@ export const SKYWAY = makeRamp(
     [52, 256],
     [43, 290],
     [42, 330],
-    [42, 690],
-    [48, 770],
-    [62, 836],
-    [93, 885],
+    [42, 680],
+    [48, 740],
+    [66, 780],
+    [88, 806],
+    [94, 836],
+    [94, 906],
   ],
   // flares on the Reactor side only: the right wall is the shooter lane's
   (s) => [22.5 + 12 * Math.max(0, 1 - s / 45), 22.5],
@@ -349,10 +370,12 @@ export const MARKET = makeRamp(
     [532, 338],
     [550, 378],
     [557, 425],
-    [557, 760],
-    [548, 828],
-    [512, 868],
-    [466, 888],
+    [557, 690],
+    [550, 750],
+    [524, 786],
+    [480, 808],
+    [462, 836],
+    [461, 906],
   ],
   (s) => {
     const w = 22 + 6 * Math.max(0, 1 - s / 30);
@@ -373,6 +396,74 @@ export const MARKET = makeRamp(
 );
 
 export const RAMPS = [SKYWAY, MARKET];
+
+/** Where a wireform hands the ball back to the floor: its last segment, already inside the inlane. */
+export const RAMP_LANDING = 2;
+/** Dropping off the wire into the inlane soaks up energy: the ball leaves along the wire at no more than this. */
+export const LANDING_SPEED = 900;
+
+/**
+ * Back Alley exit: a ball round the loop comes down the right leg into a chute that drops
+ * it into the Black Market box and down the market's wire to the right inlane. The plunge
+ * goes up the same leg on the floor and never meets it.
+ */
+const CHUTE_TOP = 205;
+const CHUTE_L = 535.5;
+const CHUTE_R = 579.5;
+const mergeAt = MARKET.path.findIndex((p) => p[1] >= 425 && p[0] > 550);
+export const ALLEY_EXIT: RampDef = (() => {
+  const head: P[] = [
+    [557.5, CHUTE_TOP],
+    [557.5, 260],
+    [557.5, 320],
+    [557.5, 380],
+  ];
+  const path = [...head, ...MARKET.path.slice(mergeAt)];
+  const zm = MARKET.z[mergeAt];
+  const z = [...head.map((_, i) => (zm * i) / head.length), ...MARKET.z.slice(mergeAt)];
+  return { id: 'market', path, walls: { left: [], right: [] }, z, madeAt: Infinity, wireFrom: 0, baseTo: 0, entry: [head[0], head[0]] };
+})();
+/** The chute's walls, and the crossing line at its top that hands a falling ball to it. */
+export const CHUTE = {
+  entry: [
+    [CHUTE_L, CHUTE_TOP],
+    [CHUTE_R, CHUTE_TOP],
+  ] as [P, P],
+  left: [
+    [CHUTE_L, CHUTE_TOP],
+    [CHUTE_L, 306],
+  ] as P[],
+  right: [
+    [CHUTE_R, CHUTE_TOP],
+    [CHUTE_R, MARKET.path[mergeAt][1]],
+  ] as P[],
+};
+/** The market ramp's outer wall, cut where it would cross the chute: [up to the chute, below the merge]. */
+export const MARKET_OUTER: [P[], P[]] = (() => {
+  const w = MARKET.walls.left;
+  const inside = (p: P) => p[0] > CHUTE_L && p[1] < MARKET.path[mergeAt][1] && p[1] > CHUTE_TOP;
+  const first = w.findIndex(inside);
+  let last = first;
+  while (last + 1 < w.length && inside(w[last + 1])) last++;
+  const a = w[first - 1];
+  const b = w[first];
+  const t = (CHUTE_L - a[0]) / (b[0] - a[0]);
+  const cut: P = [CHUTE_L, a[1] + (b[1] - a[1]) * t];
+  return [
+    [...w.slice(0, first), cut],
+    [[CHUTE_R, MARKET.path[mergeAt][1]], ...w.slice(last + 1)],
+  ];
+})();
+
+/** Guards at both side lanes: rubber deflectors that turn balls rolling down the walls away from the outlanes. */
+export const GUARD_L: P[] = [
+  [20, 712],
+  [56, 758],
+];
+export const GUARD_R: P[] = [
+  [535, 712],
+  [510, 744],
+];
 
 /** Wire lane from the Skyway's top bend up into the Impound, for the lock animation. */
 export const IMPOUND_LANE: P[] = [SKYWAY.path[SKYWAY.divertAt!], [56, 230], [50, 176], [56, 140]];

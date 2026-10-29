@@ -116,6 +116,42 @@ function launch(f: any, x: number, y: number, deg: number, speed: number, second
   return { made, b };
 }
 
+/**
+ * Launch a ball and follow it: when `arrive` says it has reached the flipper, hold that flipper
+ * up as a player catching it would. Reports the shots, the lanes it rolled through, and the catch.
+ */
+function follow(f: any, [x, y, deg, speed]: number[], flipper: any, arrive: (b: Ball) => boolean) {
+  const made: string[] = [];
+  const lanes: string[] = [];
+  for (const name of ['majorShot', 'duct'] as const) {
+    const o = f[name].bind(f);
+    f[name] = (...a: unknown[]) => {
+      made.push(name === 'duct' ? 'duct' : String(a[0]));
+      return o(...a);
+    };
+  }
+  const ro = f.rollover.bind(f);
+  f.rollover = (i: number) => {
+    lanes.push(['L-OUT', 'L-IN', 'R-IN', 'R-OUT'][i]);
+    return ro(i);
+  };
+  f.world.balls = [];
+  const r = (deg * Math.PI) / 180;
+  const b: Ball = f.addBall(x, y, Math.cos(r) * speed, -Math.sin(r) * speed);
+  let caught = false;
+  let holding = false;
+  for (let t = 0; t < 5 && !caught; t += 1 / 480) {
+    if (!holding && b.layer === 1 && arrive(b)) holding = true;
+    flipper.pressed = holding;
+    f.world.step(1 / 480);
+    f.substep(1 / 480);
+    caught = holding && b.speed < 5 && f.onHeldFlipper(b);
+    if (b.y > 1220) break;
+  }
+  flipper.pressed = false;
+  return { made, lanes, caught };
+}
+
 const lit = (f: any, s: Shot) => f.mode?.lit(s) ?? 0;
 const litShots = (f: any) => SHOTS.filter((s) => lit(f, s));
 
@@ -518,13 +554,60 @@ console.log('Ball flow');
   check('a plunge comes round the Back Alley onto the top flipper', near < 30, `closest ${near.toFixed(0)}`);
 }
 {
-  // Right flipper up the duct: the ball comes back down onto the Black Market flipper's guide.
+  // A full-strength duct shot turns under the Impound and comes onto the top flipper.
   const { f } = newGame();
-  let top = Infinity;
-  const { made, b } = launch(f, 241, 972, 123, 2600, 1.6, (ball) => (top = Math.min(top, ball.y)));
-  check('the right flipper makes the duct', made.includes('duct'), made.join());
-  check('...which climbs to the upper flippers', top < 260, `top ${top.toFixed(0)}`);
-  check('...and drops back down to the Black Market flipper', b.y > 260 && b.y < 345 && b.x < 270, `at (${b.x.toFixed(0)},${b.y.toFixed(0)})`);
+  const r = follow(f, [241, 972, 123, 2700], f.topFlipper, (b) => b.y < 240 && b.x > 70);
+  check('a full-strength duct shot is caught on the top flipper', r.made.includes('duct') && r.caught, r.made.join());
+}
+{
+  // A medium one falls back onto the guide and rolls to the Black Market flipper.
+  const { f } = newGame();
+  const r = follow(f, [241, 972, 123, 2300], f.midFlipper, (b) => b.y < 340 && b.y > 250 && b.x > 120);
+  check('a medium duct shot is caught on the Black Market flipper', r.made.includes('duct') && r.caught, r.made.join());
+}
+{
+  // Wire returns: each drops into its inlane (never the outlane) and a held flipper catches it.
+  const cases: [string, number[], 'L' | 'R', string][] = [
+    ['Skyway', [320, 972, 56, 2950], 'L', 'L-IN'],
+    ['Black Market', [284, 284, 64, 1900], 'R', 'R-IN'],
+    ['Back Alley', [225, 166, 57, 2030], 'R', 'R-IN'],
+  ];
+  for (const [name, shot, side, lane] of cases) {
+    const { f } = newGame();
+    const fl = side === 'L' ? f.flipperL : f.flipperR;
+    const r = follow(f, shot, fl, (b) => b.y > 880 && (side === 'L' ? b.x < 130 : b.x > 425));
+    check(`the ${name} returns down the ${side === 'L' ? 'left' : 'right'} inlane`, r.lanes.includes(lane) && !r.lanes.some((l) => l.endsWith('OUT')), r.lanes.join());
+    check(`...where a held flipper catches it`, r.caught);
+  }
+}
+{
+  // Guards: a ball rolling down either side wall is turned away from the outlane.
+  for (const [x, side] of [
+    [34, 'L-OUT'],
+    [522, 'R-OUT'],
+  ] as const) {
+    const { f } = newGame();
+    const lanes: string[] = [];
+    const o = f.rollover.bind(f);
+    f.rollover = (i: number) => {
+      lanes.push(['L-OUT', 'L-IN', 'R-IN', 'R-OUT'][i]);
+      return o(i);
+    };
+    f.world.balls = [];
+    f.addBall(x, 660, 0, 300);
+    for (let t = 0; t < 1.5; t += 1 / 480) f.world.step(1 / 480);
+    check(`the ${side === 'L-OUT' ? 'left' : 'right'} guard keeps a wall-hugging ball out of the outlane`, !lanes.includes(side), lanes.join());
+  }
+}
+{
+  // SAFE and VENT, in the old dead zones: a switch with Black Market cash.
+  const { g, f } = newGame();
+  park(f);
+  const s0 = g.score;
+  const c0 = f.cash;
+  f.hitFlank(0);
+  f.hitFlank(1);
+  check('SAFE and VENT pay 25K and $10K each', g.score - s0 === 50_000 && f.cash - c0 >= 20_000, `${g.score - s0} $${f.cash - c0}`);
 }
 {
   const { f } = newGame();
