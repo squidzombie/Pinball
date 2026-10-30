@@ -139,6 +139,8 @@ export class Psychosis extends Table {
   superT = 0;
   /** The drop targets were held down for a super last frame (so they come back up when it goes). */
   private dropsHeld = false;
+  /** Jackpots collected in the current Impound or vault multiball, shown when it ends. */
+  private mbTotal = 0;
   /** What a paused job restarted when the last ball was lost, shown when the next ball starts. */
   private resumeNote = '';
 
@@ -353,7 +355,12 @@ export class Psychosis extends Table {
     // The Back Alley counts once a ball is over the top, heading for the CAM lanes.
     line(L.ALLEY_SWITCH, (b, dir) => dir > 0 && this.alley(b));
     line(L.UPPER_SWITCH, (_b, dir) => dir > 0 && this.upperIn());
-    line([L.BACK_DOOR[0], L.BACK_DOOR[L.BACK_DOOR.length - 1]], (_b, dir) => dir < 0 && this.upperIn());
+    // Through the open back door: still the Back Alley shot, and into the vault.
+    line([L.BACK_DOOR[0], L.BACK_DOOR[L.BACK_DOOR.length - 1]], (b, dir) => {
+      if (dir >= 0) return;
+      this.alley(b);
+      this.upperIn();
+    });
     line(L.UPPER_EXIT_SWITCH, (_b, dir) => dir > 0 && this.upperOut('top'));
     line(L.UPPER_DRAIN_SWITCH, (_b, dir) => dir > 0 && this.upperOut('drain'));
     L.CAM_LANES.forEach(([x0, x1], i) =>
@@ -423,7 +430,7 @@ export class Psychosis extends Table {
     // The Skyway's stack sits out in front of its mouth like the others; the lock insert is just inside the lane.
     const sm: P = [512.5, 712];
     stack('skyway', sm, L.unit(L.sub(sm, [300, 1000])), [40, 70, 94]);
-    lamp({ id: 'lock:skyway', kind: 'rect', x: 512.5, y: 684, w: 34, h: 12, color: INS.orange, label: 'LOCK', labelSize: 7.5, state: () => (this.lockLit ? 3 : 0) });
+    lamp({ id: 'lock:skyway', kind: 'rect', x: 512.5, y: 684, w: 34, h: 12, color: INS.orange, label: 'LOCK', labelSize: 7.5, state: () => (this.lockLit && !this.multiball && this.locked.length < 3 ? 3 : 0) });
 
     // SAFE and VENT inserts in front of their targets
     [L.SAFE, L.VENT].forEach(([a, b], i) => {
@@ -481,7 +488,7 @@ export class Psychosis extends Table {
     // Lock: the warning triangle on the Impound
     const [ix0, iy0] = L.IMPOUND_BOX[0];
     const [ix1] = L.IMPOUND_BOX[1];
-    lamp({ id: 'lock:impound', kind: 'rect', x: (ix0 + ix1) / 2 + 2, y: iy0 - 38, w: 28, h: 11, color: INS.red, label: 'IMPOUND', labelSize: 5.5, state: () => (this.lockLit ? 3 : this.multiball === 'impound' ? 2 : 0) });
+    lamp({ id: 'lock:impound', kind: 'rect', x: (ix0 + ix1) / 2 + 2, y: iy0 - 38, w: 28, h: 11, color: INS.red, label: 'IMPOUND', labelSize: 5.5, state: () => (this.lockLit && !this.multiball ? 3 : this.multiball === 'impound' ? 2 : 0) });
 
     // Black Market menu, under the market's stack: the item on offer blinks; the one you can afford is solid
     ITEMS.forEach((it, i) =>
@@ -523,14 +530,22 @@ export class Psychosis extends Table {
       labelOff: '#f0b0a8',
       state: () => (this.wizard ? 3 : this.blackoutLit ? 2 : 0),
     });
-    // Junction lights on the map: they show how many jobs are lit
+    // Junction lights on the map: how far into the heist you are. The entry lights once you've broken
+    // in, the two links to Hack and Route once Infiltrate is done, and the link down to the last row
+    // once Hack or Route is done. They all blink while BLACKOUT is lit or running.
+    const reached = [
+      () => this.brokenIn,
+      () => this.completed.has('infiltrate'),
+      () => this.completed.has('infiltrate'),
+      () => this.completed.has('hack') || this.completed.has('route'),
+    ];
     const nodes: P[] = [
       [L.CX, L.MAP.infiltrate[1] - 44],
       [L.CX - 62, L.MAP.hack[1] - 42],
       [L.CX + 62, L.MAP.route[1] - 42],
       [L.CX, (L.MAP.hack[1] + L.MAP.payload[1]) / 2 - 12],
     ];
-    nodes.forEach(([x, y], i) => lamp({ id: `map:node:${i + 1}`, kind: 'circle', x, y, w: 13, color: INS.red, state: () => (i < this.startable().length ? 2 : this.blackoutLit ? 1 : 0) }));
+    nodes.forEach(([x, y], i) => lamp({ id: `map:node:${i + 1}`, kind: 'circle', x, y, w: 13, color: INS.red, state: () => (this.blackoutLit || this.wizard ? 2 : reached[i]() ? 1 : 0) }));
     // Bonus multiplier and R-A-G-E
     [2, 3, 4, 5, 6].forEach((n, i) =>
       lamp({ id: `bonus:${n}x`, kind: 'circle', x: L.CX - 64 + i * 32, y: 952, w: 17, color: INS.red, label: `${n}X`, labelSize: 7, state: () => (this.game.bonusMult >= n ? 1 : 0) }),
@@ -546,7 +561,8 @@ export class Psychosis extends Table {
         color: INS.red,
         label,
         labelSize: 8,
-        state: () => (this.rage ? 2 : this.rageLit[i] ? 1 : 0),
+        // lit letters stay solid in RAGE; the unlit ones blink, since spelling it again adds time
+        state: () => (this.rageLit[i] ? 1 : this.rage ? 2 : 0),
       }),
     );
     lamp({
@@ -588,8 +604,14 @@ export class Psychosis extends Table {
   shotLamp(s: Shot): LampState {
     const m = this.modeFor(s);
     if (m) return this.urgency(m, m.lit(s));
-    if (this.multiball === 'impound' && (this.jpLit(s) || (s === 'reactor' && this.impoundSuper))) return 3;
-    if (this.rage) return 2;
+    if (this.multiball === 'impound' && this.jpLit(s)) return 3;
+    // In RAGE every shot pays, so every arrow is at least lit; anything bigger keeps its own state.
+    const own = this.ownShotLamp(s);
+    return this.rage ? (Math.max(own, 2) as LampState) : own;
+  }
+
+  /** A shot's arrow outside jobs and Impound multiball. */
+  private ownShotLamp(s: Shot): LampState {
     if (s === 'market' && this.skillT > 0) return 4;
     if (s === 'breach') return (this.canStartMode() && this.startable().length) || this.breachJp > 0 || this.xballLit ? 2 : 0;
     if (s === 'reactor') return this.blackoutLit && this.canStartMode() ? 3 : this.dropsDown() ? 2 : 0;
@@ -608,9 +630,23 @@ export class Psychosis extends Table {
     return this.rage?.color ?? INS.white;
   }
 
+  /** The JP light at each shot: a jackpot is there to collect (at the Reactor, a lit super). */
   private jpLit(s: Shot) {
     if (s === 'breach' && (this.breachJp > 0 || this.xballLit)) return true;
-    return this.multiball === 'impound' && !this.impoundSuper && s !== 'reactor';
+    if (this.multiball === 'impound') return s === 'reactor' ? this.impoundSuper : !this.impoundSuper;
+    const m = this.multiball === 'payload' ? this.mode : this.multiball === 'blackout' ? this.wizard : null;
+    if (m) return s === 'reactor' ? m.lit(s) >= 4 : m.lit(s) > 0;
+    return false;
+  }
+
+  /** What the second line of a key's message says: start the job now, or after what's running. */
+  private breachHint() {
+    return this.canStartMode() ? 'SHOOT THE BREACH' : this.mode ? 'AFTER THIS JOB' : 'AFTER THE MULTIBALL';
+  }
+
+  /** A ball is held in the Breach or rolling into the Impound (the ball save waits). */
+  ballHeld() {
+    return !!this.breachBall || !!this.locking;
   }
 
   shotPos(s: Shot): P {
@@ -632,7 +668,9 @@ export class Psychosis extends Table {
     this.locking = null;
     this.releaseQueue = 0;
     if (this.mode) {
-      this.game.show(`${this.mode.name} CONTINUES`, this.resumeNote || this.mode.status(), 2.4, true);
+      // after the game's BALL n message
+      const [name, note] = [this.mode.name, this.resumeNote || this.mode.status()];
+      this.later(1.8, () => this.mode && this.game.show(`${name} CONTINUES`, note, 2.4, true));
       this.resumeNote = '';
     }
     this.hatchQueue = 0;
@@ -706,6 +744,7 @@ export class Psychosis extends Table {
   /** Feed a major shot to the running modes. */
   private event(s: Shot, b?: Ball) {
     this.validated = true;
+    if (this.game.tilted) return;
     this.cash += 5_000;
     this.mode?.onShot(s, b);
     this.wizard?.onShot(s, b);
@@ -714,7 +753,9 @@ export class Psychosis extends Table {
 
   private sw(s: Switch) {
     this.validated = true;
-    this.cash += s === 'bumper' ? 2_000 : 1_000;
+    if (this.game.tilted) return;
+    // (a spinner turn pays its own $500)
+    this.cash += s === 'bumper' ? 2_000 : s === 'spinner' ? 0 : 1_000;
     this.mode?.onSwitch(s);
     this.wizard?.onSwitch(s);
     this.rage?.onSwitch(s);
@@ -735,12 +776,13 @@ export class Psychosis extends Table {
 
   private majorShot(s: Shot, base: number, b?: Ball) {
     const g = this.game;
+    if (g.tilted) return;
     this.comboShot();
     const [x, y] = SHOT_POS[s];
     g.addScore(base, x, y);
     g.addBonus(base / 20);
     this.event(s, b);
-    if (this.multiball === 'impound' && this.jpLit(s)) this.impoundJackpot(s);
+    if (this.multiball === 'impound' && s !== 'reactor' && this.jpLit(s)) this.impoundJackpot(s);
   }
 
   /** Round the Back Alley, behind the pops. */
@@ -751,9 +793,10 @@ export class Psychosis extends Table {
     this.majorShot('alley', 75_000, b);
   }
 
-  /** SAFE or VENT: an ordinary switch for now; Hack will use them as remote keys. */
+  /** SAFE or VENT: a side standup, 25K and $10K. */
   private hitFlank(i: number) {
     this.flankFlash[i] = 0.5;
+    if (this.game.tilted) return sound.target();
     this.sw('standup');
     const [a, b] = i === 0 ? L.SAFE : L.VENT;
     const x = (a[0] + b[0]) / 2;
@@ -774,6 +817,7 @@ export class Psychosis extends Table {
     const [x, y] = [(L.CAM_LANES[i][0] + L.CAM_LANES[i][1]) / 2, L.CAM_Y];
     this.camFlash[i] = 0.6;
     sound.lane();
+    if (g.tilted) return;
     if (this.camerasDown > 0 || this.camLit[i]) {
       g.addScore(5_000, x, y);
       return;
@@ -802,7 +846,7 @@ export class Psychosis extends Table {
     this.doorOpen = BACK_DOOR_TIME;
     // It's also the key to the heist map's second row.
     const lit = this.keyRow(1);
-    if (lit) this.later(1.6, () => g.show(lit, 'SHOOT THE BREACH', 2, true));
+    if (lit) this.later(1.6, () => g.show(lit, this.breachHint(), 2, true));
     this.flash(4, 0.8);
     sound.award();
   }
@@ -810,6 +854,7 @@ export class Psychosis extends Table {
   /** The ball has gone into the upper playfield: up its lane, or through the back door off the Back Alley. */
   private upperIn() {
     if (this.multiball !== 'vault') this.doorOpen = 0;
+    if (this.game.tilted) return sound.orbit();
     if (this.multiball !== 'vault') this.game.show('THE VAULT', `CODE ${this.codeText()}`, 1.6);
     this.sw('rollover');
     this.game.addScore(50_000, L.UPPER_LANE_X[0] + 18, L.UPPER_LANE_TOP_Y);
@@ -819,6 +864,7 @@ export class Psychosis extends Table {
 
   /** Out of the upper playfield: up through the flap into the arch, or down its drain. */
   private upperOut(way: 'top' | 'drain') {
+    if (this.game.tilted) return sound.lane();
     if (way === 'top' && this.multiball === 'vault') this.vaultJackpot();
     if (way === 'top') {
       this.sw('rollover');
@@ -835,6 +881,7 @@ export class Psychosis extends Table {
   private hitTumbler(i: number) {
     const g = this.game;
     this.tumblerFlash[i] = 0.6;
+    if (g.tilted) return sound.target();
     this.sw('standup');
     const [x, y] = L.along(L.TUMBLERS[i][0], L.TUMBLERS[i][1], 0.5);
     g.fx.sparks(x, y, INS.red, 8, 300);
@@ -881,9 +928,10 @@ export class Psychosis extends Table {
     this.tumblersIn = 0;
     this.newCode();
     g.addScore(1_000_000);
-    const room = Math.max(0, MAX_BALLS - this.world.balls.length - this.releasing);
+    const room = Math.max(0, MAX_BALLS - g.ballsInPlay);
     if (!this.multiball) {
       this.multiball = 'vault';
+      this.mbTotal = 0;
       this.vaultJp = 1_000_000;
       this.hatchQueue = Math.min(VAULT_BALLS, room);
       g.grantBallSave(12);
@@ -906,6 +954,7 @@ export class Psychosis extends Table {
   private vaultJackpot() {
     const g = this.game;
     g.addScore(this.vaultJp);
+    this.mbTotal += this.vaultJp;
     g.show('VAULT JACKPOT', fmt(this.vaultJp), 1.8, true);
     g.fx.sparks((L.UPPER_EXIT_X[0] + L.UPPER_EXIT_X[1]) / 2, 120, INS.yellow, 18, 520);
     sound.jackpot();
@@ -916,6 +965,7 @@ export class Psychosis extends Table {
   private rampMade(s: 'skyway' | 'market', b: Ball) {
     const g = this.game;
     sound.ramp();
+    if (g.tilted) return;
     this.flash(s === 'skyway' ? 3 : 1, 0.8);
     if (s === 'market' && this.skillT > 0) {
       this.skillT = 0;
@@ -932,6 +982,7 @@ export class Psychosis extends Table {
   private hitStandup(i: number) {
     const g = this.game;
     this.standupWobble[i] = 1;
+    if (g.tilted) return sound.target();
     this.sw('standup');
     this.mode?.onStandup(i);
     sound.target();
@@ -987,6 +1038,7 @@ export class Psychosis extends Table {
     const g = this.game;
     d.down = true;
     d.seg.enabled = false;
+    if (g.tilted) return sound.drop();
     this.sw('drop');
     g.addScore(25_000, L.DROPS[i][0][0], L.DROPS[i][0][1]);
     g.addBonus(2_000);
@@ -1003,7 +1055,7 @@ export class Psychosis extends Table {
       }
       // It's also the key to the heist map's third row.
       const lit = this.keyRow(2);
-      if (lit) this.later(2, () => g.show(lit, 'SHOOT THE BREACH', 2, true));
+      if (lit) this.later(2, () => g.show(lit, this.breachHint(), 2, true));
       sound.siren();
     }
   }
@@ -1027,9 +1079,13 @@ export class Psychosis extends Table {
     this.flash(3);
     g.doShake(6);
     sound.punch(true);
+    if (g.tilted) return;
     if (this.blackoutLit && this.canStartMode()) return this.startBlackout();
+    let superPaid = false;
     if (this.multiball === 'impound' && this.impoundSuper) {
       const v = this.jp * 3;
+      superPaid = true;
+      this.mbTotal += v;
       g.addScore(v);
       g.show('SUPER JACKPOT', fmt(v), 2.4, true);
       this.celebrate(INS.orange);
@@ -1039,7 +1095,7 @@ export class Psychosis extends Table {
     }
     this.reactorHeat++;
     this.majorShot('reactor', 100_000 + this.reactorHeat * 50_000);
-    if (!this.mode && !this.wizard) g.show('REACTOR HEAT ' + this.reactorHeat, fmt(100_000 + this.reactorHeat * 50_000), 1.4);
+    if (!this.mode && !this.wizard && !superPaid) g.show('REACTOR HEAT ' + this.reactorHeat, fmt(100_000 + this.reactorHeat * 50_000), 1.4);
     if (!this.wantsDropsDown()) this.later(1.2, () => !this.wantsDropsDown() && this.resetDrops());
   }
 
@@ -1049,6 +1105,7 @@ export class Psychosis extends Table {
 
   private rollover(i: number, b?: Ball) {
     const g = this.game;
+    if (g.tilted) return sound.lane();
     this.sw('rollover');
     g.addScore(5_000);
     if (!this.rageLit[i]) {
@@ -1077,6 +1134,7 @@ export class Psychosis extends Table {
     b.vx = b.vy = 0;
     this.breachBall = b;
     sound.scoop();
+    if (this.game.tilted) return this.holdBreach(0.8);
     this.flash(2, 0.8);
 
     const award = this.collectBreachAwards();
@@ -1162,7 +1220,7 @@ export class Psychosis extends Table {
   }
 
   canStartMode() {
-    return !this.mode && !this.wizard && !this.multiball;
+    return !this.mode && !this.wizard && !this.multiball && !this.game.tilted;
   }
 
   /** Modes the heist map allows right now. */
@@ -1227,12 +1285,14 @@ export class Psychosis extends Table {
     this.modeKey = null;
     g.addBonus(Math.round(m.total / 20));
     if (!quiet) {
-      g.show(m.completed ? `${m.name} DONE` : `${m.name} FAILED`, m.completed ? `TOTAL ${fmt(m.total)}` : 'RETRY AT THE BREACH', 2.4, true);
+      // A finished job has just shown its own title and bonus; the total follows it.
+      if (m.completed) this.later(2.4, () => g.show(`${m.name} DONE`, `TOTAL ${fmt(m.total)}`, 2.4, true));
+      else g.show(`${m.name} FAILED`, 'RETRY AT THE BREACH', 2.4, true);
       sound.modeEnd(m.completed);
     }
     if (def.tier === 2 && m.completed && !this.wizard && !this.blackoutLit) {
       this.blackoutLit = true;
-      if (!quiet) this.later(2.4, () => g.show('BLACKOUT IS LIT', 'OVERLOAD THE REACTOR', 2.8, true));
+      if (!quiet) this.later(4.8, () => g.show('BLACKOUT IS LIT', 'OVERLOAD THE REACTOR', 2.8, true));
     }
     this.music();
   }
@@ -1284,6 +1344,8 @@ export class Psychosis extends Table {
     if (this.mode && !this.mode.multiball) this.endMode(quiet);
     this.endRage(quiet);
     this.selecting = 0;
+    // A ball waiting on the job choice (or an award) would otherwise be held forever.
+    if (this.breachBall && this.breachTimer === Infinity) this.holdBreach(0.3);
   }
 
   /**
@@ -1333,7 +1395,7 @@ export class Psychosis extends Table {
   }
 
   private canLock() {
-    return this.lockLit && !this.multiball && this.locked.length < 3 && !this.locking;
+    return this.lockLit && !this.multiball && this.locked.length < 3 && !this.locking && !this.game.tilted;
   }
 
   /** Locked balls already on their way out of the Impound. */
@@ -1354,6 +1416,7 @@ export class Psychosis extends Table {
   private startImpoundMultiball() {
     const g = this.game;
     this.multiball = 'impound';
+    this.mbTotal = 0;
     this.jackpots = 0;
     this.impoundSuper = false;
     this.releaseQueue += this.locked.length;
@@ -1368,6 +1431,7 @@ export class Psychosis extends Table {
   private impoundJackpot(s: Shot) {
     const g = this.game;
     g.addScore(this.jp);
+    this.mbTotal += this.jp;
     g.show('JACKPOT', fmt(this.jp), 1.8, true);
     this.hitFx(s, INS.orange);
     sound.jackpot();
@@ -1386,23 +1450,28 @@ export class Psychosis extends Table {
     this.impoundSuper = false;
     const g = this.game;
     if (kind === 'payload') {
-      if (this.mode) this.mode.finished = true;
-      this.endMode();
+      if (this.mode) {
+        this.mode.finished = true;
+        // A tilt voids the job, as it does any other.
+        if (g.tilted) this.mode.completed = false;
+      }
+      this.endMode(g.tilted);
     } else if (kind === 'blackout') {
       const w = this.wizard!;
       this.wizard = null;
-      g.show('LIGHTS OUT', `TOTAL ${fmt(w.total)}`, 3, true);
-      // The heist starts over, worth more.
+      if (!g.tilted) g.show('LIGHTS OUT', `TOTAL ${fmt(w.total)}`, 3, true);
+      // The heist starts over, worth more (a tilt still ends it, so it can be played again, but
+      // without the step up).
       this.played.clear();
       this.completed.clear();
-      this.level++;
+      if (!g.tilted) this.level++;
       // You're still inside, so INFILTRATE comes lit; the other rows need their keys again.
       this.rowLit = [true, false, false];
     } else if (kind === 'vault') {
       this.doorOpen = 0;
-      g.show('VAULT CLOSED', `JACKPOT ${fmt(this.vaultJp)}`, 1.8);
-    } else {
-      g.show('MULTIBALL OVER', `JACKPOT ${fmt(this.jp)}`, 1.8);
+      if (!g.tilted) g.show('VAULT CLOSED', `TOTAL ${fmt(this.mbTotal)}`, 1.8);
+    } else if (!g.tilted) {
+      g.show('MULTIBALL OVER', `TOTAL ${fmt(this.mbTotal)}`, 1.8);
     }
     if (!this.wantsDropsDown() && this.dropsDown()) this.resetDrops();
     this.music();
@@ -1436,7 +1505,8 @@ export class Psychosis extends Table {
     const it = this.offer();
     if (!it) return;
     if (this.cash < it.price) {
-      g.show('BLACK MARKET', `${it.name} COSTS $${short(it.price)}`, 1.6);
+      // only if nothing bigger (a skill shot, a jackpot, a job's message) went up with this shot
+      if (!g.msgFresh) g.show('BLACK MARKET', `${it.name} COSTS $${short(it.price)}`, 1.6);
       return;
     }
     this.cash -= it.price;
@@ -1459,7 +1529,8 @@ export class Psychosis extends Table {
         g.extraBalls++;
         break;
     }
-    g.show('BOUGHT', it.name, 1.8, true);
+    if (g.msgFresh) this.later(1.6, () => g.show('BOUGHT', it.name, 1.8, true));
+    else g.show('BOUGHT', it.name, 1.8, true);
     this.offerIdx++;
     this.offerT = 4;
   }
@@ -1601,7 +1672,11 @@ export class Psychosis extends Table {
     // Choosing a mode while the ball waits in the Breach.
     if (this.selecting > 0) {
       this.selecting -= dt;
-      if (this.selecting <= 0) this.startMode(this.startable()[this.selected]);
+      if (this.selecting <= 0) {
+        const job = this.startable()[this.selected];
+        if (job && this.canStartMode()) this.startMode(job);
+        else this.holdBreach(0.3);
+      }
     }
 
     if (this.clockRunning()) {
@@ -1708,7 +1783,7 @@ export class Psychosis extends Table {
       while (this.spinAccum >= 1) {
         this.spinAccum -= 1;
         g.addScore(2_500);
-        this.cash += 500;
+        if (!g.tilted) this.cash += 500;
         this.sw('spinner');
         sound.spinner();
       }
@@ -1717,6 +1792,13 @@ export class Psychosis extends Table {
   }
 
   // ---------------------------------------------------------------- DMD
+
+  /** The Impound's or the vault's jackpot (Payload and Blackout show their own). */
+  private multiballStatus() {
+    if (this.multiball === 'vault') return `VAULT ${short(this.vaultJp)}`;
+    if (this.multiball === 'impound') return this.impoundSuper ? `SUPER ${Math.ceil(this.superT)}` : `JP ${short(this.jp)}`;
+    return '';
+  }
 
   drawDMD(d: DMD) {
     const g = this.game;
@@ -1740,20 +1822,19 @@ export class Psychosis extends Table {
         d.text(String(secs), 127, 0, { align: 'right', level: blink ? 1 : 3 });
       }
       d.fitText(fmt(g.score), 64, 9, 126, 2, { align: 'center' });
-      let status = m.status();
-      if (this.rage && m !== this.rage && Math.floor(t / 2) % 2 === 1) status = this.rage.status();
-      else if (m.pace < 0.995 && Math.floor(t / 2) % 2 === 1) status = `SHOTS PAY ${Math.round(m.pace * 100)}%`;
-      d.text(status, 64, 25, { align: 'center', level: 2 });
+      // The bottom line takes turns, 2 s each: the job, then RAGE, its pace and any other multiball.
+      const lines = [m.status()];
+      if (this.rage && m !== this.rage) lines.push(this.rage.status());
+      if (m.pace < 0.995) lines.push(`SHOTS PAY ${Math.round(m.pace * 100)}%`);
+      const mb = this.multiballStatus();
+      if (mb) lines.push(mb);
+      d.text(lines[Math.floor(t / 2) % lines.length], 64, 25, { align: 'center', level: 2 });
       return;
     }
     d.fitText(fmt(g.score), 64, 3, 126, 2, { align: 'center' });
     d.text(`BALL ${g.ball}`, 1, 24, { level: 2 });
-    const status = this.multiball === 'vault'
-      ? `VAULT ${short(this.vaultJp)}`
-      : this.multiball
-      ? this.impoundSuper
-        ? `SUPER ${Math.ceil(this.superT)}`
-        : `JP ${short(this.jp)}`
+    const status = this.multiball
+      ? this.multiballStatus()
       : this.blackoutLit
         ? 'BLACKOUT LIT'
         : this.world.balls.some((b) => b.layer === FLOOR && insidePoly([b.x, b.y], L.UPPER_AREA))

@@ -482,6 +482,12 @@ class Extract extends Mode {
     return s === this.legs[this.leg] ? 3 : 0;
   }
 
+  override onBallLost() {
+    if (this.legT === 0) return '';
+    this.legT = 0;
+    return 'THIS LEG STARTS OVER';
+  }
+
   override onShot(s: Shot) {
     if (s !== this.legs[this.leg]) return;
     this.award(this.value, s);
@@ -526,6 +532,8 @@ export class Rage extends Mode {
   time = 20;
 
   override onSwitch(s: Switch) {
+    // Not the spinner: one Skyway shot spins it 8-15 times, which would pay over 1M.
+    if (s === 'spinner') return;
     this.award(this.v(s === 'bumper' ? 150_000 : 100_000));
   }
 

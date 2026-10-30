@@ -292,20 +292,25 @@ const bAngle = Math.atan2(BREACH_AXIS[1], BREACH_AXIS[0]);
 const bAt = (out: number, side: number): P => add(add(BREACH, BREACH_AXIS, out), bq, side);
 /** Cup at the back of the scoop, open toward the mouth. */
 export const BREACH_CUP: P[] = arc(BREACH[0], BREACH[1], 23, bAngle + Math.PI * 0.5, bAngle + Math.PI * 1.5, 12);
-/** The scoop throat: walls from the cup to the mouth, funnelling out at the lip. */
+/**
+ * The scoop throat: walls from the cup to the mouth, funnelling out at the lip. The right lip
+ * flares 10 units wider than the left: a cradled flip off the right flipper leaves at one angle for
+ * a long stretch of timings, and with a symmetric mouth those balls all hit the right post. With
+ * the flare they go in (2% of cradled flips made the Breach, now 9%; on the move 11%, now 13%).
+ */
 export const BREACH_THROAT = {
   left: [BREACH_CUP[0], bAt(26, 22), bAt(44, 29)] as P[],
-  right: [BREACH_CUP[BREACH_CUP.length - 1], bAt(26, -22), bAt(44, -29)] as P[],
+  right: [BREACH_CUP[BREACH_CUP.length - 1], bAt(26, -22), bAt(44, -39)] as P[],
 };
 /** Mouth of the scoop: [screen-left post, screen-right post]. */
-export const BREACH_MOUTH: [P, P] = [bAt(44, 29), bAt(44, -29)];
+export const BREACH_MOUTH: [P, P] = [bAt(44, 29), bAt(44, -39)];
 export const BANK_LEN = 44;
 /**
  * A-C-H runs on until it meets the Black Market's left wall, so H has no gap or corner beside it
- * (with a 44-unit bank, that corner took every right-flipper shot meant for H). The template's
- * clearance list checks the join.
+ * (a corner there took every right-flipper shot meant for H). It starts at the flared right post,
+ * so it comes out about as long as B-R-E. The template's clearance list checks the join.
  */
-export const BANK_R_LEN = 53.6;
+export const BANK_R_LEN = 44.5;
 /** A standup bank facing `toward`, running from `start` away from the scoop (side -1 = left, +1 = right). */
 function bank(start: P, toward: P, side: number, len = BANK_LEN): [P, P] {
   const n = unit(sub(toward, start));

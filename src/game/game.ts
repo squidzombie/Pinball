@@ -85,6 +85,11 @@ export class Game {
     this.msg = { l1, l2, t: 0, dur, big };
   }
 
+  /** A message went up this frame, so a lesser one shouldn't replace it. */
+  get msgFresh() {
+    return !!this.msg && this.msg.t === 0;
+  }
+
   doShake(a: number) {
     this.shake = Math.max(this.shake, a);
   }
@@ -266,6 +271,7 @@ export class Game {
   private endBall() {
     // A tilt has already ended the job; a drain only pauses it until the next ball.
     if (!this.tilted) this.main.ballLost();
+    else this.main.endModes(true);
     this.main.endMultiball();
     this.state = 'bonus';
     this.stateT = 0;
@@ -339,7 +345,7 @@ export class Game {
 
     if (this.state === 'play' || this.state === 'bonus') {
       this.stepPhysics(sdt);
-      this.updatePlay(dt);
+      this.updatePlay(dt, sdt);
     }
 
     this.main.update(sdt);
@@ -371,9 +377,11 @@ export class Game {
     }
   }
 
-  private updatePlay(dt: number) {
+  /** `tdt` is table time (the speed setting applies); the ball save runs on it, like the table's clocks. */
+  private updatePlay(dt: number, tdt: number) {
     if (this.state !== 'play') return;
-    if (this.ballSave > 0 && !this.ballInShooter()) this.ballSave = Math.max(0, this.ballSave - dt);
+    // The ball save waits while the ball is in the shooter lane or held in the Breach or the Impound.
+    if (this.ballSave > 0 && !this.ballInShooter() && !this.main.ballHeld()) this.ballSave = Math.max(0, this.ballSave - tdt);
 
     // Auto-plunger for multiball / ball saves.
     if (this.launchQueue > 0) {

@@ -724,6 +724,157 @@ console.log('Priorities');
   check('draining pauses the job rather than ending it', f.mode?.name === 'HACK' && !f.played.has('hack'));
 }
 
+console.log('Tilt');
+/** Tilt the game from here (the meter is one nudge short). */
+function tilt(g: Game) {
+  (g as any).tiltMeter = 3.5;
+  (g as any).nudgeCooldown = 0;
+  g.nudge();
+}
+{
+  // A tilt while the flippers choose a job lets the ball go instead of holding it forever.
+  const { g, f } = newGame();
+  finish(f, 'infiltrate');
+  f.brokenIn = true;
+  f.rowLit[1] = true;
+  park(f);
+  shootBreach(f);
+  check('two jobs lit open the choice', f.selecting > 0);
+  tilt(g);
+  check('a tilt...', g.tilted);
+  run(g, 2);
+  check('...lets the ball out of the Breach, and starts no job', !f.breachBall && !f.mode, `held ${!!f.breachBall} mode ${f.mode?.name}`);
+}
+{
+  const { g, f } = newGame();
+  park(f);
+  tilt(g);
+  spell(f);
+  check('a tilted ball spells nothing', !f.brokenIn && f.letters.every((x: boolean) => !x));
+  for (let i = 0; i < 4; i++) f.rollover(i);
+  check('...lights no R-A-G-E and starts no RAGE', !f.rage && g.bonusMult === 1);
+  const c0 = f.cash;
+  f.sw('bumper');
+  f.majorShot('market', 100_000);
+  check('...and earns no cash', f.cash === c0);
+  f.lockLit = true;
+  check('...and locks no ball', !f.canLock());
+}
+{
+  const { g, f } = startMode('payload');
+  f.mode.completed = true; // as if the super had been collected
+  tilt(g);
+  f.endMultiball();
+  check("a tilt voids a multiball job too: Payload doesn't count", !f.completed.has('payload') && !f.blackoutLit && f.rowLit[2]);
+}
+{
+  const { g, f } = newGame();
+  park(f).captured = false;
+  f.blackoutLit = true;
+  finish(f, 'infiltrate');
+  f.reactorHit();
+  tilt(g);
+  f.endMultiball();
+  check('a tilt in BLACKOUT ends it without the step up; the heist still starts over', f.level === 0 && f.played.size === 0 && f.rowLit[0], `level ${f.level}`);
+}
+
+console.log('Audit fixes');
+{
+  const { g } = startMode('hack');
+  const shown: string[] = [];
+  const o = g.show.bind(g);
+  g.show = (a: string, b?: string, d?: number, big?: boolean) => (shown.push(a), o(a, b, d, big));
+  (g as any).endBall();
+  for (let t = 0; t < 15 && g.ball < 2; t += 1 / 60) g.update(1 / 60);
+  run(g, 2.5);
+  check('the next ball shows HACK CONTINUES after BALL 2', shown.includes('BALL 2') && shown.indexOf('HACK CONTINUES') > shown.indexOf('BALL 2'), shown.join(' | '));
+}
+{
+  const { g, f } = newGame();
+  park(f);
+  f.startRage();
+  const t0 = f.rage.total;
+  const c0 = f.cash;
+  f.spinnerVel = 10;
+  run(g, 0.5);
+  const turns = (f.cash - c0) / 500;
+  check('a spinner turn pays $500, and nothing in RAGE', turns >= 2 && Number.isInteger(turns) && f.rage.total === t0, `cash ${f.cash - c0}, rage ${f.rage.total - t0}`);
+}
+{
+  const { g, f } = newGame();
+  finish(f, 'infiltrate');
+  f.brokenIn = true;
+  f.rowLit[1] = true;
+  park(f);
+  g.ballSave = 12;
+  shootBreach(f);
+  run(g, 3);
+  check('the ball save waits while the ball is held in the Breach', g.ballSave === 12, `${g.ballSave}`);
+}
+{
+  const { g, f } = startMode('extract');
+  f.sw('sling');
+  run(g, 5);
+  const v = f.mode.value;
+  (g as any).endBall();
+  for (let t = 0; t < 15 && g.ball < 2; t += 1 / 60) g.update(1 / 60);
+  check("a drain restarts Extract's leg in progress at full value", f.mode?.value > v, `${v} -> ${f.mode?.value}`);
+}
+{
+  const { g, f } = newGame();
+  park(f);
+  (g as any).launchQueue = 3;
+  f.crackVault();
+  check('cracking the vault never puts more than 4 balls in play', g.ballsInPlay <= 4, `${g.ballsInPlay}`);
+}
+{
+  const { g, f } = newGame();
+  park(f).captured = false;
+  const shown: string[][] = [];
+  const o = g.show.bind(g);
+  g.show = (a: string, b = '', d?: number, big?: boolean) => (shown.push([a, b]), o(a, b, d, big));
+  f.multiball = 'impound';
+  f.impoundJackpot('skyway');
+  f.impoundSuper = true;
+  f.reactorHit();
+  check("the Impound super's message isn't replaced by REACTOR HEAT", shown.at(-1)?.[0] === 'SUPER JACKPOT', shown.map((x) => x[0]).join(' | '));
+  f.endMultiball();
+  check('MULTIBALL OVER shows what it paid', shown.at(-1)?.join(' / ') === `MULTIBALL OVER / TOTAL ${(1_000_000 + 3 * 1_250_000).toLocaleString('en-US')}`, shown.at(-1)?.join(' / '));
+}
+{
+  const { f } = newGame();
+  const lamp = (id: string) => f.lamps.find((l: any) => l.id === id).state();
+  f.lockLit = true;
+  check('the lock lights are lit while a lock is possible', lamp('lock:skyway') === 3 && lamp('lock:impound') === 3);
+  f.multiball = 'payload';
+  check('...and out during another multiball', lamp('lock:skyway') === 0 && lamp('lock:impound') === 0);
+}
+{
+  const { f } = startMode('payload');
+  const lamp = (id: string) => f.lamps.find((l: any) => l.id === id).state();
+  check("Payload's ramp jackpots light their JP lights", lamp('jackpot:skyway') === 3 && lamp('jackpot:market') === 3 && lamp('jackpot:breach') === 0);
+}
+{
+  const { g, f } = newGame();
+  const b = park(f);
+  b.captured = false;
+  const shown: string[] = [];
+  const o = g.show.bind(g);
+  g.show = (a: string, c?: string, d?: number, big?: boolean) => (shown.push(a), o(a, c, d, big));
+  f.skillT = 5;
+  f.rampMade('market', b);
+  check("the shop's price doesn't replace the skill shot", shown.at(-1) === 'SKILL SHOT', shown.join(' | '));
+}
+{
+  const { g, f } = startMode('hack');
+  const shown: string[][] = [];
+  const o = g.show.bind(g);
+  g.show = (a: string, c = '', d?: number, big?: boolean) => (shown.push([a, c]), o(a, c, d, big));
+  f.camerasDownAward();
+  run(g, 1.8);
+  check('a key earned during a job says it is for after the job', shown.some(([a, c]) => a === 'ROUTE LIT' && c === 'AFTER THIS JOB'), shown.map((x) => x.join(' / ')).join(' | '));
+}
+
 console.log('Ball count');
 {
   const { g, f } = newGame();
@@ -796,7 +947,8 @@ console.log('Ball flow');
   const o = f.upperIn.bind(f);
   f.upperIn = () => (ups.push('in'), o());
   const r = launch(f, shot[0], shot[1], shot[2], shot[3], 2);
-  check('with the back door open, the Back Alley goes into the upper playfield', ups.length === 1 && !r.made.includes('alley'), r.made.join());
+  check('with the back door open, the Back Alley goes into the upper playfield', ups.length === 1, r.made.join());
+  check('...still counting as the Back Alley shot, once', r.made.filter((x: string) => x === 'alley').length === 1, r.made.join());
   check('...and the door shuts behind it', f.doorOpen === 0);
 }
 {
