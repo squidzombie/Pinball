@@ -1100,6 +1100,24 @@ exactly where every wall, lane, ramp entrance and insert is. Regenerate them wit
 
 ## 8. Decisions
 
+### For later (your idea, not built): don't spell B-R-E-A-C-H for every job
+
+You'd rather not have to spell B-R-E-A-C-H before every job: spell it once to break in, and let
+other triggers light the later jobs. Proposal, to settle before building:
+
+- **Row 1, INFILTRATE:** spell B-R-E-A-C-H, then shoot the Breach: breaking in. The only time you
+  have to spell it (Infiltrate would no longer come lit at the start).
+- **Row 2, HACK or ROUTE:** lit by **CAMERAS DOWN** (all three CAM lanes): security is blind, go
+  deeper.
+- **Row 3, PAYLOAD or EXTRACT:** lit by exposing the **Reactor** (all three drop targets down),
+  as a second reward for the shot that lights the lock. (Cracking the vault was considered, but
+  its random code makes it too hard a gate.)
+- **BLACKOUT:** as now, lit by finishing Payload or Extract.
+- **Spelling B-R-E-A-C-H after that** becomes a reward, not a gate: for example, a Breach
+  jackpot, or every third spelling lights an extra ball.
+- **Simpler alternative:** a chain, where finishing a job lights the Breach for the next. Easier
+  to learn, but the rest of the table then matters less for progress.
+
 ### 30 October 2026, thirteenth round: the brain (built)
 
 1. **Skull and plate removed;** a top-down brain sits under the heist map, with every map light
