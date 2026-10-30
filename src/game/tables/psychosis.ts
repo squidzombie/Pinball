@@ -997,7 +997,7 @@ export class Psychosis extends Table {
       this.flash(3, 0.8);
       if (!this.lockLit && this.locked.length < 3 && !this.multiball) {
         this.lockLit = true;
-        g.show('REACTOR EXPOSED', 'LOCK IS LIT AT THE SKYWAY', 2, true);
+        g.show('REACTOR EXPOSED', 'LOCK LIT AT THE SKYWAY', 2, true);
       } else {
         g.show('REACTOR EXPOSED', 'HIT THE CORE', 1.6, true);
       }
@@ -1227,7 +1227,7 @@ export class Psychosis extends Table {
     this.modeKey = null;
     g.addBonus(Math.round(m.total / 20));
     if (!quiet) {
-      g.show(m.completed ? `${m.name} DONE` : `${m.name} FAILED`, m.completed ? `TOTAL ${fmt(m.total)}` : 'TRY AGAIN AT THE BREACH', 2.4, true);
+      g.show(m.completed ? `${m.name} DONE` : `${m.name} FAILED`, m.completed ? `TOTAL ${fmt(m.total)}` : 'RETRY AT THE BREACH', 2.4, true);
       sound.modeEnd(m.completed);
     }
     if (def.tier === 2 && m.completed && !this.wizard && !this.blackoutLit) {
@@ -1270,7 +1270,7 @@ export class Psychosis extends Table {
     const total = this.completed.size >= MODES.length ? 4 : 3;
     this.addBalls(total);
     g.grantBallSave(20);
-    g.show(this.completed.size >= MODES.length ? 'TOTAL BLACKOUT' : 'BLACKOUT', 'EVERY SHOT IS A JACKPOT', 3, true);
+    g.show(this.completed.size >= MODES.length ? 'TOTAL BLACKOUT' : 'BLACKOUT', 'EVERY SHOT A JACKPOT', 3, true);
     g.doFlash(INS.red, 0.7);
     g.doShake(10);
     this.lampShow('strobe', 2);
@@ -1612,7 +1612,7 @@ export class Psychosis extends Table {
       if (this.impoundSuper && (this.superT -= dt) <= 0) {
         this.impoundSuper = false;
         this.jackpots = 2;
-        g.show('SUPER JACKPOT LOST', '2 MORE JACKPOTS RELIGHT IT', 1.8, true);
+        g.show('SUPER JACKPOT LOST', '2 JACKPOTS RELIGHT IT', 1.8, true);
         sound.warn();
       }
     }

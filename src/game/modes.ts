@@ -419,7 +419,7 @@ class Payload extends Mode {
     // Missed: two more ramp jackpots relight it.
     this.superLit = false;
     this.count = 1;
-    this.f.game.show('SUPER JACKPOT LOST', '2 MORE JACKPOTS RELIGHT IT', 1.8, true);
+    this.f.game.show('SUPER JACKPOT LOST', '2 JACKPOTS RELIGHT IT', 1.8, true);
     sound.warn();
   }
 
@@ -545,7 +545,7 @@ export class Rage extends Mode {
 export class Blackout extends Mode {
   name = 'BLACKOUT';
   color = '#ff2020';
-  brief = 'EVERY SHOT IS A JACKPOT';
+  brief = 'EVERY SHOT A JACKPOT';
   /** No clock: it lasts as long as the multiball does. */
   time = Infinity;
   multiball = true;
