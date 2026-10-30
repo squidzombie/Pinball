@@ -562,26 +562,35 @@ export function drawBallAt(ctx: CanvasRenderingContext2D, x: number, y: number, 
   ctx.drawImage(ballSprite(), x - 15, floorY - lift(14) - 15, 30, 30);
 }
 
+/** Where each ball was drawn last frame, for its motion smear. */
+const lastDrawn = new WeakMap<Ball, [number, number]>();
+
 /** z is the height of whatever the ball rolls on (0 for the floor). */
 export function drawBall(ctx: CanvasRenderingContext2D, b: Ball, z = 0) {
   const r = b.r;
   const floorY = b.y - lift(z);
   drawShadow(ctx, b.x + 2.5, floorY + 3, r * 1.05, r * 0.8, 0.7);
   const cy = floorY - lift(r);
-  const sp = b.speed;
-  if (sp > 1500 && !b.captured) {
-    // motion smear
-    ctx.save();
-    ctx.globalAlpha = 0.18;
-    ctx.strokeStyle = '#c8ccd0';
-    ctx.lineWidth = r * 1.5;
-    ctx.lineCap = 'round';
-    ctx.beginPath();
-    ctx.moveTo(b.x, cy);
-    const k = Math.min(0.025, 50 / sp);
-    ctx.lineTo(b.x - b.vx * k, cy - b.vy * k);
-    ctx.stroke();
-    ctx.restore();
+  // A fast ball jumps more than half its width between frames (more if a frame is late). A faint
+  // smear over the gap, from where it was drawn last frame, reads as motion instead of stutter.
+  const prev = lastDrawn.get(b);
+  lastDrawn.set(b, [b.x, cy]);
+  if (prev && !b.captured) {
+    const d = Math.hypot(b.x - prev[0], cy - prev[1]);
+    if (d > r * 0.5 && d < 160) {
+      const g = ctx.createLinearGradient(prev[0], prev[1], b.x, cy);
+      g.addColorStop(0, 'rgba(200,204,208,0)');
+      g.addColorStop(1, 'rgba(200,204,208,0.3)');
+      ctx.save();
+      ctx.strokeStyle = g;
+      ctx.lineWidth = r * 1.6;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(prev[0], prev[1]);
+      ctx.lineTo(b.x, cy);
+      ctx.stroke();
+      ctx.restore();
+    }
   }
   ctx.drawImage(ballSprite(), b.x - 15, cy - 15, 30, 30);
 }

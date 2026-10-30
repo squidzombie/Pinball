@@ -17,6 +17,7 @@ const tableCanvas = document.getElementById('table') as HTMLCanvasElement;
 const dmdCanvas = document.getElementById('dmd') as HTMLCanvasElement;
 const overlay = document.getElementById('overlay') as HTMLDivElement;
 const muteBtn = document.getElementById('mute') as HTMLButtonElement | null;
+const speedBtn = document.getElementById('speed') as HTMLButtonElement | null;
 const tctx = tableCanvas.getContext('2d', { alpha: false })!;
 const dctx = dmdCanvas.getContext('2d', { alpha: false })!;
 const game = new Game();
@@ -36,7 +37,8 @@ function safeInsets() {
 }
 
 function layout() {
-  dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+  // 2× is sharp on a phone; 3× screens would draw over twice the pixels each frame for little gain.
+  dpr = Math.min(window.devicePixelRatio || 1, 2);
   const cw = window.innerWidth;
   const safe = safeInsets();
   const MARGIN = 6;
@@ -75,6 +77,7 @@ function layout() {
 
   // Mute sits in the gap above the backbox if there is one, else in the corner.
   if (muteBtn) muteBtn.style.top = top - safe.top >= 46 ? `${safe.top + 6}px` : '';
+  if (speedBtn) speedBtn.style.top = muteBtn?.style.top ?? '';
 
   // The overlay covers the visible (projected) playfield.
   Object.assign(overlay.style, { left: `${left}px`, top: `${top + W * (dmdRel + gap)}px`, width: `${W}px`, height: `${W * projH}px` });
@@ -91,6 +94,28 @@ muteBtn?.addEventListener('click', () => {
   sound.unlock();
   sound.setMuted(!sound.muted);
   muteBtn.textContent = sound.muted ? '🔇' : '🔊';
+});
+
+// Game speed: 100%, 90% or 80%, remembered on this device.
+const SPEEDS = [1, 0.9, 0.8];
+function setSpeed(s: number) {
+  game.speed = s;
+  if (speedBtn) speedBtn.textContent = `${Math.round(s * 100)}%`;
+}
+try {
+  const saved = Number(localStorage.getItem('speed'));
+  if (SPEEDS.includes(saved)) setSpeed(saved);
+} catch {
+  // no storage (private window): stay at 100%
+}
+speedBtn?.addEventListener('click', () => {
+  const next = SPEEDS[(SPEEDS.indexOf(game.speed) + 1) % SPEEDS.length];
+  setSpeed(next);
+  try {
+    localStorage.setItem('speed', String(next));
+  } catch {
+    // not remembered, but still applied
+  }
 });
 
 let overlayMode = '';

@@ -6,7 +6,7 @@ own pair of small flippers. The Skyway is rerouted to make room, the Impound is 
 orbit, and three security cameras pan over the CAM lanes. Hitting the vault's three tumblers in
 the order of a random code cracks it open and starts **VAULT MULTIBALL**. The geometry, its measurements and this
 document are done. **Rules beyond the cameras, the back door and the vault, and the art pass,
-haven't started.** The phone build is this layout (version 9; the fan is version 5 in its
+haven't started.** The phone build is this layout (version 10; the fan is version 5 in its
 history). Where
 the rule sheet differs from the code, the entry says **(change)**; nearly all of those come with
 Phase 4.
@@ -25,6 +25,34 @@ shot. `npm run template` regenerates the template and prints every clearance. Ba
 ---
 
 ## 0. The layout revisions (30 October 2026)
+
+### Sixth round: CAM lanes like a real table, and a smoother frame
+
+- **CAM lanes light only when the ball rolls through them.** The pop bumpers no longer light them.
+  Each pop bumper hit shifts the lit lanes one place to the right (and from the right end round
+  to the left), like a lane change on a real table. A lit lane is a knocked-out camera, so the
+  dark camera moves with it. Light all three for **CAMERAS DOWN** (back door open); the lanes
+  reset once the cameras come back on, and at each new ball. Lit lanes no longer time out. The
+  flipper buttons still only move R-A-G-E.
+- **Frame rate.** You couldn't tell if the ball was too fast or the frame rate was poor. Measured
+  on a phone-sized screen with the processor slowed 4× (an approximation; a real phone's graphics
+  chip is faster):
+  - Drawing the table now takes about a third less time than in version 5, even with the vault
+    and three cameras. Before this round it took about a quarter more: the three camera beams
+    were redrawn as large gradients every frame. They're now plain layered cones, and the
+    cameras' heads and the back door are cached images.
+  - The table is drawn at up to 2× the screen's pixel density instead of 2.5×. That's about a
+    third fewer pixels each frame, and still sharp on a phone.
+  - A fast ball moves more than its own width between frames, which reads as stutter even at a
+    steady 60 frames a second. It now leaves a faint smear back to where it was last frame,
+    which also bridges a late frame.
+- **Speed.** The ball also *is* fast. The table's gravity is about 2.5× a real machine's (a real
+  table tilted 6.5°), so balls fall about 1.6× faster than on a real machine. Shots leave the
+  flippers at real-table speeds. The physics is unchanged. Instead, a **speed button** (next to
+  mute) sets the whole game to 100%, 90% or 80%. It's remembered on the device, and it slows
+  the ball, the flippers and the clocks evenly, so every shot and measurement stays the same,
+  just slower. At 80%, a fall takes about 1.25× as long as on a real table. If you settle on a
+  speed, it can become the default.
 
 ### Fourth round: a random code, and no more strobing
 
@@ -83,7 +111,8 @@ flagged the pop bumpers, the lights, the Reactor and the camera. What changed:
     inlane.
 - **Cameras:** three, one over each CAM lane, panning their beams down the table. A CAM lane or
   the pop bumper below it knocks that camera out for 12 s. With all three out at once: **CAMERAS
-  DOWN**, which opens the back door for 20 s.
+  DOWN**, which opens the back door for 20 s. (Sixth round: now only the lanes knock cameras
+  out, and the pops shift them.)
 - **The Skyway** now runs straight across above the Breach and down the left side, instead of
   climbing through the top left. It's easier: 19% of cradled flips, up from 11%.
 - **The Impound** is a raised cage over the orbit lane on the left, with a red beacon. The ball
@@ -541,21 +570,21 @@ against one fixed loop. Payload and Extract, the two tier-2 jobs, now share only
   - A first hit lights its letter (25K); a repeat hit pays 10K.
   - All six light a job (+200K) and reset the letters.
   - During a timed job, completing them adds 10 s and banks the next job.
-- **Security cameras (built):** three cameras pan over the CAM lanes.
-  - A CAM lane, or the pop bumper below it, knocks that camera out for 12 s. Its beam goes dark
-    and its head drops.
-  - With all three out at once: **CAMERAS DOWN**, worth 100K and $25K. The cameras stay dark for
-    6 s, and the back door opens for 20 s.
-  - In Infiltrate, the middle camera tracks the watched shot.
-- **CAM 1–3 top lanes (change):**
+- **CAM 1–3 top lanes and the security cameras (built):** three cameras pan over the three
+  lanes.
   - **Fed by:** the plunge, the Back Alley, the vault's top exit, and balls the pops kick back
     up.
-  - **Lane change:** either flipper button moves the lit lanes, the same as R-A-G-E.
-  - **First pass:** 5K a lane, 25K for lighting one.
-  - **All three lit:** this pays 100K, advances the bonus X (2× up to 6×) and raises the pop
-    value by 1K (to 5K at most, for the ball). The lanes reset. (Separately, the cameras above
-    can go down; see above.)
-  - **During Infiltrate:** cameras down also adds time (above).
+  - **Lighting:** only rolling through a lane lights it: 25K, or 5K if it's already lit. A lit
+    lane is a knocked-out camera: its beam goes dark and its head drops.
+  - **Lane change:** every pop bumper hit shifts the lit lanes one place to the right (the right
+    end wraps round to the left), and the dark cameras move with them.
+  - **All three lit: CAMERAS DOWN**, worth 100K and $25K. The cameras stay dark and the lanes
+    blink for 6 s, then the lanes reset. The back door opens for 20 s.
+  - Lit lanes don't time out. They reset at each new ball.
+  - In Infiltrate, the middle camera tracks the watched shot.
+  - **(change, Phase 4):** CAMERAS DOWN also advances the bonus X (2× up to 6×) and raises the
+    pop value by 1K (to 5K at most, for the ball). During Infiltrate it also adds time
+    (above).
 - **Skill shot (change; replaces today's):**
   - On the plunge, one CAM lane blinks, and the flippers move it.
   - Rolling through the blinking lane is a **SKILL SHOT**: 500K + $50K.
@@ -945,6 +974,15 @@ exactly where every wall, lane, ramp entrance and insert is. Regenerate them wit
 ---
 
 ## 8. Decisions
+
+### 30 October 2026, sixth round: CAM lanes, frame rate, speed (built)
+
+1. **CAM lanes light only from the ball rolling through them.** Pop bumper hits shift the lit
+   lanes (and the knocked-out cameras) one to the right. All three lit is CAMERAS DOWN.
+2. **Smoother frames:** the camera beams are cheap to draw again, the table is drawn at up to 2×
+   pixel density, and a fast ball leaves a faint smear between frames.
+3. **Speed:** the physics is unchanged, but a button next to mute sets the game to 100%, 90% or
+   80%. **Open:** try 90% and 80%. If one feels right, it can become the default.
 
 ### 30 October 2026, fourth round: random code, no strobing (built)
 

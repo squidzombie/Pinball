@@ -646,16 +646,29 @@ console.log('Ball flow');
   check('the upper playfield drains out the side to the right inlane', lanes[0] === 'R-IN', lanes.join());
 }
 {
-  // Cameras: each lane or the bumper under it knocks one out; all three is CAMERAS DOWN, which opens the vault.
+  // CAM lanes: only rolling through a lane lights it (and knocks out its camera); pop bumpers
+  // shift the lit lanes round; all three lit is CAMERAS DOWN, which opens the back door.
   const { g, f } = newGame();
   park(f);
+  const ball = f.world.balls[0];
+  f.hitBumper(f.bumpers[0], ball);
+  check('a pop bumper on its own lights no lane', f.camLit.every((x: boolean) => !x));
   f.camLane(0);
-  f.hitBumper(f.bumpers[1], f.world.balls[0]);
-  check('a lane and a bumper knock out their cameras', f.cams[0] > 0 && f.cams[2] > 0 && f.cams[1] === 0);
-  f.hitBumper(f.bumpers[2], f.world.balls[0]);
-  check('all three out is CAMERAS DOWN, and it opens the back door', f.camerasDown > 0 && f.doorOpen > 0);
+  check('rolling through a lane lights it', f.camLit.join() === 'true,false,false');
+  f.hitBumper(f.bumpers[2], ball);
+  check('a pop bumper shifts the lit lane one to the right', f.camLit.join() === 'false,true,false');
+  f.hitBumper(f.bumpers[1], ball);
+  f.hitBumper(f.bumpers[1], ball);
+  check('...and round from the right end to the left', f.camLit.join() === 'true,false,false');
+  f.camLane(0);
+  check('rolling a lit lane again changes nothing', f.camLit.join() === 'true,false,false' && f.camerasDown === 0);
+  f.camLane(1);
+  f.camLane(2);
+  check('all three lit is CAMERAS DOWN, and it opens the back door', f.camerasDown > 0 && f.doorOpen > 0);
+  f.hitBumper(f.bumpers[0], ball);
+  check('while the cameras are down the lanes stay lit', f.camLit.every(Boolean));
   run(g, 25);
-  check('the cameras come back and the door shuts again', f.cams.every((c: number) => c === 0) && f.doorOpen === 0);
+  check('then the lanes reset and the door shuts again', f.camLit.every((x: boolean) => !x) && f.doorOpen === 0);
 }
 {
   // The vault's combination: its three tumblers in the code's (random) order crack it; a wrong one starts it over.

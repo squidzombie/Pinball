@@ -43,6 +43,8 @@ export class Game {
   flash = { color: '#ffffff', a: 0 };
   private flashCooldown = 0;
   private slowT = 0;
+  /** Game speed, 1 = normal: the player's setting. It slows the whole table (ball, flippers and clocks) evenly, so every shot is the same, just slower. */
+  speed = 1;
   private acc = 0;
   private msg: Message | null = null;
   private launchQueue = 0;
@@ -323,7 +325,7 @@ export class Game {
       this.slowT -= dt;
       ts = 0.3;
     }
-    const sdt = dt * ts;
+    const sdt = dt * ts * this.speed;
 
     if (this.plungerHeld) this.plungerPull = Math.min(1, this.plungerPull + dt / 0.8);
     this.main.plungerPull = this.plungerPull;

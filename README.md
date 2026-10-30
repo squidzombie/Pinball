@@ -34,9 +34,10 @@ right:
 - **CAM 1–3 and the pops**: three top lanes, fed by the plunge and the Back Alley, drop into three
   industrial pop bumpers in their own nest. The nest's one exit lane drops the ball into the right
   inlane.
-- **The cameras**: three security cameras pan over the CAM lanes. A lane, or the pop bumper below
-  it, knocks its camera out for 12 s. Knock out all three at once for **CAMERAS DOWN**, which
-  opens the **back door** in the Back Alley's wall for 20 s.
+- **The cameras**: three security cameras pan over the CAM lanes. Rolling through a lane lights
+  it and knocks out the camera above it; every pop bumper hit shifts the lit lanes one to the
+  right. Light all three for **CAMERAS DOWN**, which opens the **back door** in the Back Alley's
+  wall for 20 s.
 - **THE VAULT**: the upper playfield, with two small flippers on the main buttons and three
   tumbler targets. Get in up the vault lane, or through the open back door with a Back Alley
   shot. Leave out the top into the CAM lanes, or past its flippers and out the side to the right
@@ -129,6 +130,7 @@ everything is worth 0.5X more.
 | Nudge | `X` | shake the phone |
 | Mute / Pause | `M` / `P` | 🔊 button |
 | Flat / tilted view | `V` (or add `?flat` to the URL) | |
+| Game speed (100% / 90% / 80%) | | the % button next to 🔊 |
 
 ## Development
 

@@ -1439,6 +1439,61 @@ function liveRail(ctx: CanvasRenderingContext2D, pts: P[], h: number, w: number)
   ctx.restore();
 }
 
+/** A rail that moves (drawn every frame), cached as an image of its bounding box. */
+function cachedRail(ctx: CanvasRenderingContext2D, key: string, pts: P[], h: number, w: number) {
+  const m = w + 4;
+  const x0 = Math.min(...pts.map((p) => p[0])) - m;
+  const x1 = Math.max(...pts.map((p) => p[0])) + m;
+  const y0 = Math.min(...pts.map((p) => p[1])) - lift(h) - m;
+  const y1 = Math.max(...pts.map((p) => p[1])) + m;
+  const c = sprite(key, x1 - x0, y1 - y0, (g) => {
+    g.translate(-x0, -y0);
+    liveRail(g, pts, h, w);
+  });
+  ctx.drawImage(c, x0, y0, x1 - x0, y1 - y0);
+}
+
+/**
+ * A camera's beam along +x from its lens: three overlapping flat cones, shorter ones brighter, so
+ * it fades with distance. Flat fills are the cheapest way to draw a big translucent shape.
+ */
+function beam(ctx: CanvasRenderingContext2D, len: number, watching: boolean) {
+  const s = Math.tan(watching ? 0.06 : 0.09);
+  const k = watching ? 2 : 1;
+  for (const [f, a] of [
+    [1, 0.04],
+    [0.65, 0.05],
+    [0.35, 0.06],
+  ]) {
+    const l = len * f;
+    ctx.fillStyle = withAlpha(RED, a * k);
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(l, -l * s);
+    ctx.lineTo(l, l * s);
+    ctx.closePath();
+    ctx.fill();
+  }
+}
+
+/** A camera's head, lens toward +x, origin at its pivot. */
+function camHead(down: boolean) {
+  return sprite(`camhead:${down}`, 28, 16, (g) => {
+    g.translate(7, 8);
+    g.beginPath();
+    g.roundRect(-6, -6, 20, 12, 2.5);
+    g.fillStyle = steelGrad(g, -6, -6, 14, 6, down ? '#8d9092' : '#c9cbcc');
+    g.fill();
+    inkLine(g, 1.2);
+    g.stroke();
+    g.beginPath();
+    g.arc(15, 0, 4, 0, Math.PI * 2);
+    g.fillStyle = '#1b1a19';
+    g.fill();
+    g.stroke();
+  });
+}
+
 /**
  * The three security cameras pan their red beams down the table; a knocked-out camera hangs
  * dark. In Infiltrate the middle one tracks the watched shot. Also the back door's deflector
@@ -1451,41 +1506,20 @@ export function paintDynamic(ctx: CanvasRenderingContext2D, t: number, cams: boo
     const oy = cy - lift(CAM_Z);
     const aim = target && i === 1 ? target : ([cx + Math.sin(t * 0.55 + i * 2.1) * 170, 470 + Math.cos(t * 0.4 + i) * 90] as P);
     const a = down ? Math.PI / 2 + 0.9 : Math.atan2(aim[1] - oy, aim[0] - ox);
-    if (!down) {
-      const len = Math.hypot(aim[0] - ox, aim[1] - oy) + 30;
-      const spread = target && i === 1 ? 0.06 : 0.09;
-      const g = ctx.createRadialGradient(ox, oy, 0, ox, oy, len);
-      g.addColorStop(0, withAlpha(RED, target && i === 1 ? 0.32 : 0.15));
-      g.addColorStop(1, withAlpha(RED, 0));
-      ctx.fillStyle = g;
-      ctx.beginPath();
-      ctx.moveTo(ox, oy);
-      ctx.lineTo(ox + Math.cos(a - spread) * len, oy + Math.sin(a - spread) * len);
-      ctx.lineTo(ox + Math.cos(a + spread) * len, oy + Math.sin(a + spread) * len);
-      ctx.closePath();
-      ctx.fill();
-      if (target && i === 1) drawGlow(ctx, target[0], target[1], 40, RED, 0.35 + 0.25 * Math.sin(t * 9));
-    }
-    // the head: a small box with its lens toward the beam
+    const watching = !!target && i === 1;
     ctx.save();
     ctx.translate(ox, oy);
     ctx.rotate(a);
-    ctx.beginPath();
-    ctx.roundRect(-6, -6, 20, 12, 2.5);
-    ctx.fillStyle = steelGrad(ctx, -6, -6, 14, 6, down ? '#8d9092' : '#c9cbcc');
-    ctx.fill();
-    inkLine(ctx, 1.2);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.arc(15, 0, 4, 0, Math.PI * 2);
-    ctx.fillStyle = '#1b1a19';
-    ctx.fill();
-    ctx.stroke();
+    if (!down) beam(ctx, Math.hypot(aim[0] - ox, aim[1] - oy) + 30, watching);
+    // the head: a small box with its lens toward the beam
+    ctx.drawImage(camHead(down), -7, -8, 28, 16);
     ctx.restore();
+    if (!down && watching) drawGlow(ctx, target![0], target![1], 40, RED, 0.35 + 0.25 * Math.sin(t * 9));
     lens(ctx, ox - 2, oy - 3, 2.4, down ? 0 : 0.6 + 0.4 * Math.sin(t * 5 + i));
   });
   // the back door: shut in the orbit's inner wall, or swung across the orbit as a deflector
-  liveRail(ctx, doorOpen ? L.BACK_DOOR_DEFLECTOR : L.BACK_DOOR, 26, 7);
+  if (doorOpen) cachedRail(ctx, 'rail:deflector', L.BACK_DOOR_DEFLECTOR, 26, 7);
+  else cachedRail(ctx, 'rail:door', L.BACK_DOOR, 26, 7);
   // the vault's hatch, swung open with gold light inside while it lets balls out
   if (hatch > 0) {
     const [hx, hy, hw, hh] = VAULT_HATCH;

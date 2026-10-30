@@ -49,13 +49,10 @@ interface Drop {
 
 type Multiball = 'impound' | 'payload' | 'blackout' | 'vault' | null;
 
-/** A knocked-out camera reboots after this; after CAMERAS DOWN they all stay dark this long. */
-const CAMERA_REBOOT = 12;
+/** After CAMERAS DOWN, the cameras stay dark (and the lanes blink) this long before the lanes reset. */
 const CAMERAS_DOWN_TIME = 6;
 /** How long CAMERAS DOWN holds the back door open. */
 const BACK_DOOR_TIME = 20;
-/** Which camera each pop bumper sits under (bumpers are listed left, right, bottom). */
-const BUMPER_CAMERA = [0, 2, 1];
 /** Balls the vault lets out when cracked (one, as an add-a-ball, during another multiball), and the most on the table. */
 const VAULT_BALLS = 3;
 const MAX_BALLS = 4;
@@ -104,8 +101,8 @@ export class Psychosis extends Table {
   vaultJp = 1_000_000;
   private flankFlash = [0, 0];
   private camFlash = [0, 0, 0];
-  /** Seconds each camera stays dark (0 = watching), and the CAMERAS DOWN timer. */
-  cams = [0, 0, 0];
+  /** The CAM lanes that are lit (each one's camera is knocked out), and the CAMERAS DOWN timer. */
+  camLit = [false, false, false];
   camerasDown = 0;
   /** Captive ball in the Reactor channel: position along the axis and speed. */
   captive: { c: Circle; s: number; v: number };
@@ -437,7 +434,7 @@ export class Psychosis extends Table {
 
     // CAM 1-3: a light in each top lane
     L.CAM_LANES.forEach(([x0, x1], i) =>
-      lamp({ id: `cam:${i + 1}`, kind: 'circle', x: (x0 + x1) / 2, y: 113, w: 15, color: INS.red, label: String(i + 1), labelSize: 8, state: () => (this.camFlash[i] > 0 ? 3 : this.cams[i] > 0 ? 1 : 0) }),
+      lamp({ id: `cam:${i + 1}`, kind: 'circle', x: (x0 + x1) / 2, y: 113, w: 15, color: INS.red, label: String(i + 1), labelSize: 8, state: () => (this.camFlash[i] > 0 ? 3 : this.camerasDown > 0 ? 2 : this.camLit[i] ? 1 : 0) }),
     );
 
     // The tumblers' lights, in front of each standup, pointing at it
@@ -612,6 +609,8 @@ export class Psychosis extends Table {
     this.releaseQueue = 0;
     this.hatchQueue = 0;
     this.hatchOpen = 0;
+    this.camLit = [false, false, false];
+    this.camerasDown = 0;
     this.multiball = null;
     this.impoundSuper = false;
     this.lampShow('sweepUp', 1.2);
@@ -730,37 +729,44 @@ export class Psychosis extends Table {
     sound.target();
   }
 
-  /** A CAM lane under the top of the arch: rolling through it knocks out the camera above it. */
+  /**
+   * A CAM lane under the top of the arch. Only rolling through a lane lights it, and a lit lane
+   * means the camera above it is knocked out. All three lit at once is CAMERAS DOWN.
+   */
   private camLane(i: number) {
+    const g = this.game;
     this.sw('rollover');
-    this.game.addScore(5_000, (L.CAM_LANES[i][0] + L.CAM_LANES[i][1]) / 2, L.CAM_Y);
+    const [x, y] = [(L.CAM_LANES[i][0] + L.CAM_LANES[i][1]) / 2, L.CAM_Y];
     this.camFlash[i] = 0.6;
-    this.knockCamera(i);
     sound.lane();
+    if (this.camerasDown > 0 || this.camLit[i]) {
+      g.addScore(5_000, x, y);
+      return;
+    }
+    this.camLit[i] = true;
+    g.addScore(25_000, x, y);
+    sound.tick();
+    if (this.camLit.every(Boolean)) this.camerasDownAward();
   }
 
-  /**
-   * The three security cameras over the CAM lanes. A camera goes dark when its lane is rolled or
-   * the pop bumper under it is hit, and reboots after a while. All three dark at once is
-   * CAMERAS DOWN; then they all reboot together.
-   */
-  private knockCamera(i: number) {
+  /** Every pop bumper hit shifts the lit CAM lanes one to the right (and round), like a real table's lane change. */
+  private rotateCamLanes() {
     if (this.camerasDown > 0) return;
-    const fresh = this.cams[i] <= 0;
-    this.cams[i] = CAMERA_REBOOT;
-    if (fresh) sound.tick();
-    if (this.cams.every((c) => c > 0)) {
-      const g = this.game;
-      this.camerasDown = CAMERAS_DOWN_TIME;
-      this.cams = this.cams.map(() => CAMERAS_DOWN_TIME);
-      g.addScore(100_000);
-      this.cash += 25_000;
-      g.show('CAMERAS DOWN', 'BACK DOOR OPEN', 1.6, true);
-      // For now the back door opens for the next Back Alley shot (the full rule comes with Phase 4).
-      this.doorOpen = BACK_DOOR_TIME;
-      this.flash(4, 0.8);
-      sound.award();
-    }
+    const l = this.camLit;
+    this.camLit = [l[2], l[0], l[1]];
+  }
+
+  /** All three cameras knocked out: the back door opens. The lanes reset once the cameras come back. */
+  private camerasDownAward() {
+    const g = this.game;
+    this.camerasDown = CAMERAS_DOWN_TIME;
+    g.addScore(100_000);
+    this.cash += 25_000;
+    g.show('CAMERAS DOWN', 'BACK DOOR OPEN', 1.6, true);
+    // For now the back door opens for the next Back Alley shot (the full rule comes with Phase 4).
+    this.doorOpen = BACK_DOOR_TIME;
+    this.flash(4, 0.8);
+    sound.award();
   }
 
   /** The ball has gone into the upper playfield: up its lane, or through the back door off the Back Alley. */
@@ -918,7 +924,7 @@ export class Psychosis extends Table {
     g.fx.sparks(c.x - (c.x - b.x) * 0.5, c.y - (c.y - b.y) * 0.5, INS.red, 10, 450);
     g.doShake(2);
     sound.bumper();
-    this.knockCamera(BUMPER_CAMERA[this.bumpers.indexOf(c)]);
+    this.rotateCamLanes();
   }
 
   private hitDrop(i: number, speed: number) {
@@ -1442,8 +1448,10 @@ export class Psychosis extends Table {
     for (let i = 0; i < 2; i++) this.flankFlash[i] = Math.max(0, this.flankFlash[i] - dt);
     for (let i = 0; i < 3; i++) this.camFlash[i] = Math.max(0, this.camFlash[i] - dt);
     for (let i = 0; i < 3; i++) this.tumblerFlash[i] = Math.max(0, this.tumblerFlash[i] - dt);
-    this.cams = this.cams.map((c) => Math.max(0, c - dt));
-    this.camerasDown = Math.max(0, this.camerasDown - dt);
+    if (this.camerasDown > 0) {
+      this.camerasDown = Math.max(0, this.camerasDown - dt);
+      if (this.camerasDown === 0) this.camLit = [false, false, false];
+    }
     this.diverter.enabled = !this.alleyLoopOpen;
     // In vault multiball the back door stays open, so the Back Alley feeds the vault.
     this.doorOpen = this.multiball === 'vault' ? Math.max(this.doorOpen, 1) : Math.max(0, this.doorOpen - dt);
@@ -1632,7 +1640,7 @@ export class Psychosis extends Table {
   }
 
   protected override drawDynamic(ctx: CanvasRenderingContext2D) {
-    paintDynamic(ctx, this.time, this.cams.map((c) => c <= 0), this.cameraTarget(), this.plungerPull, this.doorOpen > 0, Math.min(1, this.hatchOpen * 3));
+    paintDynamic(ctx, this.time, this.camLit.map((lit) => !lit && this.camerasDown <= 0), this.cameraTarget(), this.plungerPull, this.doorOpen > 0, Math.min(1, this.hatchOpen * 3));
     // The Breach glows when it has something to give.
     if (this.shotLamp('breach')) drawGlow(ctx, L.BREACH[0], L.BREACH[1], 36, this.shotTint('breach'), 0.35 + 0.3 * Math.sin(this.time * 6));
   }
