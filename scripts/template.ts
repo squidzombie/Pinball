@@ -236,10 +236,10 @@ function sensors(svg: Svg) {
   gate('LEFT GATE', L.LEFT_GATE, -6, 30);
   gate('UPPER GATE', L.UPPER_GATE, 0, -4);
   gate('UPPER EXIT FLAP', L.UPPER_EXIT_FLAP, 0, -6);
-  // the vault door: part of the orbit's inner wall; when open it swings across the orbit (dashed)
-  svg.path(L.VAULT_DOOR, C.oneWay, 2.4, false, 'none');
-  svg.path(L.VAULT_DEFLECTOR, C.oneWay, 1, false, 'none', 'stroke-dasharray="3 2"');
-  gate('VAULT DOOR', L.VAULT_DEFLECTOR, 6, -6);
+  // the back door: part of the orbit's inner wall; when open it swings across the orbit (dashed)
+  svg.path(L.BACK_DOOR, C.oneWay, 2.4, false, 'none');
+  svg.path(L.BACK_DOOR_DEFLECTOR, C.oneWay, 1, false, 'none', 'stroke-dasharray="3 2"');
+  gate('BACK DOOR', L.BACK_DOOR_DEFLECTOR, 6, -6);
   tag('UPPER PF IN', L.UPPER_SWITCH, 0, 9);
   tag('UPPER EXIT', L.UPPER_EXIT_SWITCH, 0, 9);
   tag('UPPER DRAIN', L.UPPER_DRAIN_SWITCH, 14, 0);

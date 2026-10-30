@@ -619,17 +619,17 @@ console.log('Ball flow');
   check('with the loop held open it comes back to the right inlane', r2.lanes.includes('R-IN') && !r2.lanes.some((l) => l.endsWith('OUT')), `${r2.made.join()} ${r2.lanes.join()}`);
 }
 {
-  // The vault door: open, it turns the Back Alley into the upper playfield instead of the top.
+  // The back door: open, it turns the Back Alley into the upper playfield instead of the top.
   const shot = realShot('right', 'alley');
   const { f } = newGame();
-  f.vaultOpen = 10;
+  f.doorOpen = 10;
   f.update(1 / 60);
   const ups: string[] = [];
   const o = f.upperIn.bind(f);
   f.upperIn = () => (ups.push('in'), o());
   const r = launch(f, shot[0], shot[1], shot[2], shot[3], 2);
-  check('with the vault door open, the Back Alley goes into the upper playfield', ups.length === 1 && !r.made.includes('alley'), r.made.join());
-  check('...and the door shuts behind it', f.vaultOpen === 0);
+  check('with the back door open, the Back Alley goes into the upper playfield', ups.length === 1 && !r.made.includes('alley'), r.made.join());
+  check('...and the door shuts behind it', f.doorOpen === 0);
 }
 {
   // The upper playfield: a ball nobody flips drains out the side to the right inlane.
@@ -653,9 +653,62 @@ console.log('Ball flow');
   f.hitBumper(f.bumpers[1], f.world.balls[0]);
   check('a lane and a bumper knock out their cameras', f.cams[0] > 0 && f.cams[2] > 0 && f.cams[1] === 0);
   f.hitBumper(f.bumpers[2], f.world.balls[0]);
-  check('all three out is CAMERAS DOWN, and it opens the vault door', f.camerasDown > 0 && f.vaultOpen > 0);
+  check('all three out is CAMERAS DOWN, and it opens the back door', f.camerasDown > 0 && f.doorOpen > 0);
   run(g, 25);
-  check('the cameras come back and the door shuts again', f.cams.every((c: number) => c === 0) && f.vaultOpen === 0);
+  check('the cameras come back and the door shuts again', f.cams.every((c: number) => c === 0) && f.doorOpen === 0);
+}
+{
+  // The vault's combination: tumblers 1, 2, 3 in order crack it; a wrong one starts it over.
+  const { g, f } = newGame();
+  park(f);
+  f.hitTumbler(0);
+  f.hitTumbler(2);
+  check('a tumbler out of order starts the combination over', f.tumblersIn === 0 && !f.multiball);
+  f.hitTumbler(1);
+  f.hitTumbler(2);
+  check("...so 2 and 3 on their own don't open the vault", f.tumblersIn === 0 && !f.multiball);
+  f.hitTumbler(0);
+  f.hitTumbler(0);
+  check('hitting 1 again just starts over at 1', f.tumblersIn === 1);
+  f.hitTumbler(1);
+  f.hitTumbler(2);
+  check('1, 2, 3 in order cracks the vault: VAULT MULTIBALL', f.multiball === 'vault');
+  check('...with two balls on their way out of its hatch', g.ballsInPlay === 3, `${g.ballsInPlay}`);
+  const deck = (b: Ball) => b.x > L.UPPER_LANE_X[1] && b.x < 265 && b.y < L.UPPER_FLIPPER.y;
+  let seen = 0;
+  for (let t = 0; t < 3; t += 1 / 60) {
+    g.update(1 / 60);
+    seen = Math.max(seen, f.world.balls.filter((b: Ball) => !b.captured && deck(b)).length);
+  }
+  check('...that drop out onto the vault deck', f.world.balls.filter((b: Ball) => !b.captured).length === 2 && seen >= 1, `${seen}`);
+  check('the back door stays open in vault multiball', f.doorOpen > 0);
+  const jp = f.vaultJp;
+  const s0 = g.score;
+  f.upperOut('top');
+  check('out the vault top is the vault jackpot, and it rises', g.score - s0 >= jp && f.vaultJp > jp);
+}
+{
+  // The balls out of the safe, with nobody flipping, drain out the side to the right inlane.
+  const { f } = newGame();
+  f.world.balls = [];
+  const lanes: string[] = [];
+  const o = f.rollover.bind(f);
+  f.rollover = (k: number) => (lanes.push(['L-OUT', 'L-IN', 'R-IN', 'R-OUT'][k]), o(k));
+  f.hitTumbler(0);
+  f.hitTumbler(1);
+  f.hitTumbler(2);
+  for (let t = 0; t < 12 && lanes.length < 2; t += 1 / 480) {
+    f.world.step(1 / 480);
+    f.substep(1 / 480);
+    f.update(1 / 480);
+  }
+  check('both balls out of the vault come down the right inlane', lanes.length === 2 && lanes.every((l) => l === 'R-IN'), lanes.join());
+  // In another multiball, cracking the vault adds one ball.
+  const h = newGame();
+  park(h.f);
+  h.f.multiball = 'impound';
+  for (const k of [0, 1, 2]) h.f.hitTumbler(k);
+  check('cracked during another multiball, the vault adds one ball', h.f.multiball === 'impound' && h.g.ballsInPlay === 2, `${h.g.ballsInPlay}`);
 }
 {
   // Wire returns: each drops into its inlane (never the outlane) and a held flipper catches it.

@@ -3,9 +3,11 @@
 Status: **second layout round built for your review (30 October 2026).** The fan from the first
 round now has an upper playfield, **THE VAULT**, in the old dead area at the top left, with its
 own pair of small flippers. The Skyway is rerouted to make room, the Impound is a cage over the
-orbit, and three security cameras pan over the CAM lanes. The geometry, its measurements and this
-document are done. **Rules beyond the cameras and the vault door, and the art pass, haven't
-started.** The phone build is this layout (version 6; the fan is version 5 in its history). Where
+orbit, and three security cameras pan over the CAM lanes. Hitting the vault's three tumblers in
+order cracks it open and starts **VAULT MULTIBALL**. The geometry, its measurements and this
+document are done. **Rules beyond the cameras, the back door and the vault, and the art pass,
+haven't started.** The phone build is this layout (version 7; the fan is version 5 in its
+history). Where
 the rule sheet differs from the code, the entry says **(change)**; nearly all of those come with
 Phase 4.
 
@@ -24,6 +26,22 @@ shot. `npm run template` regenerates the template and prints every clearance. Ba
 
 ## 0. The layout revisions (30 October 2026)
 
+### Third round: the vault's combination and VAULT MULTIBALL
+
+Your idea: the three tumblers at the top of the vault are a combination. Hit them in order, 1
+then 2 then 3, and the vault opens and extra balls drop out as a multiball. As built:
+
+- **The combination:** tumbler 1 (left), then 2, then 3. The lights in front of them show where
+  you are: done ones lit, the next one blinking. A tumbler out of order is **WRONG
+  COMBINATION** and starts it over (tumbler 1 out of order counts as a fresh start).
+- **Cracked:** the vault's hatch, on top of the tumbler block, swings open with gold light
+  inside, and two
+  balls drop out onto the vault's deck one after the other: **VAULT MULTIBALL**. Rules are in
+  section 2.
+- **Renamed:** the door in the Back Alley's wall is now the **back door**, so "the vault opens"
+  only ever means the hatch. (The tumbler block isn't called a safe, because SAFE is already the
+  standup on the vault lane's wall.)
+
 ### Second round: the upper playfield, the cameras and a visual clean-up
 
 You said the top left still felt dead, and asked for its own small game up there. You also
@@ -32,16 +50,16 @@ flagged the pop bumpers, the lights, the Reactor and the camera. What changed:
 - **THE VAULT (upper playfield)** fills the old sealed yard between the orbit, the Breach and the
   pops. Details are at the end of section 1.
   - **Ways in:** a lane up the left side beside the B-R-E bank, through a one-way gate. Or the
-    **vault door**: a stretch of the orbit's inner wall that swings across the orbit, so a Back
+    **back door**: a stretch of the orbit's inner wall that swings across the orbit, so a Back
     Alley shot goes straight in.
   - **Inside:** two half-size flippers on the main buttons, and three **tumbler** standups on a
-    raised block at the back.
+    raised block at the back. (Third round: the tumblers are now the vault's combination.)
   - **Ways out:** out the top through a one-way flap into the arch, then the CAM lanes. Or down
     past its flippers, out the side along under the pops, into the pop exit lane and the right
     inlane.
 - **Cameras:** three, one over each CAM lane, panning their beams down the table. A CAM lane or
   the pop bumper below it knocks that camera out for 12 s. With all three out at once: **CAMERAS
-  DOWN**, which opens the vault door for 20 s.
+  DOWN**, which opens the back door for 20 s.
 - **The Skyway** now runs straight across above the Breach and down the left side, instead of
   climbing through the top left. It's easier: 19% of cradled flips, up from 11%.
 - **The Impound** is a raised cage over the orbit lane on the left, with a red beacon. The ball
@@ -111,7 +129,7 @@ Skyway 7.5%, Breach 2.7%, Reactor drops 4.9%.
 
 | Shot | Flipper | Angles | Share | Returns to | Role |
 |---|---|---|---|---|---|
-| **Back Alley** (left orbit, over the top) | Right | 122.8–124.8° | 10% / 2% | **Loop closed:** into the CAM lanes 12/12, then through the pops to the right flipper. **Loop held open:** round the top and down the right leg into the chute, onto the Black Market wire, to the right inlane. 12/12 back to the right flipper (2 loop all the way; 10 slower ones drop into the lanes and come out of the pops). **Vault door open:** 12/12 into the upper playfield. | Mode shot, Impound jackpot, feeds the CAM lanes and the vault. |
+| **Back Alley** (left orbit, over the top) | Right | 122.8–124.8° | 10% / 2% | **Loop closed:** into the CAM lanes 12/12, then through the pops to the right flipper. **Loop held open:** round the top and down the right leg into the chute, onto the Black Market wire, to the right inlane. 12/12 back to the right flipper (2 loop all the way; 10 slower ones drop into the lanes and come out of the pops). **Back door open:** 12/12 into the upper playfield. | Mode shot, Impound jackpot, feeds the CAM lanes and the vault. |
 | **Vault lane** (up the left into the upper playfield) | Right | 116.1–117.7° | 1% / 1% | Through the upper playfield and out (below). | The way into THE VAULT. |
 | **SAFE** (standup on the vault lane's wall) | Right | 109.2–112.7° | 7% / 2% | Bounces back. | Hack remote key. |
 | **B-R-E** standups (face the right flipper) | Right | B 109.4–109.7°, R 106°, E rarely | B 6% / 0%, R about 1% | Rebound: 0 down the middle; 2 of 9 to an outlane. | Letters. |
@@ -123,7 +141,7 @@ Skyway 7.5%, Breach 2.7%, Reactor drops 4.9%.
 | Pop exit gate | Left | 62.3–63.9° | 1% / 1% | Bounces back (one-way, exit only). | — |
 | **Skyway** (right ramp, deck straight across above the Breach, wire down the left) | Left | 54.7–57.2° | 19% / 2% | Left inlane → left flipper 12/12. | Lock (divert to the Impound), mode shot, jackpot, spinner. |
 | **CAM 1–3** top lanes | Plunge, Back Alley, the vault's top exit, the pops | — | — | Into the pops. | Each knocks out the camera above it; bonus X, pop value, skill shot. |
-| **Tumblers** (3 standups in the vault) | The upper flippers | — | — | Back down to the upper flippers. | The vault job (Phase 4). |
+| **Tumblers** (3 standups in the vault) | The upper flippers | — | — | Back down to the upper flippers. | The vault's combination: 1, 2, 3 in order starts VAULT MULTIBALL. |
 | **Pops** (only from the lanes) | — | — | — | Out of the exit lane into the right inlane, right flipper 12/12. | Cash, Rage. |
 
 **Flags:**
@@ -138,7 +156,7 @@ Skyway 7.5%, Breach 2.7%, Reactor drops 4.9%.
   want it easier, the real lever is moving the scoop up to 2° clockwise, toward the right
   flipper's busiest angles, at the expense of the A standup.
 - **The vault lane is the hardest shot on the table** (1% of flips). The right flipper rarely
-  launches at 116–118°. That's why the vault door exists: when the cameras are down, the Back
+  launches at 116–118°. That's why the back door exists: when the cameras are down, the Back
   Alley (10%) feeds the vault instead.
 - **No two shots' windows overlap.** Each shot's approach is clear. One overlap of *paths* is
   unavoidable: the Skyway's deck passes over the Black Market's climb (compromise 1).
@@ -172,7 +190,7 @@ the right. The Breach crosses right to left; the Black Market crosses left to ri
 |---|---|---|
 | Skyway reaches its inlane | ≥ 11/12, 0 drains | **12/12** left inlane → left flipper, 0 drains |
 | Black Market reaches its inlane | ≥ 11/12, 0 drains | **12/12** from the left flipper and **12/12** from the right, right inlane → right flipper, 0 drains |
-| Back Alley reaches the top lanes | ≥ 11/12 | **12/12** (loop closed). Held open: 12/12 back to the right flipper. Vault door open: 12/12 into the upper playfield. Of 134 cradled flips, 12 more go up the orbit but fall back short of the top (the switch doesn't count them): 7 come back to the left flipper, 5 to the right. |
+| Back Alley reaches the top lanes | ≥ 11/12 | **12/12** (loop closed). Held open: 12/12 back to the right flipper. Back door open: 12/12 into the upper playfield. Of 134 cradled flips, 12 more go up the orbit but fall back short of the top (the switch doesn't count them): 7 come back to the left flipper, 5 to the right. |
 | Plunge reaches the top lanes | 12/12 | **12/12** at 50–100% pull; the auto-launch too. At about 37–50% it clears the shooter gate but not the top, and drops into the Back Alley chute to the right inlane. Weaker than that, it falls back to the plunger. No pull strength leaves it stuck (tested from 0 to 100%, and finely around the gate). |
 | Pop nest exits toward an outlane | ≤ 1/12 | **0/12**: all 12 visits leave by the exit lane into the right inlane and reach the right flipper. |
 | Pop nest: bumper hits and time | Busy for a few seconds, never trapped | 12 plunges: **3.1 hits** a visit on average (1–6) and **3.1 s** in the nest (1.1–5.7 s). Stress test from the first round (the nest hasn't changed), 72 visits: no ball trapped, median 2.3 s, 90% out within 4.7 s, longest 9.9 s. |
@@ -255,14 +273,19 @@ than the ball. The new ones are 72 across at the ring (2.6 balls), and the drawn
     - The old skill shot (Black Market within 7 s of the plunge) still works.
     - The CAM lanes are plain switches.
     - The diverter can be held open from code, but no rule opens it yet.
-    - The vault scores (in 50K, tumblers 25K, out the top 100K), but the VAULT job isn't built.
-      For now, CAMERAS DOWN just opens the door for 20 s.
+    - CAMERAS DOWN only opens the back door for 20 s.
 15. **The upper flippers flip with the main ones,** on the same buttons, as on real tables.
     Flipping for the lower flippers also flips the vault's, which mostly doesn't matter, since
     they're out of reach.
 16. **The vault's top exit can miss the CAM lanes.** A ball that leaves the top slowly rolls round
     the arch instead (3 of 12 in the test above) and comes down the right leg to the right
     flipper. It's still a safe return.
+17. **The combination is hard, on purpose.** From a cradle on the vault's flippers, tumbler 1 is
+    mostly a left-flipper shot (17 of 150 timings), tumbler 2 a right-flipper shot (20 of 150)
+    and tumbler 3 a left-flipper shot again (9 of 150). The test bot, flipping at random, never
+    cracked it in 30 minutes. It did hit WRONG COMBINATION a few times. A stress run that cracked
+    the vault every 30 s (about 20 multiballs in 10 minutes, up to 4 balls at once) had no stuck
+    balls and no leaks.
 ### The upper playfield: THE VAULT (built)
 
 Your idea from the first round: turn the dead yard in the upper left into its own small game,
@@ -274,14 +297,14 @@ with its own flippers, a way out the side and maybe one out the top. As built:
   - **The vault lane:** up the left side beside the B-R-E bank (31 units wide), through a sloped
     one-way gate at the top. From the right flipper, 116–118°, 1% of flips: the hardest shot on
     the table.
-  - **The vault door:** a 90-unit stretch of the orbit's inner wall, hazard-striped. When it's
+  - **The back door:** a 90-unit stretch of the orbit's inner wall, hazard-striped. When it's
     open, it swings across the orbit lane, so a Back Alley shot goes straight in (12/12).
     CAMERAS DOWN opens it for 20 s. Going in closes it.
 - **Inside:**
   - **Two half-size flippers** (44 units, half the main ones) at the bottom. They're on
     the main buttons.
-  - **Three tumbler standups** on a raised block at the back, under the arch. There's a painted
-    safe dial on the deck.
+  - **Three tumbler standups** on a raised block at the back, under the arch, with the vault's
+    hatch on top of the block. There's a painted safe dial on the deck.
 - **Ways out:**
   - **Out the top:** between the tumbler block and the pop nest's wall, over a one-way flap into
     the arch. The ball rolls right into the CAM lanes and the pops (or on round the arch), then
@@ -293,9 +316,9 @@ with its own flippers, a way out the side and maybe one out the top. As built:
   lane's wall.
 - **Phone view:** the vault is in the smallest part of the tilted view. Its art is bold: a dark
   tread-plate deck, a big safe dial, a hazard-striped door.
-- **Still to decide (Phase 4):** the VAULT job itself. The idea from the first round: a short
-  timed round where the tumblers crack the safe and the top exit pays the vault jackpot, and
-  draining out the side ends it.
+- **Cracking the vault (third round):** tumblers 1, 2, 3 in order crack it, and two balls drop
+  out of its hatch onto the deck for VAULT MULTIBALL (section 2). With nobody flipping, both drain out the
+  side to the right inlane (a rules test checks this).
 
 ---
 
@@ -462,6 +485,28 @@ against one fixed loop. Payload and Extract, the two tier-2 jobs, now share only
 - **Shooting style:** both ramps and the orbit, then the scoop. Compare Blackout, which adds the
   Reactor.
 
+### Vault multiball (new; built)
+
+- **Start:** crack the vault. Hit its three tumblers in order: 1, then 2, then 3.
+  - Tumbler 1 pays 50K, tumbler 2 pays 100K, and cracking the vault pays 1M.
+  - A tumbler out of order pays 10K, shows **WRONG COMBINATION** and starts the combination
+    over.
+  - The combination carries over from ball to ball. It resets at a new game.
+- **Balls:** two drop out of the vault's hatch onto its deck, 0.9 s apart, with 12 s of
+  ball save. The player can play them with the vault's flippers, or let them drain out the side
+  to the right flipper.
+- **Jackpot:** each ball shot out of the vault's top pays the **VAULT JACKPOT**: 1M, +250K each
+  time. A JP light by the top exit strobes.
+- **The back door stays open** for the whole multiball. A Back Alley shot goes straight back into
+  the vault, which makes a loop: right flipper, Back Alley, vault, out the top for the jackpot,
+  CAM lanes, pops, right flipper.
+- **During another multiball** (Impound, Payload or Blackout), cracking the vault is an
+  **ADD-A-BALL**: one ball drops out. The table holds at most 4 balls, so with 4 already in play
+  the crack pays only the 1M.
+- **Ends:** at one ball, with **VAULT CLOSED**; the back door shuts.
+- **Shooting style:** play the vault's flippers like a small table. The first jackpot is a
+  flipper shot inside the vault; the later ones come round through the Back Alley.
+
 ### Supporting features
 
 - **B-R-E-A-C-H standups:**
@@ -472,7 +517,7 @@ against one fixed loop. Payload and Extract, the two tier-2 jobs, now share only
   - A CAM lane, or the pop bumper below it, knocks that camera out for 12 s. Its beam goes dark
     and its head drops.
   - With all three out at once: **CAMERAS DOWN**, worth 100K and $25K. The cameras stay dark for
-    6 s, and the vault door opens for 20 s.
+    6 s, and the back door opens for 20 s.
   - In Infiltrate, the middle camera tracks the watched shot.
 - **CAM 1–3 top lanes (change):**
   - **Fed by:** the plunge, the Back Alley, the vault's top exit, and balls the pops kick back
@@ -564,6 +609,9 @@ bumper-bashing ball (about 100 pops) is worth about 100K. One job is 7–20M.
 | Payload | 1.5M + 250K ramps, super 3× | crates 1M + 250K, cash ×1.5 |
 | Extract | 6M / 7M / 8M draining 200K/s, 4M finish | same |
 | Impound jackpot / super | 1M + 250K / 3× | same |
+| Vault: way in / out the top | 50K / 100K | same |
+| Vault tumbler: 1 / 2 / cracked / out of order | 50K / 100K / 1M / 10K | same |
+| Vault jackpot (out the top in vault multiball) | 1M + 250K | same |
 | Blackout jackpot / super | 2M + 500K / 5×, × job multiplier | same |
 | Time bonus | 100K a second | same |
 
@@ -639,7 +687,7 @@ One machine, with each part distinct:
   beacon on its corner and three chrome balls visible behind its bars. A wire runs up into it
   from the Skyway's turn down the left.
 - **THE VAULT (upper playfield):** a dark tread-plate deck with a big painted safe dial, the
-  raised tumbler block at the back with its three red standups, and a hazard-striped vault door
+  raised tumbler block at the back with its three red standups, and a hazard-striped back door
   in the orbit's wall.
 - **Skyway:** a wide steel trough on trusses, with visible side walls, a riveted lip, SKYWAY
   stencilled in ink and red chevron arrows. A worn steel wireform runs down the left.
@@ -717,7 +765,10 @@ chance, under 3 s or in grace).
 | Light stack, one per major shot (Skyway, Black Market, Back Alley, Breach, Reactor): arrow, JP and mode light in a line on the shot's approach, the arrow nearest the shot and pointing at it | **Arrow:** something to collect there (job shot, lock, affordable purchase). **JP:** a jackpot is lit there. **Mode light:** the running job wants this shot (in the job's colour). | Arrow: slow = available, fast = under 6 s, strobe = super or grace; the watched shot in Infiltrate strobes. JP: fast. Mode light: follows the arrow while a job wants the shot. |
 | B-R-E-A-C-H letters (6, one in front of each standup, pointing at it) | Letters spelled. In Hack, the flashing key. | On = spelled, fast = the key to hit. |
 | Drop lamps (3) | Drop is down. | On. |
-| LOCK (Skyway lane) and the Impound triangle | Lock lit; Impound multiball running. | Fast = lock lit, slow = multiball. |
+| LOCK (Skyway lane) and the IMPOUND light | Lock lit; Impound multiball running. | Fast = lock lit, slow = multiball. |
+| Tumblers 1–3 (one in front of each, pointing at it) | The vault's combination. | On = in; slow = the next one to hit; fast = just hit, and all three while the vault's hatch is open. |
+| Vault JP (by the vault's top exit) | Vault jackpot lit. | Fast during vault multiball. |
+| Vault lane arrow | Back door open. | Slow while it's open. |
 | Black Market menu (5) | The item on offer. | Slow = on offer, can't afford; fast = on offer, can afford. |
 | Mode map nodes (one small red light per job, plus Blackout) | Heist progress. | Off = closed, slow = available next, fast = running, on = completed, strobe = choosing. |
 | CAM 1–3 (one in each top lane) | Lane lit. During the skill shot, the blinking lane is the target. | On = lit; fast = the skill-shot lane. |
@@ -859,21 +910,35 @@ exactly where every wall, lane, ramp entrance and insert is. Regenerate them wit
 
 ## 8. Decisions
 
+### 30 October 2026, third round: the vault's combination (built)
+
+1. **The tumblers are the vault's combination:** 1, then 2, then 3. A wrong one starts it over.
+2. **Cracking it starts VAULT MULTIBALL:** two balls drop out of the vault's hatch onto its deck.
+   Out the vault's top is the jackpot, and the back door stays open so the Back Alley feeds the
+   vault. During another multiball it's an add-a-ball. The rules are in section 2.
+3. **The door off the Back Alley is renamed the back door.**
+4. **Physics unchanged.**
+5. **Open:**
+   - Should the combination stay 1-2-3, or change each time (for example, shown on the display)?
+   - Is two extra balls the right size?
+   - Should CAMERAS DOWN do more than open the back door?
+
 ### 30 October 2026, second round: the upper playfield (built, waiting for your review)
 
 1. **Upper playfield: built** as THE VAULT, with its own flippers, a way out the side and one out
    the top. Section 0 has the summary and section 1 the details. The lane in is very hard (1%),
-   so the vault door off the Back Alley is the main way in.
+   so the back door off the Back Alley is the main way in.
 2. **Skyway: rerouted** straight across above the Breach and down the left. It now takes 19% of
    cradled flips.
 3. **Cameras:** three side by side over the CAM lanes. Knocking out all three (with the lanes or
-   the pops below) opens the vault door.
+   the pops below) opens the back door.
 4. **Visual fixes:** pop bumpers, the bars between them, the Reactor, the flashers and the
    Impound, as listed in section 0.
 5. **The ball you circled** was an Impound lock. The Impound is now a cage you can see into.
 6. **Physics feel unchanged.** Flippers, gravity and bumpers are untouched. The one physics
    change is the weak-plunge fix (section 0), which only affects a ball that used to get stuck.
-7. **Open:** the VAULT job's rules, and whether CAMERAS DOWN should do more than open the door.
+7. **Open:** the vault's rules (since settled: third round), and whether CAMERAS DOWN should do
+   more than open the door.
 8. **Art:** still waiting for your approval of the layout. The template is regenerated.
 
 ### 30 October 2026: layout revision (built, waiting for your review)

@@ -347,6 +347,7 @@
 <path d="M0 -6 L7 6 L-7 6 Z" stroke="#c81e1e" stroke-width="0.9" fill="none" stroke-linejoin="round" transform="translate(167 184.3) rotate(-11.3)"/>
 <path d="M0 -6 L7 6 L-7 6 Z" stroke="#c81e1e" stroke-width="0.9" fill="none" stroke-linejoin="round" transform="translate(190.3 179.7) rotate(-11.3)"/>
 <path d="M0 -6 L7 6 L-7 6 Z" stroke="#c81e1e" stroke-width="0.9" fill="none" stroke-linejoin="round" transform="translate(213.7 175) rotate(-11.3)"/>
+<circle cx="0" cy="0" r="7.5" stroke="#c81e1e" stroke-width="0.9" fill="none" transform="translate(243.5 150) rotate(0)"/>
 <path d="M0 -15 L11 3.5999999999999996 L5.279999999999999 1.2 L5.279999999999999 15 L-5.279999999999999 15 L-5.279999999999999 1.2 L-11 3.5999999999999996 Z" stroke="#c81e1e" stroke-width="0.9" fill="none" stroke-linejoin="round" transform="translate(79.7 566) rotate(0)"/>
 <path d="M-8 -3.5 h16 v7 h-16 Z" stroke="#c81e1e" stroke-width="0.9" fill="none" stroke-linejoin="round" transform="translate(326.9 567.1) rotate(19.3)"/>
 <path d="M-8 -3.5 h16 v7 h-16 Z" stroke="#c81e1e" stroke-width="0.9" fill="none" stroke-linejoin="round" transform="translate(347 574.2) rotate(19.3)"/>

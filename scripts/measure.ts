@@ -60,7 +60,7 @@ function reset(dropsDown = false) {
   m.locking = null;
   m.lockLit = false;
   m.alleyLoopOpen = false;
-  m.vaultOpen = 0;
+  m.doorOpen = 0;
   m.drops.forEach((d: any) => {
     d.down = dropsDown;
     d.seg.enabled = !dropsDown;
@@ -281,17 +281,17 @@ if (want('alley')) {
   }
   say(`up the orbit but short of the top (${back.length} flips): ${tally(back) || 'none'}`);
   trials(
-    'vault door open',
+    'back door open',
     F.right,
     'alley',
     (b) => {
       for (let t = 0; t < 4 && !ev.includes('upper'); t += DT) {
-        m.vaultOpen = 5;
+        m.doorOpen = 5;
         step(b);
       }
       return ev.includes('upper') ? 'into the upper playfield' : `missed (${ev.join('>') || 'nothing'})`;
     },
-    () => (m.vaultOpen = 5),
+    () => (m.doorOpen = 5),
   );
   trials(
     'loop held open',

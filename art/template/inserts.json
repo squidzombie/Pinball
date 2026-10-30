@@ -420,6 +420,20 @@
   }
  },
  {
+  "id": "jackpot:vault",
+  "kind": "circle",
+  "x": 243.5,
+  "y": 150,
+  "w": 15,
+  "h": 15,
+  "angleDeg": 0,
+  "label": "JP",
+  "px": {
+   "x": 731,
+   "y": 450
+  }
+ },
+ {
   "id": "arrow:upper",
   "kind": "arrow",
   "x": 79.7,

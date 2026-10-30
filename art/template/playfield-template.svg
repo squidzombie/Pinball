@@ -870,7 +870,7 @@
 <text x="243.5" y="64.9" font-size="5" fill="#e07000" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" >UPPER EXIT FLAP</text>
 <polyline points="70,237.3 72.7,224.3 75.9,211.7 79.8,199.5 84.3,187.8 89.5,176.3 95.4,165.2 102,154.4" stroke="#e07000" stroke-width="2.4" fill="none" stroke-linejoin="round" stroke-linecap="round" />
 <polyline points="25.1,240 102,154.4" stroke="#e07000" stroke-width="1" fill="none" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="3 2"/>
-<text x="69.5" y="191.2" font-size="5" fill="#e07000" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" >VAULT DOOR</text>
+<text x="69.5" y="191.2" font-size="5" fill="#e07000" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" >BACK DOOR</text>
 <text x="79.7" y="339" font-size="5.5" fill="#1a9a3a" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" >UPPER PF IN</text>
 <text x="243.5" y="119" font-size="5.5" fill="#1a9a3a" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" >UPPER EXIT</text>
 <text x="344" y="412.5" font-size="5.5" fill="#1a9a3a" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" >UPPER DRAIN</text>
@@ -945,6 +945,8 @@
 <text x="190.3" y="190.7" font-size="3.6" fill="#c81e1e" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" >tumbler:2</text>
 <path d="M0 -6 L7 6 L-7 6 Z" stroke="#c81e1e" stroke-width="0.9" fill="rgba(200,30,30,0.12)" stroke-linejoin="round" transform="translate(213.7 175) rotate(-11.3)"/>
 <text x="213.7" y="186" font-size="3.6" fill="#c81e1e" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" >tumbler:3</text>
+<circle cx="0" cy="0" r="7.5" stroke="#c81e1e" stroke-width="0.9" fill="rgba(200,30,30,0.12)" transform="translate(243.5 150) rotate(0)"/>
+<text x="243.5" y="162.5" font-size="3.6" fill="#c81e1e" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" >jackpot:vault</text>
 <path d="M0 -15 L11 3.5999999999999996 L5.279999999999999 1.2 L5.279999999999999 15 L-5.279999999999999 15 L-5.279999999999999 1.2 L-11 3.5999999999999996 Z" stroke="#c81e1e" stroke-width="0.9" fill="rgba(200,30,30,0.12)" stroke-linejoin="round" transform="translate(79.7 566) rotate(0)"/>
 <text x="79.7" y="586" font-size="3.6" fill="#c81e1e" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" >arrow:upper</text>
 <path d="M-8 -3.5 h16 v7 h-16 Z" stroke="#c81e1e" stroke-width="0.9" fill="rgba(200,30,30,0.12)" stroke-linejoin="round" transform="translate(326.9 567.1) rotate(19.3)"/>

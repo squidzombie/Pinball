@@ -47,15 +47,25 @@ interface Drop {
   anim: number;
 }
 
-type Multiball = 'impound' | 'payload' | 'blackout' | null;
+type Multiball = 'impound' | 'payload' | 'blackout' | 'vault' | null;
 
 /** A knocked-out camera reboots after this; after CAMERAS DOWN they all stay dark this long. */
 const CAMERA_REBOOT = 12;
 const CAMERAS_DOWN_TIME = 6;
-/** How long CAMERAS DOWN holds the vault door open. */
-const VAULT_OPEN_TIME = 20;
+/** How long CAMERAS DOWN holds the back door open. */
+const BACK_DOOR_TIME = 20;
 /** Which camera each pop bumper sits under (bumpers are listed left, right, bottom). */
 const BUMPER_CAMERA = [0, 2, 1];
+/** Balls the vault lets out when cracked (one, as an add-a-ball, during another multiball), and the most on the table. */
+const VAULT_BALLS = 2;
+const MAX_BALLS = 4;
+/** Where the cracked vault lets its balls out: in front of the middle tumbler, rolling down the deck. */
+const HATCH_OUT: P = (() => {
+  const [a, b] = L.TUMBLERS[1];
+  const d = L.unit(L.sub(b, a));
+  return L.add(L.along(a, b, 0.5), [-d[1], d[0]], L.BALL_R + 6);
+})();
+const HATCH_DIR: P = L.unit(L.sub(HATCH_OUT, L.along(L.TUMBLERS[1][0], L.TUMBLERS[1][1], 0.5)));
 
 const ITEMS = [
   { key: 'time', label: 'TIME', name: '+15 SECONDS', price: 30_000 },
@@ -72,10 +82,10 @@ export class Psychosis extends Table {
   diverter: Segment;
   /** Held open (combos, some modes): the Back Alley loops round to the Black Market's wire. */
   alleyLoopOpen = false;
-  /** The vault door on the orbit into the upper playfield, and how long it stays open. */
-  vaultDoor: Segment[] = [];
-  vaultDeflector!: Segment;
-  vaultOpen = 0;
+  /** The back door on the orbit into the upper playfield, and how long it stays open. */
+  backDoor: Segment[] = [];
+  doorDeflector!: Segment;
+  doorOpen = 0;
   bumpers: Circle[] = [];
   drops: Drop[] = [];
   standups: Segment[] = [];
@@ -84,6 +94,13 @@ export class Psychosis extends Table {
   /** The three standups at the back of the upper playfield. */
   tumblers: Segment[] = [];
   private tumblerFlash = [0, 0, 0];
+  /** The vault's combination: how many tumblers are in, in order (1, then 2, then 3). */
+  tumblersIn = 0;
+  /** Balls still to come out of the cracked vault, the clock to the next, and how long its hatch stays open. */
+  private hatchQueue = 0;
+  private hatchT = 0;
+  hatchOpen = 0;
+  vaultJp = 1_000_000;
   private flankFlash = [0, 0];
   private camFlash = [0, 0, 0];
   /** Seconds each camera stays dark (0 = watching), and the CAMERAS DOWN timer. */
@@ -157,10 +174,10 @@ export class Psychosis extends Table {
     w.seg(L.GATE[0][0], L.GATE[0][1], L.GATE[1][0], L.GATE[1][1], { oneWay: true, restitution: 0.3 });
     poly(w, L.ARCH_OUTER, { restitution: 0.35, friction: 0.02 });
     for (const part of L.ARCH_INNER_L_PARTS) poly(w, part, { restitution: 0.35, friction: 0.02 });
-    // The vault door into the upper playfield: shut, it's orbit wall; open, a deflector turns the Back Alley into it
-    this.vaultDoor = poly(w, L.VAULT_DOOR, { restitution: 0.35, friction: 0.02 });
-    this.vaultDeflector = w.seg(L.VAULT_DEFLECTOR[0][0], L.VAULT_DEFLECTOR[0][1], L.VAULT_DEFLECTOR[1][0], L.VAULT_DEFLECTOR[1][1], { restitution: 0.3, friction: 0.02 });
-    this.vaultDeflector.enabled = false;
+    // The back door into the upper playfield: shut, it's orbit wall; open, a deflector turns the Back Alley into it
+    this.backDoor = poly(w, L.BACK_DOOR, { restitution: 0.35, friction: 0.02 });
+    this.doorDeflector = w.seg(L.BACK_DOOR_DEFLECTOR[0][0], L.BACK_DOOR_DEFLECTOR[0][1], L.BACK_DOOR_DEFLECTOR[1][0], L.BACK_DOOR_DEFLECTOR[1][1], { restitution: 0.3, friction: 0.02 });
+    this.doorDeflector.enabled = false;
     w.seg(L.UPPER_EXIT_FLAP[0][0], L.UPPER_EXIT_FLAP[0][1], L.UPPER_EXIT_FLAP[1][0], L.UPPER_EXIT_FLAP[1][1], { oneWay: true, restitution: 0.3 });
     poly(w, L.ARCH_INNER_NEST, { restitution: 0.35, friction: 0.02 });
     poly(w, L.ARCH_INNER_R, { restitution: 0.35, friction: 0.02 });
@@ -315,7 +332,7 @@ export class Psychosis extends Table {
     // The Back Alley counts once a ball is over the top, heading for the CAM lanes.
     line(L.ALLEY_SWITCH, (b, dir) => dir > 0 && this.alley(b));
     line(L.UPPER_SWITCH, (_b, dir) => dir > 0 && this.upperIn());
-    line([L.VAULT_DOOR[0], L.VAULT_DOOR[L.VAULT_DOOR.length - 1]], (_b, dir) => dir < 0 && this.upperIn());
+    line([L.BACK_DOOR[0], L.BACK_DOOR[L.BACK_DOOR.length - 1]], (_b, dir) => dir < 0 && this.upperIn());
     line(L.UPPER_EXIT_SWITCH, (_b, dir) => dir > 0 && this.upperOut('top'));
     line(L.UPPER_DRAIN_SWITCH, (_b, dir) => dir > 0 && this.upperOut('drain'));
     L.CAM_LANES.forEach(([x0, x1], i) =>
@@ -427,10 +444,12 @@ export class Psychosis extends Table {
       const mid = L.along(a, b, 0.5);
       const n = L.unit([-(b[1] - a[1]), b[0] - a[0]]);
       const at = L.add(mid, n, 17);
-      lamp({ id: `tumbler:${i + 1}`, kind: 'tri', x: at[0], y: at[1], w: 14, h: 12, angle: dirAngle([-n[0], -n[1]]), color: INS.red, state: () => (this.tumblerFlash[i] > 0 ? 3 : 0) });
+      lamp({ id: `tumbler:${i + 1}`, kind: 'tri', x: at[0], y: at[1], w: 14, h: 12, angle: dirAngle([-n[0], -n[1]]), color: INS.red, state: () => (this.tumblerFlash[i] > 0 || this.hatchOpen > 0 ? 3 : i < this.tumblersIn ? 1 : i === this.tumblersIn ? 2 : 0) });
     });
+    // The vault jackpot, on the way out of its top
+    lamp({ id: 'jackpot:vault', kind: 'circle', x: (L.UPPER_EXIT_X[0] + L.UPPER_EXIT_X[1]) / 2, y: 150, w: 15, color: INS.yellow, label: 'JP', labelSize: 6.5, state: () => (this.multiball === 'vault' ? 3 : 0) });
     // The upper playfield's way in: an arrow up its lane
-    lamp({ id: 'arrow:upper', kind: 'arrow', x: (L.UPPER_LANE_X[0] + L.UPPER_LANE_X[1]) / 2, y: L.UPPER_LANE_MOUTH_Y - 34, w: 22, h: 30, angle: 0, color: INS.white, state: () => (this.vaultOpen > 0 ? 2 : 0) });
+    lamp({ id: 'arrow:upper', kind: 'arrow', x: (L.UPPER_LANE_X[0] + L.UPPER_LANE_X[1]) / 2, y: L.UPPER_LANE_MOUTH_Y - 34, w: 22, h: 30, angle: 0, color: INS.white, state: () => (this.doorOpen > 0 ? 2 : 0) });
 
     // Reactor drop lamps
     const ra = L.REACTOR_AXIS;
@@ -554,7 +573,7 @@ export class Psychosis extends Table {
     if (s === 'breach') return this.modesLit > 0 && this.canStartMode() && this.available().length ? 2 : 0;
     if (s === 'reactor') return this.blackoutLit && this.canStartMode() ? 3 : this.dropsDown() ? 2 : 0;
     if (s === 'skyway') return this.lockLit ? 2 : this.comboTimer > 0 ? 2 : 0;
-    if (s === 'alley') return this.vaultOpen > 0 ? 3 : this.comboTimer > 0 ? 2 : 0;
+    if (s === 'alley') return this.doorOpen > 0 ? 3 : this.comboTimer > 0 ? 2 : 0;
     if (s === 'market') return this.offer() && this.cash >= this.offer()!.price ? 2 : 0;
     return 0;
   }
@@ -583,13 +602,15 @@ export class Psychosis extends Table {
   // ---------------------------------------------------------------- game flow hooks
 
   resetForBall() {
-    this.vaultOpen = 0;
+    this.doorOpen = 0;
     this.combo = 0;
     this.comboTimer = 0;
     this.selecting = 0;
     this.breachBall = null;
     this.locking = null;
     this.releaseQueue = 0;
+    this.hatchQueue = 0;
+    this.hatchOpen = 0;
     this.multiball = null;
     this.impoundSuper = false;
     this.lampShow('sweepUp', 1.2);
@@ -610,6 +631,7 @@ export class Psychosis extends Table {
     this.lockLit = false;
     this.locked = [];
     this.multiball = null;
+    this.tumblersIn = 0;
     this.cash = 0;
     this.xballBought = false;
     this.reactorHeat = 0;
@@ -731,17 +753,17 @@ export class Psychosis extends Table {
       this.cams = this.cams.map(() => CAMERAS_DOWN_TIME);
       g.addScore(100_000);
       this.cash += 25_000;
-      g.show('CAMERAS DOWN', 'THE VAULT IS OPEN', 1.6, true);
-      // For now the vault door opens for the next Back Alley shot (the full rule comes with Phase 4).
-      this.vaultOpen = VAULT_OPEN_TIME;
+      g.show('CAMERAS DOWN', 'BACK DOOR OPEN', 1.6, true);
+      // For now the back door opens for the next Back Alley shot (the full rule comes with Phase 4).
+      this.doorOpen = BACK_DOOR_TIME;
       this.flash(4, 0.8);
       sound.award();
     }
   }
 
-  /** The ball has gone into the upper playfield: up its lane, or through the vault door off the Back Alley. */
+  /** The ball has gone into the upper playfield: up its lane, or through the back door off the Back Alley. */
   private upperIn() {
-    this.vaultOpen = 0;
+    if (this.multiball !== 'vault') this.doorOpen = 0;
     this.sw('rollover');
     this.game.addScore(50_000, L.UPPER_LANE_X[0] + 18, L.UPPER_LANE_TOP_Y);
     this.flash(0, 0.6);
@@ -750,6 +772,7 @@ export class Psychosis extends Table {
 
   /** Out of the upper playfield: up through the flap into the arch, or down its drain. */
   private upperOut(way: 'top' | 'drain') {
+    if (way === 'top' && this.multiball === 'vault') this.vaultJackpot();
     if (way === 'top') {
       this.sw('rollover');
       this.game.addScore(100_000, (L.UPPER_EXIT_X[0] + L.UPPER_EXIT_X[1]) / 2, 110);
@@ -758,15 +781,71 @@ export class Psychosis extends Table {
     } else sound.lane();
   }
 
-  /** The tumblers: three standups at the back of the upper playfield. */
+  /**
+   * The tumblers: three standups at the back of the upper playfield, and the vault's combination.
+   * Hit them in order, 1 then 2 then 3, to crack the vault. A wrong one starts the combination over.
+   */
   private hitTumbler(i: number) {
+    const g = this.game;
     this.tumblerFlash[i] = 0.6;
     this.sw('standup');
     const [x, y] = L.along(L.TUMBLERS[i][0], L.TUMBLERS[i][1], 0.5);
-    this.game.addScore(25_000, x, y);
-    this.game.fx.sparks(x, y, INS.red, 8, 300);
-    sound.target();
+    g.fx.sparks(x, y, INS.red, 8, 300);
+    if (this.hatchOpen > 0) {
+      g.addScore(25_000, x, y);
+      sound.target();
+    } else if (i === this.tumblersIn) {
+      this.tumblersIn++;
+      if (this.tumblersIn === 3) this.crackVault();
+      else {
+        g.addScore(50_000 * this.tumblersIn, x, y);
+        g.show(`TUMBLER ${this.tumblersIn}`, `NEXT: TUMBLER ${this.tumblersIn + 1}`, 1.2);
+        sound.target();
+      }
+    } else {
+      this.tumblersIn = i === 0 ? 1 : 0;
+      g.addScore(10_000, x, y);
+      g.show('WRONG COMBINATION', i === 0 ? 'NEXT: TUMBLER 2' : 'START AT TUMBLER 1', 1.2);
+      sound.warn();
+    }
   }
+
+  /** The combination is in: the vault's hatch opens and balls drop out onto its deck. */
+  private crackVault() {
+    const g = this.game;
+    this.tumblersIn = 0;
+    g.addScore(1_000_000);
+    const room = Math.max(0, MAX_BALLS - this.world.balls.length - this.releasing);
+    if (!this.multiball) {
+      this.multiball = 'vault';
+      this.vaultJp = 1_000_000;
+      this.hatchQueue = Math.min(VAULT_BALLS, room);
+      g.grantBallSave(12);
+      g.show('VAULT CRACKED', 'VAULT MULTIBALL', 2.4, true);
+      sound.siren();
+      this.music();
+    } else {
+      this.hatchQueue = Math.min(1, room);
+      g.show('VAULT CRACKED', this.hatchQueue ? 'ADD-A-BALL' : fmt(1_000_000), 2, true);
+      sound.award();
+    }
+    this.hatchT = 0.7;
+    this.hatchOpen = 1.2;
+    g.doFlash(INS.yellow, 0.5);
+    this.lampShow('strobe', 1.2);
+    this.flash(4, 1);
+  }
+
+  /** In vault multiball, shooting a ball out the vault's top pays the vault jackpot. */
+  private vaultJackpot() {
+    const g = this.game;
+    g.addScore(this.vaultJp);
+    g.show('VAULT JACKPOT', fmt(this.vaultJp), 1.8, true);
+    g.fx.sparks((L.UPPER_EXIT_X[0] + L.UPPER_EXIT_X[1]) / 2, 120, INS.yellow, 18, 520);
+    sound.jackpot();
+    this.vaultJp += 250_000;
+  }
+
 
   private rampMade(s: 'skyway' | 'market', b: Ball) {
     const g = this.game;
@@ -1103,7 +1182,7 @@ export class Psychosis extends Table {
 
   /** Locked balls already on their way out of the Impound. */
   get releasing() {
-    return Math.min(this.releaseQueue, this.locked.length);
+    return Math.min(this.releaseQueue, this.locked.length) + this.hatchQueue;
   }
 
   /** Put `total` balls in play, using locked balls first. */
@@ -1161,6 +1240,9 @@ export class Psychosis extends Table {
       this.completed.clear();
       this.level++;
       this.modesLit = Math.max(this.modesLit, 1);
+    } else if (kind === 'vault') {
+      this.doorOpen = 0;
+      g.show('VAULT CLOSED', `JACKPOT ${fmt(this.vaultJp)}`, 1.8);
     } else {
       g.show('MULTIBALL OVER', `JACKPOT ${fmt(this.jp)}`, 1.8);
     }
@@ -1341,9 +1423,10 @@ export class Psychosis extends Table {
     this.cams = this.cams.map((c) => Math.max(0, c - dt));
     this.camerasDown = Math.max(0, this.camerasDown - dt);
     this.diverter.enabled = !this.alleyLoopOpen;
-    this.vaultOpen = Math.max(0, this.vaultOpen - dt);
-    for (const s of this.vaultDoor) s.enabled = this.vaultOpen <= 0;
-    this.vaultDeflector.enabled = this.vaultOpen > 0;
+    // In vault multiball the back door stays open, so the Back Alley feeds the vault.
+    this.doorOpen = this.multiball === 'vault' ? Math.max(this.doorOpen, 1) : Math.max(0, this.doorOpen - dt);
+    for (const s of this.backDoor) s.enabled = this.doorOpen <= 0;
+    this.doorDeflector.enabled = this.doorOpen > 0;
     for (const d of this.drops) d.anim += ((d.down ? 1 : 0) - d.anim) * Math.min(1, dt * 18);
     for (const x of this.timers) x.t -= dt;
     const due = this.timers.filter((x) => x.t <= 0);
@@ -1402,6 +1485,20 @@ export class Psychosis extends Table {
         else if (this.world.balls.length === 0) g.serveBall();
       }
     }
+    // Balls dropping out of the cracked vault's hatch onto its deck, one at a time.
+    if (this.hatchQueue > 0) {
+      this.hatchOpen = Math.max(this.hatchOpen, 1);
+      this.hatchT -= dt;
+      const clear = !this.world.balls.some((b) => Math.hypot(b.x - HATCH_OUT[0], b.y - HATCH_OUT[1]) < 2 * L.BALL_R + 4);
+      if (this.hatchT <= 0 && clear) {
+        this.hatchT = 0.9;
+        this.hatchQueue--;
+        this.addBall(HATCH_OUT[0], HATCH_OUT[1], HATCH_DIR[0] * 220, HATCH_DIR[1] * 220);
+        this.game.fx.sparks(HATCH_OUT[0], HATCH_OUT[1], INS.yellow, 14, 380);
+        sound.eject();
+        this.flash(4, 0.8);
+      }
+    } else this.hatchOpen = Math.max(0, this.hatchOpen - dt);
     // Balls dropping out of the Impound back onto the Skyway's wire, down to the left inlane.
     if (this.releaseQueue > 0 && this.locked.length > 0) {
       this.releaseT -= dt;
@@ -1480,7 +1577,9 @@ export class Psychosis extends Table {
     }
     d.fitText(fmt(g.score), 64, 3, 126, 2, { align: 'center' });
     d.text(`BALL ${g.ball}`, 1, 24, { level: 2 });
-    const status = this.multiball
+    const status = this.multiball === 'vault'
+      ? `VAULT ${short(this.vaultJp)}`
+      : this.multiball
       ? this.impoundSuper
         ? 'SUPER LIT'
         : `JP ${short(this.jp)}`
@@ -1509,7 +1608,7 @@ export class Psychosis extends Table {
   }
 
   protected override drawDynamic(ctx: CanvasRenderingContext2D) {
-    paintDynamic(ctx, this.time, this.cams.map((c) => c <= 0), this.cameraTarget(), this.plungerPull, this.vaultOpen > 0);
+    paintDynamic(ctx, this.time, this.cams.map((c) => c <= 0), this.cameraTarget(), this.plungerPull, this.doorOpen > 0, Math.min(1, this.hatchOpen * 3));
     // The Breach glows when it has something to give.
     if (this.shotLamp('breach')) drawGlow(ctx, L.BREACH[0], L.BREACH[1], 36, this.shotTint('breach'), 0.35 + 0.3 * Math.sin(this.time * 6));
   }

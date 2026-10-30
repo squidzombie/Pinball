@@ -854,11 +854,49 @@ function paintVault(ctx: CanvasRenderingContext2D) {
   inkLine(ctx, 1.6);
   ctx.stroke();
   label(ctx, 'THE VAULT', cx + 2, 336, 9, 0, withAlpha(INK, 0.8), 900);
-  // the tumbler block, with its name on top
+  // the tumbler block: its name along the front, the vault's hatch on top
   block(ctx, L.TUMBLER_BLOCK, 24, '#8f8d86', STEEL_D);
   const [a, c] = [L.TUMBLERS[0][0], L.TUMBLERS[2][1]];
-  label(ctx, 'TUMBLERS', (a[0] + c[0]) / 2 - 8, (a[1] + c[1]) / 2 - 22 - lift(24), 8, Math.atan2(c[1] - a[1], c[0] - a[0]), INK, 900);
+  label(ctx, 'TUMBLERS 1 · 2 · 3', (a[0] + c[0]) / 2, (a[1] + c[1]) / 2 - 9 - lift(24), 6.5, Math.atan2(c[1] - a[1], c[0] - a[0]), INK, 900);
+  const [hx, hy, hw, hh] = VAULT_HATCH;
+  const y = hy - lift(24);
+  ctx.beginPath();
+  ctx.roundRect(hx - hw / 2, y - hh / 2, hw, hh, 3);
+  ctx.fillStyle = steelGrad(ctx, hx - hw / 2, y - hh / 2, hx + hw / 2, y + hh / 2, '#b9b7b0');
+  ctx.fill();
+  inkLine(ctx, 1.6);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.roundRect(hx - hw / 2 + 3, y - hh / 2 + 3, hw - 6, hh - 6, 2);
+  inkLine(ctx, 0.7, 0.5);
+  ctx.stroke();
+  for (const dy of [-hh / 4, hh / 4]) {
+    ctx.beginPath();
+    ctx.roundRect(hx - hw / 2 - 2, y + dy - 3, 4, 6, 1);
+    ctx.fillStyle = STEEL_D;
+    ctx.fill();
+    inkLine(ctx, 0.8);
+    ctx.stroke();
+  }
+  ctx.beginPath();
+  ctx.arc(hx + 3, y, 6, 0, Math.PI * 2);
+  ctx.fillStyle = '#3a3835';
+  ctx.fill();
+  inkLine(ctx, 1);
+  ctx.stroke();
+  for (let k = 0; k < 8; k++) {
+    const an = (k / 8) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.moveTo(hx + 3 + Math.cos(an) * 4, y + Math.sin(an) * 4);
+    ctx.lineTo(hx + 3 + Math.cos(an) * 6, y + Math.sin(an) * 6);
+    ctx.strokeStyle = '#d6d3cb';
+    ctx.lineWidth = 0.7;
+    ctx.stroke();
+  }
 }
+
+/** The vault's hatch on top of the tumbler block: centre x, y (on the floor) and its size. */
+const VAULT_HATCH = [180, 122, 30, 24] as const;
 
 /** Ramps cast a pencil-hatched shadow on the concrete below them. */
 function paintRampShadows(ctx: CanvasRenderingContext2D) {
@@ -882,9 +920,9 @@ function paintRampShadows(ctx: CanvasRenderingContext2D) {
 /** Cabinet walls, the loop, the shooter lane, lower guides and slings. */
 function paintLanes(ctx: CanvasRenderingContext2D, lower: LowerSection) {
   rail(ctx, L.ARCH_OUTER, 30, 9);
-  // the orbit's inner wall, with a gap for the vault door (drawn live, since it opens)
+  // the orbit's inner wall, with a gap for the back door (drawn live, since it opens)
   for (const part of L.ARCH_INNER_L_PARTS) rail(ctx, part, 26, 8);
-  for (const p of [L.VAULT_DOOR[0], L.VAULT_DOOR[L.VAULT_DOOR.length - 1]]) can(ctx, p[0], p[1], 5, 0, 28, STEEL_D, STEEL);
+  for (const p of [L.BACK_DOOR[0], L.BACK_DOOR[L.BACK_DOOR.length - 1]]) can(ctx, p[0], p[1], 5, 0, 28, STEEL_D, STEEL);
   rail(ctx, L.ARCH_INNER_R, 26, 8);
   rail(ctx, L.ORBIT_FLARE, 26, 8);
   can(ctx, L.ORBIT_POST[0], L.ORBIT_POST[1], 6, 0, 18, '#36322e', '#5a554f');
@@ -1403,10 +1441,10 @@ function liveRail(ctx: CanvasRenderingContext2D, pts: P[], h: number, w: number)
 
 /**
  * The three security cameras pan their red beams down the table; a knocked-out camera hangs
- * dark. In Infiltrate the middle one tracks the watched shot. Also the vault door's deflector
+ * dark. In Infiltrate the middle one tracks the watched shot. Also the back door's deflector
  * when it's open, and the plunger.
  */
-export function paintDynamic(ctx: CanvasRenderingContext2D, t: number, cams: boolean[], target: P | null, pull: number, vaultOpen: boolean) {
+export function paintDynamic(ctx: CanvasRenderingContext2D, t: number, cams: boolean[], target: P | null, pull: number, doorOpen: boolean, hatch: number) {
   L.CAMERAS.forEach(([cx, cy], i) => {
     const down = !cams[i];
     const ox = cx;
@@ -1446,8 +1484,37 @@ export function paintDynamic(ctx: CanvasRenderingContext2D, t: number, cams: boo
     ctx.restore();
     lens(ctx, ox - 2, oy - 3, 2.4, down ? 0 : 0.6 + 0.4 * Math.sin(t * 5 + i));
   });
-  // the vault door: shut in the orbit's inner wall, or swung across the orbit as a deflector
-  liveRail(ctx, vaultOpen ? L.VAULT_DEFLECTOR : L.VAULT_DOOR, 26, 7);
+  // the back door: shut in the orbit's inner wall, or swung across the orbit as a deflector
+  liveRail(ctx, doorOpen ? L.BACK_DOOR_DEFLECTOR : L.BACK_DOOR, 26, 7);
+  // the vault's hatch, swung open with gold light inside while it lets balls out
+  if (hatch > 0) {
+    const [hx, hy, hw, hh] = VAULT_HATCH;
+    const y = hy - lift(24);
+    const x0 = hx - hw / 2;
+    ctx.beginPath();
+    ctx.roundRect(x0, y - hh / 2, hw, hh, 3);
+    const g = ctx.createRadialGradient(hx, y, 1, hx, y, hw * 0.7);
+    g.addColorStop(0, '#fff3b0');
+    g.addColorStop(0.35, '#e0a830');
+    g.addColorStop(1, '#2a1c08');
+    ctx.fillStyle = g;
+    ctx.fill();
+    inkLine(ctx, 1.6);
+    ctx.stroke();
+    // the door, turning on its hinges at the left edge
+    const dw = hw * (1 - 0.85 * hatch);
+    ctx.beginPath();
+    ctx.moveTo(x0, y - hh / 2);
+    ctx.lineTo(x0 - dw * 0.35, y - hh / 2 - 6 * hatch);
+    ctx.lineTo(x0 - dw * 0.35, y + hh / 2 - 6 * hatch);
+    ctx.lineTo(x0, y + hh / 2);
+    ctx.closePath();
+    ctx.fillStyle = '#a9a7a0';
+    ctx.fill();
+    inkLine(ctx, 1.2);
+    ctx.stroke();
+    drawGlow(ctx, hx, y, 34, '#ffc94a', 0.55 * hatch + 0.15 * Math.sin(t * 14));
+  }
   // plunger: spring, rod and knob
   const py = 1180 + pull * 50;
   ctx.strokeStyle = INK;

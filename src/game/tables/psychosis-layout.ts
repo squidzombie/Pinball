@@ -143,23 +143,23 @@ export const ARCH_INNER_L: P[] = (() => {
   return [...arch.right.slice(0, i + 1), p];
 })();
 /**
- * The vault door: a stretch of the orbit's inner wall where it starts to curve over, above the
+ * The back door: a stretch of the orbit's inner wall where it starts to curve over, above the
  * upper playfield's lane gate. When it's open, a deflector swings across the orbit and turns a
  * Back Alley shot through the gap into the upper playfield. [lower end, upper end] into ARCH_INNER_L.
  */
 const doorAt = (y: number) => ARCH_INNER_L.findIndex((p) => p[1] <= y);
 const DOOR: [number, number] = [doorAt(240), doorAt(160)];
-export const VAULT_DOOR: P[] = ARCH_INNER_L.slice(DOOR[0], DOOR[1] + 1);
+export const BACK_DOOR: P[] = ARCH_INNER_L.slice(DOOR[0], DOOR[1] + 1);
 /** The orbit's inner wall with the door cut out: [below it, above it]. */
 export const ARCH_INNER_L_PARTS: [P[], P[]] = [ARCH_INNER_L.slice(0, DOOR[0] + 1), ARCH_INNER_L.slice(DOOR[1])];
 /** The deflector across the orbit lane while the door is open. */
-export const VAULT_DEFLECTOR: P[] = [
+export const BACK_DOOR_DEFLECTOR: P[] = [
   (() => {
     const i = arch.left.findIndex((p) => p[1] <= 240);
     const [a, b] = [arch.left[i - 1], arch.left[i]];
     return [a[0] + ((b[0] - a[0]) * (240 - a[1])) / (b[1] - a[1]), 240] as P;
   })(),
-  VAULT_DOOR[VAULT_DOOR.length - 1],
+  BACK_DOOR[BACK_DOOR.length - 1],
 ];
 /** One-way flap in the arch's inner wall: balls shot up out of the upper playfield pass into the arch; balls in the arch roll over it. */
 export const UPPER_EXIT_FLAP: P[] = [innerAt(UPPER_EXIT_X[0])[1], innerAt(UPPER_EXIT_X[1])[1]];

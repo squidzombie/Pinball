@@ -36,11 +36,15 @@ right:
   inlane.
 - **The cameras**: three security cameras pan over the CAM lanes. A lane, or the pop bumper below
   it, knocks its camera out for 12 s. Knock out all three at once for **CAMERAS DOWN**, which
-  opens the **vault door** in the Back Alley's wall for 20 s.
+  opens the **back door** in the Back Alley's wall for 20 s.
 - **THE VAULT**: the upper playfield, with two small flippers on the main buttons and three
-  tumbler targets. Get in up the vault lane, or through the open vault door with a Back Alley
+  tumbler targets. Get in up the vault lane, or through the open back door with a Back Alley
   shot. Leave out the top into the CAM lanes, or past its flippers and out the side to the right
   flipper.
+- **Cracking the vault**: hit the tumblers in order, 1 then 2 then 3 (a wrong one starts the
+  combination over). The vault's hatch opens and two balls drop out for **VAULT MULTIBALL**:
+  every ball shot out the vault's top is a jackpot, and the back door stays open so the Back
+  Alley feeds the vault.
 - **The Impound**: a three-ball lock, a cage over the orbit on the left. The Skyway feeds it when
   the lock is lit, and at multiball the balls roll back down the Skyway's wire.
 - **R-A-G-E**: the in/outlanes. The flippers move the lit lanes.
