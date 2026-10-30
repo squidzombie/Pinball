@@ -149,22 +149,6 @@ function stripes(ctx: CanvasRenderingContext2D, x0: number, y0: number, x1: numb
   }
 }
 
-/** Hazard band clipped to a polygon at height z. */
-function hazardIn(ctx: CanvasRenderingContext2D, pts: P[], z = 0, w = 8, seed = 1) {
-  const b = bounds(pts);
-  const lz = lift(z);
-  ctx.save();
-  strokePath(ctx, pts, true, lz);
-  ctx.clip();
-  stripes(ctx, b.x0 - 4, b.y0 - lz - 4, b.x1 + 4, b.y1 - lz + 4, w, seed);
-  ctx.restore();
-  ctx.save();
-  strokePath(ctx, pts, true, lz);
-  inkLine(ctx, 1);
-  ctx.stroke();
-  ctx.restore();
-}
-
 /**
  * An extruded steel block: shadow, side band, lit top, then ink on every edge
  * a pen would draw: the base silhouette, the vertical corners and the top outline.
@@ -584,44 +568,32 @@ function paintFloorPlates(ctx: CanvasRenderingContext2D) {
       }
     }
   };
-  // the round deck under the pops, inside the Back Alley
+  // the round deck under the pops, under the CAM lanes
+  const [nx, ny] = L.BUMPERS[2];
   ctx.save();
-  strokePath(ctx, L.ALLEY_INNER);
-  ctx.lineTo(535, 300);
-  ctx.lineTo(300, 300);
-  ctx.closePath();
+  strokePath(ctx, L.NEST_AREA, true);
   ctx.fillStyle = '#a7a49b';
   ctx.fill();
   ctx.clip();
   ctx.strokeStyle = 'rgba(40,36,30,0.22)';
   ctx.lineWidth = 0.8;
-  for (let r = 40; r < 220; r += 18) {
+  for (let r = 40; r < 260; r += 18) {
     ctx.beginPath();
-    ctx.arc(418, 182, r, 0, Math.PI * 2);
+    ctx.arc(nx, ny - 60, r, 0, Math.PI * 2);
     ctx.stroke();
   }
   for (let i = 0; i < 24; i++) {
     const a = (i / 24) * Math.PI * 2;
     ctx.beginPath();
-    ctx.moveTo(418 + Math.cos(a) * 40, 182 + Math.sin(a) * 40);
-    ctx.lineTo(418 + Math.cos(a) * 220, 182 + Math.sin(a) * 220);
+    ctx.moveTo(nx + Math.cos(a) * 40, ny - 60 + Math.sin(a) * 40);
+    ctx.lineTo(nx + Math.cos(a) * 260, ny - 60 + Math.sin(a) * 260);
     ctx.stroke();
   }
   ctx.restore();
-  // Back Alley channel floor: brushed steel trough
-  const ch = [...L.ALLEY_OUTER.slice(0, -1), ...L.ALLEY_INNER.slice().reverse()];
+  // the Back Alley orbit floor: brushed steel trough up the left and over the top
+  const ch = [...L.ARCH_OUTER.slice(0, -1), ...L.ARCH_INNER.slice().reverse()];
   plate(ch, '#b9b5ac', 4, false);
-  // diamond plates beside the slings and under the upper flippers
-  plate(
-    [
-      [22, 150],
-      [130, 176],
-      [120, 290],
-      [22, 290],
-    ],
-    '#9b988f',
-    7,
-  );
+  // diamond plates beside the slings
   plate(
     [
       [124, 1120],
@@ -643,46 +615,6 @@ function paintFloorPlates(ctx: CanvasRenderingContext2D) {
     ],
     '#97948b',
     9,
-  );
-  // triangular plates and a grate either side of the centre channel
-  plate(
-    [
-      [262, 610],
-      [300, 590],
-      [292, 650],
-    ],
-    '#9d9a91',
-    13,
-  );
-  plate(
-    [
-      [334, 640],
-      [366, 626],
-      [372, 676],
-      [342, 690],
-    ],
-    '#9d9a91',
-    14,
-  );
-  plate(
-    [
-      [112, 760],
-      [150, 744],
-      [160, 800],
-      [120, 812],
-    ],
-    '#9d9a91',
-    15,
-  );
-  plate(
-    [
-      [404, 752],
-      [442, 740],
-      [452, 790],
-      [414, 802],
-    ],
-    '#9d9a91',
-    16,
   );
   // dark plate behind the skull
   plate(
@@ -867,10 +799,6 @@ function paintSkull(ctx: CanvasRenderingContext2D) {
 
 /** Painted arrows, chevrons and stencils on the concrete. */
 function paintFloorMarks(ctx: CanvasRenderingContext2D) {
-  // red painted arrows toward the shots, like the sketch
-  paintedArrow(ctx, 205, 384, 46, -0.62);
-  paintedArrow(ctx, 260, 640, 40, -1.85);
-  paintedArrow(ctx, 440, 690, 40, -2.05);
   // yellow chevrons in front of the drops
   const ra = L.REACTOR_AXIS;
   const perp = L.REACTOR_PERP;
@@ -898,73 +826,22 @@ function paintFloorMarks(ctx: CanvasRenderingContext2D) {
   label(ctx, 'SKILL', 557.5, 1004, 10, 0, INK);
   label(ctx, 'SHOT', 557.5, 1016, 10, 0, INK);
   for (const y of [900, 1062]) paintedArrow(ctx, 557.5, y, 46, -Math.PI / 2, y > 1000 ? withAlpha(INK, 0.6) : RED, 2.5);
-  // the duct: a grate up the left side
-  ctx.save();
-  ctx.beginPath();
-  ctx.rect(22, 300, 44, 400);
-  ctx.clip();
-  ctx.fillStyle = '#9da0a2';
-  ctx.fillRect(22, 300, 44, 400);
-  inkLine(ctx, 0.9, 0.55);
-  for (let y = 300; y < 700; y += 7) {
-    ctx.beginPath();
-    ctx.moveTo(22, y);
-    ctx.lineTo(66, y + 3);
-    ctx.stroke();
-  }
-  ctx.restore();
-  label(ctx, 'DUCT', 43, 470, 9, -Math.PI / 2, withAlpha(INK, 0.8));
-  paintedArrow(ctx, 43, 560, 40, -Math.PI / 2, RED, 2.5);
-  // BACK ALLEY lettering along the loop
-  const P0 = L.ALLEY_CENTER;
+  // BACK ALLEY lettering up the orbit, and arrows round it
+  const P0 = L.ARCH_PATH;
   const at = (f: number) => P0[Math.round((P0.length - 1) * f)];
   const ang = (f: number) => {
-    const a = at(f - 0.03);
-    const b = at(f + 0.03);
+    const a = at(f - 0.02);
+    const b = at(f + 0.02);
     return Math.atan2(b[1] - a[1], b[0] - a[0]);
   };
-  label(ctx, 'BACK ALLEY', at(0.72)[0], at(0.72)[1], 12, ang(0.72));
-  paintedArrow(ctx, at(0.5)[0], at(0.5)[1], 30, ang(0.5) + Math.PI, RED, 2.6);
-  paintedArrow(ctx, at(0.9)[0], at(0.9)[1], 26, ang(0.9), RED, 2.6);
-  // the Breach channel: name and the chevron sign pointing down it
+  label(ctx, 'BACK ALLEY', at(0.14)[0], at(0.14)[1], 11, ang(0.14));
+  for (const f of [0.3, 0.45]) paintedArrow(ctx, at(f)[0], at(f)[1], 24, ang(f), RED, 2.4);
+  // the Breach: its name on the scoop
   const ba = L.BREACH_AXIS;
-  const bAng = Math.atan2(ba[1], ba[0]) - Math.PI / 2;
-  const lp = L.add(L.BREACH, ba, 36);
-  label(ctx, 'BREACH', lp[0], lp[1], 12, bAng);
-  const sp = L.add(L.BREACH, ba, 196);
-  ctx.save();
-  ctx.translate(sp[0], sp[1]);
-  ctx.rotate(bAng);
-  ctx.beginPath();
-  ctx.moveTo(-12, -18);
-  ctx.lineTo(12, -18);
-  ctx.lineTo(12, 10);
-  ctx.lineTo(0, 22);
-  ctx.lineTo(-12, 10);
-  ctx.closePath();
-  ctx.fillStyle = PLAQUE;
-  ctx.fill();
-  inkLine(ctx, 1);
-  ctx.stroke();
-  ctx.strokeStyle = '#ece8df';
-  ctx.lineWidth = 2.2;
-  for (const yy of [-8, 2, 12]) {
-    ctx.beginPath();
-    ctx.moveTo(-7, yy - 4);
-    ctx.lineTo(0, yy + 2);
-    ctx.lineTo(7, yy - 4);
-    ctx.stroke();
-  }
-  ctx.restore();
+  const lp = L.add(L.BREACH, ba, 30);
+  label(ctx, 'BREACH', lp[0], lp[1], 9, Math.atan2(ba[1], ba[0]) - Math.PI / 2);
   // RAGE and bonus labels
   label(ctx, 'BONUS', L.CX, 968, 7.5, 0, withAlpha(INK, 0.7), 800);
-  ctx.beginPath();
-  ctx.roundRect(252, 527, 133, 32, 5);
-  ctx.fillStyle = withAlpha(PLAQUE, 0.85);
-  ctx.fill();
-  inkLine(ctx, 1);
-  ctx.stroke();
-  label(ctx, 'BLACK MARKET', 318, 534, 7.5, 0, '#ece8df', 900);
 }
 
 /** Ramps cast a pencil-hatched shadow on the concrete below them. */
@@ -988,32 +865,30 @@ function paintRampShadows(ctx: CanvasRenderingContext2D) {
 
 /** Cabinet walls, the loop, the shooter lane, lower guides and slings. */
 function paintLanes(ctx: CanvasRenderingContext2D, lower: LowerSection) {
-  rail(ctx, L.ALLEY_OUTER, 30, 9);
-  rail(ctx, L.ALLEY_INNER, 26, 8);
+  rail(ctx, L.ARCH_OUTER, 30, 9);
+  rail(ctx, L.ARCH_INNER_L, 26, 8);
+  rail(ctx, L.ARCH_INNER_R, 26, 8);
+  rail(ctx, L.ORBIT_FLARE, 26, 8);
+  can(ctx, L.ORBIT_POST[0], L.ORBIT_POST[1], 6, 0, 18, '#36322e', '#5a554f');
   rail(ctx, L.LEFT_LOW, 30, 9);
   rail(ctx, L.RIGHT_WALL, 30, 9);
   rail(ctx, L.PLUNGER_WALL, 24, 7);
-  rail(ctx, L.GATE, 18, 4, '#e8e4dc');
-  rail(ctx, L.UPPER_LEFT, 28, 8);
-  rail(ctx, L.TOP_GUIDE, 16, 6);
-  rail(ctx, L.TOP_GATE, 10, 4, '#e8e4dc');
+  // one-way gates: light steel flaps
+  for (const gate of [L.GATE, L.LEFT_GATE, L.DIVERTER, L.EXIT_GATE]) rail(ctx, gate, 10, 4, '#e8e4dc');
+  // CAM lane guides with rubber-capped posts
+  for (const [a, b] of L.LANE_GUIDES) {
+    rail(ctx, [a, b], 16, 5);
+    can(ctx, a[0], a[1], L.LANE_POST_R, 0, 18, '#36322e', '#5a554f');
+  }
+  // the pop nest's walls and its exit lane
+  for (const wall of [L.NEST_LEFT, L.NEST_FLOOR, L.NEST_RIGHT, L.EXIT_LANE_L, L.EXIT_LANE_R]) rail(ctx, wall, 22, 7);
+  for (const wall of [L.SAFE_WALL, L.BANK_R_WALL, L.MARKET_LIP]) rail(ctx, wall, 20, 6);
   // rubber guards at the side lanes
   for (const g of [L.GUARD_L, L.GUARD_R]) {
     rail(ctx, g, 14, 8, '#3a3633');
     can(ctx, g[1][0], g[1][1], 5, 0, 18, '#36322e', '#5a554f');
     bolt(ctx, g[1][0], g[1][1] - lift(18), 2.6);
   }
-  rail(ctx, L.DUCT_GATE, 10, 4, '#e8e4dc');
-  rail(ctx, L.LANE_ROOF, 22, 7);
-  rail(
-    ctx,
-    [
-      [L.SKY_LANE_X, 640],
-      [L.SKY_LANE_X, 672],
-    ],
-    22,
-    7,
-  );
   // ramp feet: the lane walls up to where the ramp lifts off
   for (const r of L.RAMPS) {
     rail(ctx, r.walls.left.slice(0, r.baseTo + 1), 20, 6);
@@ -1041,9 +916,6 @@ function paintLanes(ctx: CanvasRenderingContext2D, lower: LowerSection) {
   }
   // slingshots: angular steel frames with a red lamp lens inside
   for (const tri of lower.slings) sling(ctx, tri);
-  // rubber post by the Black Market flipper
-  can(ctx, L.MID_POST[0], L.MID_POST[1], 6, 0, 14, '#2d2a27', '#55504a');
-  rivet(ctx, L.MID_POST[0], L.MID_POST[1] - lift(14), 2.4);
 }
 
 function sling(ctx: CanvasRenderingContext2D, tri: P[]) {
@@ -1095,73 +967,19 @@ function sling(ctx: CanvasRenderingContext2D, tri: P[]) {
   }
 }
 
-/** The Impound lock box, its machinery neighbour and the pipes around them. */
+/** The Impound lock box at the top of the sealed yard, with a window onto the locked balls. */
 function paintImpoundAndMachines(ctx: CanvasRenderingContext2D) {
-  // pipes along the back wall first
-  pipe(
-    ctx,
-    [
-      [24, 300],
-      [24, 150],
-      [36, 128],
-      [36, 24],
-    ],
-    4.5,
-    10,
-    BRASS,
-  );
-  pipe(
-    ctx,
-    [
-      [190, 24],
-      [190, 60],
-      [214, 80],
-      [214, 118],
-    ],
-    3.5,
-    30,
-    STEEL,
-  );
-  block(ctx, L.MACHINE, 40, '#8e8c85', STEEL_DD, true);
-  // machinery top: a transformer, a gauge and a hazard plate
-  const mz = lift(40);
-  ctx.save();
-  ctx.beginPath();
-  ctx.rect(184, 30 - mz, 40, 18);
-  ctx.clip();
-  stripes(ctx, 184, 30 - mz, 224, 48 - mz, 5, 41);
-  ctx.restore();
-  inkLine(ctx, 1);
-  ctx.strokeRect(184, 30 - mz, 40, 18);
-  can(ctx, 202, 86, 10, 40, 58, '#8c9093', '#c9cccd');
-  ctx.beginPath();
-  ctx.arc(196, 108 - mz, 7, 0, Math.PI * 2);
-  ctx.fillStyle = '#ece8df';
-  ctx.fill();
-  inkLine(ctx, 1);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(196, 108 - mz);
-  ctx.lineTo(200, 103 - mz);
-  ctx.strokeStyle = RED;
-  ctx.stroke();
-
-  // the Impound box
   const H = 44;
   const lh = lift(H);
   block(ctx, L.IMPOUND_BOX, H, '#a09e97', STEEL_D, true);
-  label(ctx, 'IMPOUND', 112, 44 - lh, 17, 0, INK);
-  // window onto the locked balls, set in the box's top face
+  const [x0, y0] = L.IMPOUND_SLOTS[0];
+  const [x1] = L.IMPOUND_SLOTS[L.IMPOUND_SLOTS.length - 1];
+  label(ctx, 'IMPOUND', (x0 + x1) / 2, y0 - 36 - lh, 15, 0, INK);
   ctx.beginPath();
-  ctx.roundRect(52, 82 - lh, 108, 40, 12);
+  ctx.roundRect(x0 - 20, y0 - 20 - lh, x1 - x0 + 40, 40, 12);
   ctx.fillStyle = '#1d1b19';
   ctx.fill();
   inkLine(ctx, 1.6);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.roundRect(48, 78 - lh, 116, 48, 15);
-  ctx.strokeStyle = '#6e7276';
-  ctx.lineWidth = 2;
   ctx.stroke();
   for (const [x, y] of L.IMPOUND_SLOTS) {
     ctx.beginPath();
@@ -1190,104 +1008,33 @@ function paintImpoundAndMachines(ctx: CanvasRenderingContext2D) {
   }
 }
 
-/** Machinery packed between the duct and the Breach, as in the sketch. */
+/** Ground nothing rolls on (under the ramps' climb): a low steel deck, hatched. */
 function paintLeftMass(ctx: CanvasRenderingContext2D) {
-  block(ctx, L.LEFT_MASS, 34, '#85847e', STEEL_DD, true);
-  const lz = lift(34);
-  // hatched shading over the machinery top
-  ctx.save();
-  strokePath(ctx, L.LEFT_MASS, true, lz);
-  ctx.clip();
-  hatch(ctx, 60, 280 - lz, 210, 700 - lz, 3, -0.7, 0.22, 0.6);
-  can(ctx, 112, 430, 12, 34, 52, '#9a9993', '#c8c6bf');
-  can(ctx, 92, 640, 10, 34, 50, '#9a9993', '#c8c6bf');
-  ctx.restore();
-  pipe(
-    ctx,
-    [
-      [170, 345],
-      [140, 352],
-      [118, 380],
-    ],
-    3.4,
-    40,
-    BRASS,
-  );
-  pipe(
-    ctx,
-    [
-      [78, 340],
-      [92, 360],
-      [92, 520],
-      [86, 600],
-    ],
-    4,
-    34,
-    BRASS,
-  );
-  pipe(
-    ctx,
-    [
-      [120, 330],
-      [104, 380],
-      [104, 560],
-    ],
-    3,
-    36,
-    STEEL,
-  );
-  can(ctx, 150, 336, 9, 34, 46, '#8c9093', '#c9cccd');
-  bolt(ctx, 150, 336 - lift(46), 3);
-  for (let y = 400; y < 640; y += 48) rivet(ctx, 78, y - lz, 1.8);
+  for (const area of [L.SEALED, L.BEHIND_SKYWAY]) {
+    block(ctx, area, 14, '#8a8983', STEEL_DD, false);
+    const lz = lift(14);
+    const b = bounds(area);
+    ctx.save();
+    strokePath(ctx, area, true, lz);
+    ctx.clip();
+    hatch(ctx, b.x0, b.y0 - lz, b.x1, b.y1 - lz, 4, -0.7, 0.18, 0.6);
+    ctx.restore();
+  }
 }
 
-/** The Breach: scoop housing and two kite banks of riveted steel. */
+/** The Breach: the scoop, its throat, and steel backing behind the two standup banks. */
 function paintBreach(ctx: CanvasRenderingContext2D) {
-  const z = 34;
-  const lz = lift(z);
-  // the solid structure the banks and housing stand on
-  block(ctx, L.BREACH_BOX, 16, '#7f7e78', STEEL_DD, false);
-  for (const bank of [L.BANK_L, L.BANK_R]) {
-    const pts: P[] = [bank.peak, bank.top, bank.bottom, bank.outer];
-    block(ctx, pts, z, '#9c9a93', STEEL_D, true);
-    // hazard band toward the bottom of each bank
-    const mid = (a: P, b: P, t: number): P => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
-    hazardIn(ctx, [mid(bank.top, bank.bottom, 0.72), bank.bottom, mid(bank.outer, bank.bottom, 0.25), mid(bank.outer, bank.bottom, 0.0)], z, 5, 50);
-    // a seam down the middle of the plate
-    ctx.beginPath();
-    ctx.moveTo(bank.peak[0], bank.peak[1] - lz);
-    ctx.lineTo((bank.bottom[0] + bank.outer[0]) / 2, (bank.bottom[1] + bank.outer[1]) / 2 - lz);
-    inkLine(ctx, 0.8, 0.5);
-    ctx.stroke();
-  }
-  // scoop housing: a compact box over the cup, between the banks' tops
   const [bx, by] = L.BREACH;
-  const housing: P[] = [
-    [bx - 27, 362],
-    [bx + 28, 362],
-    [bx + 30, by - 14],
-    [bx - 29, by - 14],
-  ];
-  block(ctx, housing, z + 10, '#8f8e88', STEEL_DD, true);
-  const hz = lift(z + 10);
-  // grille on the housing top
-  ctx.save();
-  ctx.beginPath();
-  ctx.roundRect(bx - 18, 370 - hz, 36, 26, 4);
-  ctx.fillStyle = '#2a2724';
-  ctx.fill();
-  inkLine(ctx, 1);
-  ctx.stroke();
-  ctx.strokeStyle = '#8e9194';
-  ctx.lineWidth = 1.2;
-  for (let x = bx - 15; x < bx + 18; x += 5) {
-    ctx.beginPath();
-    ctx.moveTo(x, 373 - hz);
-    ctx.lineTo(x, 393 - hz);
-    ctx.stroke();
+  // backing plates behind B-R-E and A-C-H
+  for (const [a, b] of [L.BANK_L, L.BANK_R]) {
+    const d = L.unit(L.sub(b, a));
+    const back: P = [d[1], -d[0]];
+    const toward = L.sub(a === L.BANK_L[0] ? L.RF : L.LF, a);
+    const n: P = back[0] * toward[0] + back[1] * toward[1] > 0 ? [-back[0], -back[1]] : back;
+    block(ctx, [a, b, L.add(b, n, 12), L.add(a, n, 12)], 28, '#9c9a93', STEEL_D, false);
   }
-  ctx.restore();
-  lens(ctx, bx, 410 - hz, 6, 0.4);
+  rail(ctx, L.BREACH_THROAT.left, 26, 6);
+  rail(ctx, L.BREACH_THROAT.right, 26, 6);
   // the cup
   rail(ctx, L.BREACH_CUP, 26, 6);
   // scoop hole with the red light glowing in it
@@ -1399,14 +1146,6 @@ function paintPopsBase(ctx: CanvasRenderingContext2D) {
     18,
     BRASS,
   );
-  // small steel posts topped with balls, like the sketch's decorations
-  for (const [x, y] of [
-    [508, 168],
-    [330, 250],
-  ] as P[]) {
-    can(ctx, x, y, 4, 0, 26, STEEL_D, null);
-    drawBallAt(ctx, x, y, 26 + 9);
-  }
 }
 
 function paintApron(ctx: CanvasRenderingContext2D) {
@@ -1673,9 +1412,9 @@ function paintMarket(ctx: CanvasRenderingContext2D) {
     STEEL_D,
     true,
   );
-  label(ctx, 'BLACK', 524, 330 - lz, 15, 0, INK);
-  label(ctx, 'MARKET', 524, 346 - lz, 15, 0, INK);
-  paintedArrow(ctx, 548, 370 - lz, 22, 0.9, RED, 2.6);
+  const [mx, my] = centroid(L.MARKET_BOX);
+  label(ctx, 'BLACK', mx, my - 8 - lz, 13, 0, INK);
+  label(ctx, 'MARKET', mx, my + 6 - lz, 13, 0, INK);
   wireform(ctx, r, end - 1);
 }
 
@@ -1895,37 +1634,6 @@ export function drawImpound(ctx: CanvasRenderingContext2D, locked: number, t: nu
   ctx.lineTo(sweep + 30, 82 - lh);
   ctx.stroke();
   ctx.restore();
-}
-
-/** The turbine on the shooter lane wall, spinning faster when things get hot. */
-export function drawTurbine(ctx: CanvasRenderingContext2D, angle: number) {
-  const [x, y0] = L.TURBINE;
-  const z = 30;
-  const y = y0 - lift(z);
-  can(ctx, x, y0, 20, 0, z, '#9da1a4', null);
-  ctx.beginPath();
-  ctx.ellipse(x, y, 20, 10, 0, 0, Math.PI * 2);
-  ctx.fillStyle = '#3a3734';
-  ctx.fill();
-  inkLine(ctx, 1.2);
-  ctx.stroke();
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.scale(1, 0.5);
-  for (let i = 0; i < 6; i++) {
-    const a = angle + (i / 6) * Math.PI * 2;
-    ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.lineTo(Math.cos(a) * 17, Math.sin(a) * 17);
-    ctx.lineTo(Math.cos(a + 0.4) * 15, Math.sin(a + 0.4) * 15);
-    ctx.closePath();
-    ctx.fillStyle = '#c9cccd';
-    ctx.fill();
-    inkLine(ctx, 1.4);
-    ctx.stroke();
-  }
-  ctx.restore();
-  bolt(ctx, x, y, 3.4);
 }
 
 /** Spinner flag across the Skyway lane. */

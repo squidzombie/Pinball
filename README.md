@@ -14,29 +14,35 @@ bumper, target and ramp has height.
 
 ### The playfield
 
-- **Skyway** (left flipper): up the lane beside the Reactor (past its spinner), along the long deck
-  from the middle right to the upper left, and down the left side on a wireform to the left inlane.
-- **Two upper-left flippers**, both on the left button. The top one sits under the Impound; the
-  one below it, between the Skyway deck and the Breach, is the Black Market flipper.
-- **Back Alley** (top flipper): the loop round the top, behind three industrial pop bumpers. The
-  plunge rides it the other way and drops onto the top flipper; a ball shot round it comes down
-  the right side into the pops.
-- **Black Market** (middle flipper): a ramp up over the pops into the market box on the right,
-  then a wireform down the right side to the right inlane.
-- **The duct** (right flipper): a lane up the left side under the Skyway's wireform. It feeds the
-  Black Market flipper.
-- **The Breach** (right flipper): a scoop between two kite-shaped banks of standups that spell
-  **B-R-E-A-C-H**.
+A classic fan, all of it shot from the two flippers. Left to right:
+
+- **Back Alley** (right flipper): the left orbit. It runs up the left side and over the top arch
+  into the three **CAM** lanes. A diverter can hold the loop open, so the ball comes all the way
+  round, down a chute onto the Black Market's wire, and back to the right flipper.
+- **SAFE**: a standup on the orbit's inner wall.
+- **The Breach** (right flipper): a scoop between two banks of three standups that spell
+  **B-R-E-A-C-H**, each bank angled at the opposite flipper.
+- **Black Market** (either flipper): the centre ramp. It runs under the Skyway into the market box
+  over the shooter lane, then a wireform takes it down the right side to the right inlane.
 - **The Reactor** (left flipper): a captive ball behind three drop targets. Knock the drops down
-  and slam the captive ball into the core.
-- **The Impound**: a three-ball lock in the top-left corner. The Skyway feeds it when the lock is lit.
+  and slam the captive ball into the core. **VENT** is a standup on its right flank.
+- **Skyway** (left flipper): up the lane beside the shooter lane (past its spinner), across under
+  the pops and up to the Impound, then down the left side on a wireform to the left inlane.
+- **CAM 1–3 and the pops**: three top lanes, fed by the plunge and the Back Alley, drop into three
+  industrial pop bumpers in their own nest. The nest's one exit lane drops the ball into the right
+  inlane.
+- **The Impound**: a three-ball lock at the top left. The Skyway feeds it when the lock is lit,
+  and at multiball the balls roll back down the Skyway's wire.
 - **R-A-G-E**: the in/outlanes. The flippers move the lit lanes.
+
+The shot map, measurements and the rules still to build for this layout are in
+[`DESIGN.md`](DESIGN.md).
 
 ### The heist (modes)
 
 Modes work like the modes on a 90s machine. Light one, start it at the Breach, and the table
-changes. Specific shots light in the mode's colour, a clock runs (on the DMD and in the bar of
-lamps under the heist map), and the lit shots pay the mode's own scaled values.
+changes. Specific shots light in the mode's colour, a clock runs on the DMD, and the lit shots pay
+the mode's own scaled values.
 
 1. **Light a mode**: spell **B-R-E-A-C-H** on the standups. The first one of each game comes lit.
 2. **Start it**: shoot the **Breach**. If the map offers two modes, the flippers choose while the ball is held.
@@ -61,10 +67,10 @@ The clocks follow conventions taken from real machines' rulesheets and from Free
 - **The clock waits** while the ball is held in the Breach (mode intros and awards cost no time), while a ball rolls into the Impound, and while no ball is on the table. It also waits after a kickout or plunge until the ball hits a playfield switch, for at most 2 s.
 - **Stuck balls stop the clock.** If every ball has stopped somewhere other than a held flipper, the clock waits until ball search frees it.
 - **Cradling does not stop the clock.**
-- **Grace period.** When the clock hits 0, lit shots still count for 2 s, shown by the whole clock bar strobing.
+- **Grace period.** When the clock hits 0, lit shots still count for 2 s, shown by the lit arrows strobing.
 - **Progress keeps you alive.** Collecting a lit shot with under 10 s left tops the clock back up to 10. Spelling B-R-E-A-C-H during a mode adds 10 s (and banks the next mode).
 - **Time bonus.** Finishing a mode early pays 100K × the seconds left.
-- **Warnings.** There's an alarm and a "HURRY UP" message at 10 s, and ticks from 5 down to 1. The lit-shot arrows and the clock bar flash faster under 9, 6 and 3 seconds.
+- **Warnings.** There's an alarm and a "HURRY UP" message at 10 s, and ticks from 5 down to 1. The lit-shot arrows flash faster under 9, 6 and 3 seconds.
 
 #### Blackout (wizard mode)
 
@@ -80,25 +86,28 @@ everything is worth 0.5X more.
 - **The Reactor**: knock down the three drops to expose the core and light the lock. Each time the
   captive ball hits the core, **reactor heat** goes up (100K, +50K a level) and the drops reset.
 - **The Impound** (ball lock): with the lock lit, make the Skyway and its top bend diverts the
-  ball up a wire into the cage. Lock three for **Impound multiball**: the balls drop out onto the
-  top flipper, and the Skyway, Black Market, Back Alley and Breach are jackpots (1M, +250K each).
+  ball up a wire into the cage. Lock three for **Impound multiball**: the balls roll back down the
+  Skyway's wire to the left flipper, and the Skyway, Black Market, Back Alley and Breach are
+  jackpots (1M, +250K each).
   Four jackpots light the super jackpot at the Reactor (3× the jackpot).
-- **The Black Market**: switches earn cash ($1K, bumpers $2K) and major shots $5K. The menu between
-  the Breach and the Reactor rotates every 4 s, and making the Black Market ramp buys whatever is on offer if you can
-  afford it: **+15 seconds** ($30K, during a timed mode), **ball save** ($50K), **light lock**
-  ($40K), **bonus +1X** ($60K) or an **extra ball** ($200K, once a game).
+- **The Black Market**: switches earn cash ($1K, bumpers $2K) and major shots $5K. The menu under
+  the Black Market's lights rotates every 4 s, and making the Black Market ramp buys whatever is on
+  offer if you can afford it: **+15 seconds** ($30K, during a timed mode), **ball save** ($50K),
+  **light lock** ($40K) or an **extra ball** ($200K, once a game). The **10X** item (next shot ×10)
+  is on the menu but not sold until its rule is built.
 - **RAGE**: roll the **R-A-G-E** lanes to raise the bonus multiplier (up to 6X) and start a 20 s
   frenzy where every switch pays 100K (bumpers 150K) and every shot 250K. It runs alongside a mode,
   and relighting it adds 10 s.
-- **Skill shot**: the plunge rides round the Back Alley and drops onto the top flipper. Let it roll
-  down to the Black Market flipper and make the Black Market within 7 seconds for 500K and $50K.
+- **Skill shot**: make the Black Market within 7 seconds of the plunge for 500K and $50K. (The plunge
+  now drops into the CAM lanes; a skill shot through the blinking lane replaces this when the rules
+  are updated.)
 - **Combos**: major shots within 3.5 s of each other build combos (50K × the combo).
 
 ### Controls
 
 | Action | Keyboard | Touch |
 | --- | --- | --- |
-| Left flippers (lower and upper) | `Z`, `←`, left `Shift` | left half of screen |
+| Left flipper | `Z`, `←`, left `Shift` | left half of screen |
 | Right flipper | `/`, `→`, right `Shift` | right half of screen |
 | Plunger | hold `Space` / `↓` / `Enter`, release | hold right half while ball is in the lane |
 | Start | `Enter` | tap |
@@ -115,6 +124,7 @@ npm run build      # typecheck + production build into dist/
 npm test           # rule tests for the heist, multiballs, Black Market, RAGE and the clocks
 npm run sim        # headless soak test: a bot plays and checks for physics leaks
 npx tsx scripts/shotmap.ts   # which shots each flipper can reach
+npm run measure    # layout measurements: shot windows, returns, pops, Breach, clearances
 npm run template   # regenerate the art templates in art/template from the physics
 ```
 

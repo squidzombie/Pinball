@@ -1,5 +1,9 @@
 # Image-generator prompt: Cyber Psychosis playfield
 
+> **Out of date (30 October 2026).** This prompt describes the layout before the fan revision
+> (upper flippers, duct, machinery). Don't generate from it. It will be rebuilt from the final
+> template in `template/` once the new layout is approved.
+
 Two layers, generated separately with the same style: the **base** (`art/playfield.png`) and the
 **overlay** (`art/overlay.png`). See `art/README.md` for what belongs in each.
 

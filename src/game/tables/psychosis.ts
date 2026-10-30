@@ -1,4 +1,4 @@
-import { FLOOR, RAMP, RAMP2, Flipper, LineSensor, ZoneSensor, type Ball, type Circle, type Segment } from '../../engine/physics';
+import { FLOOR, RAMP, RAMP2, LineSensor, ZoneSensor, type Ball, type Circle, type Segment } from '../../engine/physics';
 import { sound } from '../../engine/audio';
 import { drawGlow } from '../../engine/fx';
 import type { DMD } from '../../engine/dmd';
@@ -8,7 +8,7 @@ import { Blackout, MODES, Rage, type Mode, type ModeDef, type Shot, type Switch 
 import { buildLowerSection, poly, type LowerSection, type P } from './geom';
 import { drawBallAt, lift, type Lamp, type LampState } from './draw';
 import * as L from './psychosis-layout';
-import { drawDrop, drawImpound, drawReactorEye, drawSpinner, drawStandup, drawTank, drawTurbine, paintDynamic, paintRamps, paintStatic } from './psychosis-art';
+import { drawDrop, drawImpound, drawReactorEye, drawSpinner, drawStandup, drawTank, paintDynamic, paintRamps, paintStatic } from './psychosis-art';
 import { Table, type Sprite } from './table';
 
 const INS = {
@@ -22,7 +22,7 @@ const INS = {
 
 /** Where each shot's popups and glows appear. */
 const SHOT_POS: Record<Shot, P> = {
-  alley: [400, 58],
+  alley: L.along(L.ALLEY_SWITCH[0], L.ALLEY_SWITCH[1], 0.5),
   market: L.MARKET.path[0],
   breach: L.BREACH,
   skyway: [512, 620],
@@ -47,22 +47,24 @@ const ITEMS = [
   { key: 'time', label: 'TIME', name: '+15 SECONDS', price: 30_000 },
   { key: 'save', label: 'SAVE', name: 'BALL SAVE', price: 50_000 },
   { key: 'lock', label: 'LOCK', name: 'LIGHT LOCK', price: 40_000 },
-  { key: 'bonus', label: '+1X', name: 'BONUS +1X', price: 60_000 },
+  { key: 'tenx', label: '10X', name: 'NEXT SHOT 10X', price: 75_000 },
   { key: 'xball', label: 'X-BALL', name: 'EXTRA BALL', price: 200_000 },
 ] as const;
 type ItemKey = (typeof ITEMS)[number]['key'];
 
 export class Psychosis extends Table {
   lower: LowerSection;
-  /** Upper left flippers: the top one under the Impound shoots the Back Alley, the middle one the Black Market. */
-  topFlipper: Flipper;
-  midFlipper: Flipper;
+  /** The Back Alley diverter at the right end of the CAM lanes; disabled while the loop is held open. */
+  diverter: Segment;
+  /** Held open (combos, some modes): the Back Alley loops round to the Black Market's wire. */
+  alleyLoopOpen = false;
   bumpers: Circle[] = [];
   drops: Drop[] = [];
   standups: Segment[] = [];
   /** SAFE (under the Breach) and VENT (under the Reactor). */
   flanks: Segment[] = [];
   private flankFlash = [0, 0];
+  private camFlash = [0, 0, 0];
   /** Captive ball in the Reactor channel: position along the axis and speed. */
   captive: { c: Circle; s: number; v: number };
   private coreFlash = 0;
@@ -73,7 +75,6 @@ export class Psychosis extends Table {
   spinnerAngle = 0;
   spinnerVel = 0;
   private spinAccum = 0;
-  turbineAngle = 0;
   breachBall: Ball | null = null;
   private breachTimer = 0;
   private standupWobble = [0, 0, 0, 0, 0, 0];
@@ -124,59 +125,64 @@ export class Psychosis extends Table {
     const w = this.world;
     this.flipperStyle = { body: '#f2f0ec', rubber: '#c41a1a', ink: '#2a2622' };
 
-    // Cabinet, shooter lane and the Back Alley loop
+    // Cabinet, shooter lane and the arch: the Back Alley orbit up the left, over the top, the plunge down the right
     poly(w, L.LEFT_LOW, { restitution: 0.4 });
     poly(w, L.RIGHT_WALL, { restitution: 0.4 });
     poly(w, L.SHOOTER_FLOOR, { restitution: 0.2 });
     poly(w, L.PLUNGER_WALL, { restitution: 0.3 });
     w.seg(L.GATE[0][0], L.GATE[0][1], L.GATE[1][0], L.GATE[1][1], { oneWay: true, restitution: 0.3 });
-    poly(w, L.ALLEY_OUTER, { restitution: 0.35, friction: 0.02 });
-    poly(w, L.ALLEY_INNER, { restitution: 0.35, friction: 0.02 });
+    poly(w, L.ARCH_OUTER, { restitution: 0.35, friction: 0.02 });
+    poly(w, L.ARCH_INNER_L, { restitution: 0.35, friction: 0.02 });
+    poly(w, L.ARCH_INNER_R, { restitution: 0.35, friction: 0.02 });
+    poly(w, L.ORBIT_FLARE, { restitution: 0.4 });
+    w.circle(L.ORBIT_POST[0], L.ORBIT_POST[1], 5, { restitution: 0.6 });
 
-    // Top left: Impound, machinery, the guides down to both upper flippers
-    poly(w, L.IMPOUND_BOX, { restitution: 0.3 }, true);
-    poly(w, L.MACHINE, { restitution: 0.3 }, true);
-    poly(w, L.UPPER_LEFT, { restitution: 0.3 });
-    w.seg(L.TOP_GATE[0][0], L.TOP_GATE[0][1], L.TOP_GATE[1][0], L.TOP_GATE[1][1], { oneWay: true, restitution: 0.25 });
-    poly(w, L.TOP_GUIDE, { restitution: 0.25 });
-    poly(w, L.LEFT_MASS_WALL, { restitution: 0.35 });
-    w.seg(L.DUCT_GATE[0][0], L.DUCT_GATE[0][1], L.DUCT_GATE[1][0], L.DUCT_GATE[1][1], { oneWay: true, restitution: 0.25 });
+    // CAM lanes: rubber-capped posts and guides, a one-way gate at each end of the row
+    for (const [a, b] of L.LANE_GUIDES) {
+      w.circle(a[0], a[1], L.LANE_POST_R, { restitution: 0.6 });
+      w.seg(a[0], a[1], b[0], b[1], { restitution: 0.4 });
+    }
+    w.seg(L.LEFT_GATE[0][0], L.LEFT_GATE[0][1], L.LEFT_GATE[1][0], L.LEFT_GATE[1][1], { oneWay: true, restitution: 0.3 });
+    this.diverter = w.seg(L.DIVERTER[0][0], L.DIVERTER[0][1], L.DIVERTER[1][0], L.DIVERTER[1][1], { oneWay: true, restitution: 0.3 });
+
+    // The pop nest and its exit lane down between the Reactor and the Skyway
+    poly(w, L.NEST_LEFT, { restitution: 0.35 });
+    poly(w, L.NEST_FLOOR, { restitution: 0.35 });
+    poly(w, L.NEST_RIGHT, { restitution: 0.35 });
+    poly(w, L.EXIT_LANE_L, { restitution: 0.35 });
+    poly(w, L.EXIT_LANE_R, { restitution: 0.35 });
+    w.seg(L.EXIT_GATE[0][0], L.EXIT_GATE[0][1], L.EXIT_GATE[1][0], L.EXIT_GATE[1][1], { oneWay: true, restitution: 0.3 });
+
     // Guards at the side lanes
     for (const g of [L.GUARD_L, L.GUARD_R]) {
       poly(w, g, { restitution: 0.6 });
       w.circle(g[1][0], g[1][1], 4, { restitution: 0.6 });
     }
-    // Flank standups in what used to be dead zones: SAFE under the Breach, VENT under the Reactor
-    [L.SAFE, L.REACTOR.vent].forEach(([a, b], i) => {
+    // Side targets: SAFE left of the Breach, VENT on the Reactor's right flank
+    [L.SAFE, L.VENT].forEach(([a, b], i) => {
       this.flanks.push(w.seg(a[0], a[1], b[0], b[1], { restitution: 0.35, onHit: (h) => h.speed > 70 && this.hitFlank(i) }));
     });
+    poly(w, L.SAFE_WALL, { restitution: 0.4 });
+    poly(w, L.BANK_R_WALL, { restitution: 0.4 });
 
-    // Breach: cup, the scoop housing, and two banks of standups
+    // Breach: cup, throat, and the two standup banks either side of the mouth
     poly(w, L.BREACH_CUP, { restitution: 0.25 });
-    poly(w, [L.BANK_L.bottom, L.BANK_L.outer, ...L.BREACH_BOX, L.BANK_R.outer, L.BANK_R.bottom], { restitution: 0.4 });
-    [L.BANK_L, L.BANK_R].forEach((bank, side) => {
-      const at = (t: number): P => [bank.top[0] + (bank.bottom[0] - bank.top[0]) * t, bank.top[1] + (bank.bottom[1] - bank.top[1]) * t];
-      const T = L.STANDUP_T;
-      poly(w, [bank.top, at(T[0])], { restitution: 0.4 });
-      for (let i = 0; i < 3; i++) {
-        const a = at(T[i]);
-        const b = at(T[i + 1]);
-        const idx = side * 3 + i;
-        this.standups.push(w.seg(a[0], a[1], b[0], b[1], { restitution: 0.35, onHit: (h) => h.speed > 70 && this.hitStandup(idx) }));
-      }
-      poly(w, [at(T[3]), bank.bottom], { restitution: 0.4 });
+    poly(w, L.BREACH_THROAT.left, { restitution: 0.3 });
+    poly(w, L.BREACH_THROAT.right, { restitution: 0.3 });
+    for (const p of L.BREACH_MOUTH) w.circle(p[0], p[1], 3, { restitution: 0.4 });
+    L.STANDUPS.forEach(([a, b], idx) => {
+      this.standups.push(w.seg(a[0], a[1], b[0], b[1], { restitution: 0.35, onHit: (h) => h.speed > 70 && this.hitStandup(idx) }));
     });
     w.zones.push(new ZoneSensor(L.BREACH[0], L.BREACH[1], 18, (b) => this.enterBreach(b)));
 
-    // Reactor: shell, funnel, captive ball channel, drop targets across the mouth
+    // Reactor: housing, funnel, captive ball channel, drop targets across the mouth
     const R = L.REACTOR;
-    poly(w, [...R.shell.slice(0, -1), R.vent[0]], { restitution: 0.4 });
-    poly(w, [R.vent[1], R.shell[R.shell.length - 1]], { restitution: 0.4 });
+    poly(w, L.MARKET_LIP, { restitution: 0.4 });
+    poly(w, [R.mouthR, L.VENT[0]], { restitution: 0.4 });
+    poly(w, [L.VENT[1], L.EXIT_LANE_L[L.EXIT_LANE_L.length - 1]], { restitution: 0.4 });
     poly(w, [R.mouthL, R.channelL0, R.lipL], { restitution: 0.3 });
     poly(w, [R.mouthR, R.channelR0, R.lipR], { restitution: 0.3 });
     poly(w, [R.channelL0, R.channelL1, R.channelR1, R.channelR0], { restitution: 0.3 });
-    w.seg(L.SKY_LANE_X, 640, L.SKY_LANE_X, 672, { restitution: 0.35 });
-    poly(w, L.LANE_ROOF, { restitution: 0.35 });
     L.DROPS.forEach(([a, b], i) => {
       const seg = w.seg(a[0], a[1], b[0], b[1], { restitution: 0.3, onHit: (h) => this.hitDrop(i, h.speed) });
       this.drops.push({ seg, down: false, anim: 0 });
@@ -228,7 +234,7 @@ export class Psychosis extends Table {
       );
     });
 
-    // Back Alley exit: a ball falling down the right leg drops into the chute to the market's wire.
+    // Back Alley loop: a ball falling down the right leg drops into the chute to the market's wire.
     poly(w, L.CHUTE.left, { layers: RAMP2, restitution: 0.3, friction: 0.02 });
     poly(w, L.CHUTE.right, { layers: RAMP2, restitution: 0.3, friction: 0.02 });
     const [ca, cb] = L.CHUTE.entry;
@@ -250,15 +256,6 @@ export class Psychosis extends Table {
     });
     this.flipperL = this.lower.left;
     this.flipperR = this.lower.right;
-    const mk = (U: typeof L.TOP_FLIPPER) => {
-      const f = new Flipper(U.x, U.y, U.len, U.rest, U.up, U.r0, U.r1);
-      w.flippers.push(f);
-      this.extraFlippers.push({ f, side: -1 });
-      return f;
-    };
-    this.topFlipper = mk(L.TOP_FLIPPER);
-    this.midFlipper = mk(L.MID_FLIPPER);
-    w.circle(L.MID_POST[0], L.MID_POST[1], 6, { restitution: 0.6 });
 
     L.BUMPERS.forEach(([x, y]) => {
       const c = w.circle(x, y, L.BUMPER_R, { restitution: 0.6, kick: 900, kickThreshold: 10, onHit: (h) => this.hitBumper(c, h.ball) });
@@ -268,16 +265,17 @@ export class Psychosis extends Table {
     // Sensors
     const line = (pts: P[], fn: (b: Ball, dir: number) => void, layers = FLOOR) =>
       w.lineSensors.push(new LineSensor(pts[0][0], pts[0][1], pts[1][0], pts[1][1], fn, layers));
-    // The Back Alley counts once a ball is over the top heading clockwise (plunges go the other way).
-    const top = L.ALLEY_CENTER[Math.round(L.ALLEY_CENTER.length * 0.45)];
-    line(
-      [
-        [top[0], top[1] - 26],
-        [top[0], top[1] + 26],
-      ],
-      (b, dir) => dir > 0 && this.alley(b),
+    // The Back Alley counts once a ball is over the top, heading for the CAM lanes.
+    line(L.ALLEY_SWITCH, (b, dir) => dir > 0 && this.alley(b));
+    L.CAM_LANES.forEach(([x0, x1], i) =>
+      line(
+        [
+          [x0 + L.LANE_POST_R, L.CAM_Y],
+          [x1 - L.LANE_POST_R, L.CAM_Y],
+        ],
+        (_b, dir) => dir < 0 && this.camLane(i),
+      ),
     );
-    line(L.DUCT_SENSOR, (_b, dir) => dir > 0 && this.duct());
     line(
       [
         [L.SKY_LANE_X, 650],
@@ -300,11 +298,11 @@ export class Psychosis extends Table {
 
     this.shooter = { x: 557.5, y: 1165, minX: 536, maxX: 580, minY: 700 };
     this.flashers = [
-      { x: 186, y: 30, r: 10, z: 46, color: INS.red, level: 0 },
-      { x: 520, y: 300, r: 11, z: 70, color: INS.yellow, level: 0 },
-      { x: L.BREACH[0], y: 366, r: 9, z: 40, color: INS.red, level: 0 },
+      { x: 196, y: 92, r: 10, z: 46, color: INS.red, level: 0 },
+      { x: 540, y: 400, r: 11, z: 70, color: INS.yellow, level: 0 },
+      { x: L.BREACH[0] - 26, y: L.BREACH[1] - 22, r: 9, z: 40, color: INS.red, level: 0 },
       { x: L.REACTOR.eye[0], y: L.REACTOR.eye[1], r: 12, z: 36, color: INS.red, level: 0 },
-      { x: 312, y: 112, r: 9, z: 46, color: INS.orange, level: 0 },
+      { x: 400, y: 138, r: 9, z: 46, color: INS.orange, level: 0 },
     ];
     this.buildLamps();
   }
@@ -313,80 +311,80 @@ export class Psychosis extends Table {
 
   private buildLamps() {
     const lamp = (l: Lamp) => this.lamps.push(l);
-    const arrow = (s: Shot, x: number, y: number, angle: number) =>
-      lamp({ id: `arrow:${s}`, kind: 'arrow', x, y, w: 26, h: 36, angle, color: INS.white, tint: () => this.shotTint(s), state: () => this.shotLamp(s) });
-    const jp = (s: Shot, x: number, y: number) =>
-      lamp({ id: `jackpot:${s}`, kind: 'circle', x, y, w: 15, color: INS.red, label: 'JP', labelSize: 7, state: () => (this.jpLit(s) ? 3 : 0) });
     const dirAngle = (d: P) => Math.atan2(d[0], -d[1]);
 
-    // Back Alley: in front of its mouth, pointing up the left leg
-    const am = L.ALLEY_MOUTH;
-    const amc: P = [(am[0][0] + am[1][0]) / 2, (am[0][1] + am[1][1]) / 2];
-    const ad = L.unit(L.sub(L.ALLEY_CENTER[3], L.ALLEY_CENTER[0]));
-    arrow('alley', amc[0] - ad[0] * 36, amc[1] - ad[1] * 36, dirAngle(ad));
-    jp('alley', amc[0] - ad[0] * 36 + 22, amc[1] - ad[1] * 36 + 8);
-    // Black Market: in front of its mouth
-    const m0 = L.MARKET.path[0];
-    const md = L.unit(L.sub(L.MARKET.path[2], m0));
-    arrow('market', m0[0] - md[0] * 44, m0[1] - md[1] * 44, dirAngle(md));
-    jp('market', m0[0] - md[0] * 44 + 24, m0[1] - md[1] * 44 + 4);
-    // Skyway: up the lane beside the Reactor
-    arrow('skyway', 512, 676, 0);
-    jp('skyway', 512, 634);
-    const ba = L.BREACH_AXIS;
-    arrow('breach', L.BREACH[0] + ba[0] * 150, L.BREACH[1] + ba[1] * 150, dirAngle([-ba[0], -ba[1]]));
-    jp('breach', L.BREACH[0] + ba[0] * 70, L.BREACH[1] + ba[1] * 70);
-    // Duct: lit when an upper flipper shot is wanted
-    lamp({ id: 'arrow:duct', kind: 'arrow', x: 43, y: 620, w: 22, h: 30, angle: 0, color: INS.white, state: () => (this.shotLamp('alley') || this.shotLamp('market') ? 2 : 0) });
-    // SAFE and VENT inserts in front of their targets
-    [L.SAFE, L.REACTOR.vent].forEach(([a, b], i) => {
-      const mx = (a[0] + b[0]) / 2;
-      const my = (a[1] + b[1]) / 2;
-      const nx = (b[1] - a[1]) / Math.hypot(b[0] - a[0], b[1] - a[1]);
-      const ny = -(b[0] - a[0]) / Math.hypot(b[0] - a[0], b[1] - a[1]);
-      lamp({ id: i === 0 ? 'flank:safe' : 'flank:vent', kind: 'circle', x: mx + nx * 16, y: my + ny * 16, w: 13, color: INS.red, label: i === 0 ? 'S' : 'V', labelSize: 8, state: () => (this.flankFlash[i] > 0 ? 3 : 0) });
-    });
-    const ra = L.REACTOR_AXIS;
-    arrow('reactor', L.REACTOR_MOUTH[0] - ra[0] * 74, L.REACTOR_MOUTH[1] - ra[1] * 74, dirAngle(ra));
+    // Every major shot gets the same stack, lined up on the way in: an arrow pointing at the
+    // shot, then its jackpot insert, then its mode light.
+    const stack = (s: Shot, at: P, d: P, gaps: [number, number, number] = [46, 78, 104]) => {
+      const p = (k: number): P => [at[0] - d[0] * gaps[k], at[1] - d[1] * gaps[k]];
+      const [a, j, m] = [p(0), p(1), p(2)];
+      lamp({ id: `arrow:${s}`, kind: 'arrow', x: a[0], y: a[1], w: 26, h: 34, angle: dirAngle(d), color: INS.white, tint: () => this.shotTint(s), state: () => this.shotLamp(s) });
+      lamp({ id: `jackpot:${s}`, kind: 'circle', x: j[0], y: j[1], w: 17, color: INS.red, label: 'JP', labelSize: 7, state: () => (this.jpLit(s) ? 3 : 0) });
+      lamp({ id: `mode:${s}`, kind: 'circle', x: m[0], y: m[1], w: 12, color: INS.white, tint: () => this.modeFor(s)?.tint(s) ?? INS.white, state: () => (this.modeFor(s) ? this.shotLamp(s) : 0) });
+    };
+    const fromRF: P = [330, 1030];
+    const am = L.along(L.ALLEY_MOUTH[0], L.ALLEY_MOUTH[1], 0.5);
+    stack('alley', am, L.unit(L.sub(am, fromRF)), [44, 76, 102]);
+    const bm = L.along(L.BREACH_MOUTH[0], L.BREACH_MOUTH[1], 0.5);
+    stack('breach', bm, [-L.BREACH_AXIS[0], -L.BREACH_AXIS[1]]);
+    const mm = L.MARKET.path[0];
+    stack('market', mm, L.unit(L.sub(mm, [L.CX, 1040])));
+    stack('reactor', L.REACTOR_MOUTH, L.REACTOR_AXIS, [44, 70, 92]);
+    // The Skyway's stack runs up its own lane, with the lock insert at the top.
+    stack('skyway', [512.5, 600], [0, -1], [-86, -26, 4]);
+    lamp({ id: 'lock:skyway', kind: 'rect', x: 512.5, y: 568, w: 38, h: 13, color: INS.orange, label: 'LOCK', labelSize: 8, state: () => (this.lockLit ? 3 : 0) });
 
-    // B-R-E-A-C-H letters beside their standups, on the channel floor
-    [L.BANK_L, L.BANK_R].forEach((bank, side) => {
-      for (let i = 0; i < 3; i++) {
-        const t = (L.STANDUP_T[i] + L.STANDUP_T[i + 1]) / 2;
-        const p: P = [bank.top[0] + (bank.bottom[0] - bank.top[0]) * t, bank.top[1] + (bank.bottom[1] - bank.top[1]) * t];
-        const toAxis = side === 0 ? L.cw([-ba[0], -ba[1]]) : L.cw(ba);
-        const idx = side * 3 + i;
-        lamp({
-          id: `letter:${L.BREACH_LETTERS[idx]}`,
-          kind: 'circle',
-          x: p[0] + toAxis[0] * 10,
-          y: p[1] + toAxis[1] * 10,
-          w: 13,
-          color: INS.red,
-          tint: () => (this.mode?.litStandup(idx) ? this.mode.color : INS.red),
-          label: L.BREACH_LETTERS[idx],
-          labelSize: 9,
-          state: () => this.mode?.litStandup(idx) || (this.letters[idx] ? 1 : 0),
-        });
-      }
+    // SAFE and VENT inserts in front of their targets
+    [L.SAFE, L.VENT].forEach(([a, b], i) => {
+      const mid = L.along(a, b, 0.5);
+      let n = L.unit([b[1] - a[1], -(b[0] - a[0])]);
+      const toward = L.sub(i === 0 ? L.RF : L.LF, mid);
+      if (n[0] * toward[0] + n[1] * toward[1] < 0) n = [-n[0], -n[1]];
+      lamp({ id: i === 0 ? 'flank:safe' : 'flank:vent', kind: 'circle', x: mid[0] + n[0] * 17, y: mid[1] + n[1] * 17, w: 13, color: INS.red, label: i === 0 ? 'S' : 'V', labelSize: 8, state: () => (this.flankFlash[i] > 0 ? 3 : 0) });
     });
+
+    // B-R-E-A-C-H: a row of inserts in front of each bank, each pointing at its own standup
+    L.STANDUPS.forEach(([a, b], idx) => {
+      const mid = L.along(a, b, 0.5);
+      const n = L.unit(L.sub(idx < 3 ? L.RF_BAT : L.LF_BAT, mid));
+      const at = L.add(mid, n, 19);
+      lamp({
+        id: `letter:${L.BREACH_LETTERS[idx]}`,
+        kind: 'tri',
+        x: at[0],
+        y: at[1],
+        w: 17,
+        h: 15,
+        angle: dirAngle([-n[0], -n[1]]),
+        color: INS.red,
+        tint: () => (this.mode?.litStandup(idx) ? this.mode.color : INS.red),
+        label: L.BREACH_LETTERS[idx],
+        labelSize: 7.5,
+        state: () => this.mode?.litStandup(idx) || (this.letters[idx] ? 1 : 0),
+      });
+    });
+
+    // CAM 1-3: a light in each top lane
+    L.CAM_LANES.forEach(([x0, x1], i) =>
+      lamp({ id: `cam:${i + 1}`, kind: 'circle', x: (x0 + x1) / 2, y: 113, w: 15, color: INS.red, label: String(i + 1), labelSize: 8, state: () => (this.camFlash[i] > 0 ? 3 : 0) }),
+    );
 
     // Reactor drop lamps
+    const ra = L.REACTOR_AXIS;
     L.DROPS.forEach(([a, b], i) => {
       const m: P = [(a[0] + b[0]) / 2 - ra[0] * 15, (a[1] + b[1]) / 2 - ra[1] * 15];
       lamp({ id: `drop:${i + 1}`, kind: 'rect', x: m[0], y: m[1], w: 16, h: 7, angle: Math.atan2(ra[0], -ra[1]), color: INS.yellow, state: () => (this.drops[i].down ? 1 : 0) });
     });
-    // Lock: the warning triangle on the Impound, and the lit-lock insert on the Skyway lane
-    lamp({ id: 'lock:impound', kind: 'tri', x: 56, y: 56 - lift(36), w: 16, h: 14, color: INS.red, state: () => (this.lockLit ? 3 : this.multiball === 'impound' ? 2 : 0) });
-    lamp({ id: 'lock:skyway', kind: 'rect', x: 512, y: 594, w: 38, h: 13, color: INS.orange, label: 'LOCK', labelSize: 8, state: () => (this.lockLit ? 3 : 0) });
+    // Lock: the warning triangle on the Impound
+    lamp({ id: 'lock:impound', kind: 'tri', x: 226, y: 112 - lift(36), w: 16, h: 14, color: INS.red, state: () => (this.lockLit ? 3 : this.multiball === 'impound' ? 2 : 0) });
 
-    // Black Market menu: the item on offer blinks; the one you can afford is solid
+    // Black Market menu, under the market's stack: the item on offer blinks; the one you can afford is solid
     ITEMS.forEach((it, i) =>
       lamp({
         id: `shop:${it.key}`,
         kind: 'rect',
-        x: 268 + i * 25,
-        y: 548,
+        x: 214 + i * 25,
+        y: 662,
         w: 23,
         h: 12,
         color: INS.yellow,
@@ -428,25 +426,6 @@ export class Psychosis extends Table {
       [L.CX, (L.MAP.hack[1] + L.MAP.payload[1]) / 2 - 12],
     ];
     nodes.forEach(([x, y], i) => lamp({ id: `map:node:${i + 1}`, kind: 'circle', x, y, w: 13, color: INS.red, state: () => (i < this.modesLit ? 2 : this.blackoutLit ? 1 : 0) }));
-    // mode clock: a bar of lamps under the map
-    for (let i = 0; i < 12; i++)
-      lamp({
-        id: `clock:${i + 1}`,
-        kind: 'rect',
-        x: L.CX - 66 + i * 12,
-        y: 928,
-        w: 9,
-        h: 6,
-        color: INS.white,
-        tint: () => (this.mode ?? this.rage)?.color ?? INS.white,
-        state: () => {
-          const m = this.mode ?? this.rage;
-          if (!m || !m.timed) return 0;
-          if (m.inGrace) return 4;
-          return i < Math.ceil(m.meter() * 12) ? this.urgency(m, 1) : 0;
-        },
-      });
-
     // Bonus multiplier and R-A-G-E
     [2, 3, 4, 5, 6].forEach((n, i) =>
       lamp({ id: `bonus:${n}x`, kind: 'circle', x: L.CX - 64 + i * 32, y: 952, w: 17, color: INS.red, label: `${n}X`, labelSize: 7, state: () => (this.game.bonusMult >= n ? 1 : 0) }),
@@ -465,7 +444,6 @@ export class Psychosis extends Table {
         state: () => (this.rage ? 2 : this.rageLit[i] ? 1 : 0),
       }),
     );
-    lamp({ id: 'skill', kind: 'tri', x: 557.5, y: 960, w: 24, h: 21, color: INS.red, state: () => (this.skillT > 0 || this.skillArmed ? 3 : 0) });
     lamp({
       id: 'shoot-again',
       kind: 'rect',
@@ -653,7 +631,7 @@ export class Psychosis extends Table {
   private hitFlank(i: number) {
     this.flankFlash[i] = 0.5;
     this.sw('standup');
-    const [a, b] = i === 0 ? L.SAFE : L.REACTOR.vent;
+    const [a, b] = i === 0 ? L.SAFE : L.VENT;
     const x = (a[0] + b[0]) / 2;
     const y = (a[1] + b[1]) / 2;
     this.game.addScore(25_000, x, y);
@@ -662,10 +640,11 @@ export class Psychosis extends Table {
     sound.target();
   }
 
-  /** Up the duct to the upper flippers. */
-  private duct() {
+  /** A CAM lane under the top of the arch. Plain switch for now: the lane rules come with Phase 4. */
+  private camLane(i: number) {
     this.sw('rollover');
-    this.game.addScore(25_000, 43, 420);
+    this.game.addScore(5_000, (L.CAM_LANES[i][0] + L.CAM_LANES[i][1]) / 2, L.CAM_Y);
+    this.camFlash[i] = 0.6;
     sound.lane();
   }
 
@@ -691,10 +670,7 @@ export class Psychosis extends Table {
     this.sw('standup');
     this.mode?.onStandup(i);
     sound.target();
-    const bank = i < 3 ? L.BANK_L : L.BANK_R;
-    const t = (L.STANDUP_T[i % 3] + L.STANDUP_T[(i % 3) + 1]) / 2;
-    const px = bank.top[0] + (bank.bottom[0] - bank.top[0]) * t;
-    const py = bank.top[1] + (bank.bottom[1] - bank.top[1]) * t;
+    const [px, py] = L.along(L.STANDUPS[i][0], L.STANDUPS[i][1], 0.5);
     g.fx.sparks(px, py, INS.red, 8, 300);
     if (!this.letters[i]) {
       this.letters[i] = true;
@@ -1081,8 +1057,8 @@ export class Psychosis extends Table {
         return this.game.ballSave <= 0;
       case 'lock':
         return !this.lockLit && this.locked.length < 3 && !this.multiball;
-      case 'bonus':
-        return this.game.bonusMult < 6;
+      case 'tenx':
+        return false; // 10X comes with the rules (Phase 4); until then the shop skips it
       case 'xball':
         return !this.xballBought;
     }
@@ -1115,8 +1091,7 @@ export class Psychosis extends Table {
       case 'lock':
         this.lockLit = true;
         break;
-      case 'bonus':
-        g.bonusMult++;
+      case 'tenx':
         break;
       case 'xball':
         this.xballBought = true;
@@ -1225,12 +1200,13 @@ export class Psychosis extends Table {
     if (this.skillT > 0) this.skillT -= dt;
     for (let i = 0; i < 6; i++) this.standupWobble[i] = Math.max(0, this.standupWobble[i] - dt * 4);
     for (let i = 0; i < 2; i++) this.flankFlash[i] = Math.max(0, this.flankFlash[i] - dt);
+    for (let i = 0; i < 3; i++) this.camFlash[i] = Math.max(0, this.camFlash[i] - dt);
+    this.diverter.enabled = !this.alleyLoopOpen;
     for (const d of this.drops) d.anim += ((d.down ? 1 : 0) - d.anim) * Math.min(1, dt * 18);
     for (const x of this.timers) x.t -= dt;
     const due = this.timers.filter((x) => x.t <= 0);
     this.timers = this.timers.filter((x) => x.t > 0);
     for (const x of due) x.fn();
-    this.turbineAngle += dt * (this.rage ? 9 : this.mode ? 4 : 1.2);
 
     if (g.ballInShooter() && this.world.balls.length === 1) {
       this.validated = false;
@@ -1284,20 +1260,23 @@ export class Psychosis extends Table {
         else if (this.world.balls.length === 0) g.serveBall();
       }
     }
-    // Balls dropping out of the Impound onto the top flipper.
+    // Balls dropping out of the Impound back onto the Skyway's wire, down to the left inlane.
     if (this.releaseQueue > 0 && this.locked.length > 0) {
       this.releaseT -= dt;
       if (this.releaseT <= 0) {
         this.releaseT = 0.9;
         this.releaseQueue--;
         const b = this.locked.pop()!;
+        const path = L.SKYWAY.path;
+        const i = L.SKYWAY.divertAt! + 2;
+        const d = L.unit(L.sub(path[i + 1], path[i]));
         b.captured = false;
-        b.layer = FLOOR;
-        b.tags = {};
-        b.x = L.IMPOUND_EXIT[0];
-        b.y = L.IMPOUND_EXIT[1];
-        b.vx = -20 + Math.random() * 20;
-        b.vy = 120;
+        b.layer = RAMP_LAYER[0];
+        b.tags = { ramp: 1, ri: i, made: 1, diverted: 1 };
+        b.x = path[i][0];
+        b.y = path[i][1];
+        b.vx = d[0] * 250;
+        b.vy = d[1] * 250;
         this.world.balls.push(b);
         sound.eject();
         this.flash(0, 0.7);
@@ -1431,7 +1410,6 @@ export class Psychosis extends Table {
       },
     });
     out.push({ y: 150, draw: (ctx) => drawImpound(ctx, this.locked.length, this.time) });
-    out.push({ y: L.TURBINE[1] + 20, draw: (ctx) => drawTurbine(ctx, this.turbineAngle) });
   }
 
   protected override drawTop(ctx: CanvasRenderingContext2D) {

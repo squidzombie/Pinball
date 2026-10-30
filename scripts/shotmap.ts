@@ -27,7 +27,6 @@ wrap('hitStandup', () => 'standup');
 wrap('hitDrop', () => 'drop');
 wrap('hitBumper', () => 'bumper');
 wrap('enterBreach', () => 'breach');
-wrap('duct', () => 'duct');
 wrap('hitFlank', () => 'flank');
 
 const w = m.world;
@@ -68,5 +67,3 @@ function map(name: string, f: Flipper, start: () => [number, number]) {
 
 map('left', m.flipperL, () => [93, 900]);
 map('right', m.flipperR, () => [462, 900]);
-map('top', m.topFlipper, () => [152, 150]);
-map('mid', m.midFlipper, () => [225, 290]);

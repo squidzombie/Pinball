@@ -96,7 +96,7 @@ function launch(f: any, x: number, y: number, deg: number, speed: number, second
   const made: string[] = [];
   for (const [name, label] of [
     ['majorShot', ''],
-    ['duct', 'duct'],
+    ['camLane', 'cam'],
     ['hitBumper', 'bumper'],
   ] as const) {
     const o = f[name].bind(f);
@@ -123,10 +123,10 @@ function launch(f: any, x: number, y: number, deg: number, speed: number, second
 function follow(f: any, [x, y, deg, speed]: number[], flipper: any, arrive: (b: Ball) => boolean) {
   const made: string[] = [];
   const lanes: string[] = [];
-  for (const name of ['majorShot', 'duct'] as const) {
+  for (const name of ['majorShot', 'camLane'] as const) {
     const o = f[name].bind(f);
     f[name] = (...a: unknown[]) => {
-      made.push(name === 'duct' ? 'duct' : String(a[0]));
+      made.push(name === 'camLane' ? 'cam' : String(a[0]));
       return o(...a);
     };
   }
@@ -150,6 +150,35 @@ function follow(f: any, [x, y, deg, speed]: number[], flipper: any, arrive: (b: 
   }
   flipper.pressed = false;
   return { made, lanes, caught };
+}
+
+/**
+ * A real flip that makes `shot`: cradle the ball, drop the flipper, flip at each timing in turn
+ * and keep the launches that make it. Returns the middle one as [x, y, deg, speed].
+ */
+function realShot(side: 'left' | 'right', shot: Shot): number[] {
+  const { f } = newGame();
+  const found: number[][] = [];
+  const fl = side === 'left' ? f.flipperL : f.flipperR;
+  const start = side === 'left' ? [93, 900] : [462, 900];
+  for (let delay = 0.3; delay < 0.9; delay += 0.002) {
+    f.world.balls = [];
+    const b: Ball = f.addBall(start[0], start[1], 0, 100);
+    fl.pressed = true;
+    for (let t = 0; t < 2; t += 1 / 480) f.world.step(1 / 480);
+    fl.pressed = false;
+    let got: number[] | null = null;
+    for (let t = 0; t < 1.5 && !got; t += 1 / 480) {
+      if (t > delay + 0.03) fl.pressed = true;
+      f.world.step(1 / 480);
+      if (fl.pressed && b.vy < 0 && b.y < 1000 && b.speed > 1200) got = [b.x, b.y, (Math.atan2(-b.vy, b.vx) * 180) / Math.PI, b.speed];
+    }
+    fl.pressed = false;
+    if (got && launch(f, got[0], got[1], got[2], got[3], 4).made.includes(shot)) found.push(got);
+  }
+  if (!found.length) throw new Error(`no ${side} flip makes the ${shot}`);
+  // the middle of the window, not its weakest edge
+  return found[Math.floor(found.length / 2)];
 }
 
 const lit = (f: any, s: Shot) => f.mode?.lit(s) ?? 0;
@@ -420,11 +449,11 @@ console.log('Black Market');
   f.rampMade('market', b);
   check('too poor: nothing bought', f.cash > 0 && f.offer()?.key === it.key);
   f.cash = 1_000_000;
-  while (f.offer()?.key !== 'bonus') f.offerIdx++;
-  const m0 = g.bonusMult;
+  check('10X is on the menu but not sold until its rule is built', !f.itemAvailable('tenx'));
+  while (f.offer()?.key !== 'save') f.offerIdx++;
   f.rampMade('market', b);
-  check('buying BONUS +1X', g.bonusMult === m0 + 1);
-  check('...costs $60K plus what the ramp earned', f.cash === 1_000_000 - 60_000 + 5_000, `${f.cash}`);
+  check('buying a BALL SAVE', g.ballSave >= 15);
+  check('...costs $50K plus what the ramp earned', f.cash === 1_000_000 - 50_000 + 5_000, `${f.cash}`);
   while (f.offer()?.key !== 'xball') f.offerIdx++;
   f.rampMade('market', b);
   check('extra ball bought once', g.extraBalls === 1 && !f.itemAvailable('xball'));
@@ -540,45 +569,84 @@ console.log('Ball count');
 
 console.log('Ball flow');
 {
-  // A plunge rides the Back Alley round the top and drops onto the top flipper.
-  const { g, f } = newGame();
-  f.world.balls = [];
-  const b: Ball = f.addBall(557.5, 1165);
-  (g as any).fire(0.8);
-  let near = Infinity;
-  for (let t = 0; t < 2; t += 1 / 480) {
-    f.world.step(1 / 480);
-    const tf = f.topFlipper;
-    near = Math.min(near, Math.hypot(b.x - (tf.px + tf.tipX) / 2, b.y - (tf.py + tf.tipY) / 2));
+  // Every plunge from half strength up comes round the arch and drops into a CAM lane.
+  let ok = 0;
+  for (let i = 0; i < 6; i++) {
+    const { g, f } = newGame();
+    const lanes: number[] = [];
+    const o = f.camLane.bind(f);
+    f.camLane = (k: number) => (lanes.push(k), o(k));
+    f.world.balls = [];
+    f.addBall(557.5, 1165);
+    for (let t = 0; t < 0.4; t += 1 / 480) f.world.step(1 / 480);
+    (g as any).fire(0.5 + i * 0.1);
+    for (let t = 0; t < 4 && !lanes.length; t += 1 / 480) f.world.step(1 / 480);
+    if (lanes.length) ok++;
   }
-  check('a plunge comes round the Back Alley onto the top flipper', near < 30, `closest ${near.toFixed(0)}`);
+  check('a plunge from 50% to 100% drops into the CAM lanes', ok === 6, `${ok}/6`);
 }
 {
-  // A full-strength duct shot turns under the Impound and comes onto the top flipper.
+  // The Back Alley: up the left orbit, over the top and into the CAM lanes...
+  const shot = realShot('right', 'alley');
   const { f } = newGame();
-  const r = follow(f, [241, 972, 123, 2700], f.topFlipper, (b) => b.y < 240 && b.x > 70);
-  check('a full-strength duct shot is caught on the top flipper', r.made.includes('duct') && r.caught, r.made.join());
-}
-{
-  // A medium one falls back onto the guide and rolls to the Black Market flipper.
-  const { f } = newGame();
-  const r = follow(f, [241, 972, 123, 2300], f.midFlipper, (b) => b.y < 340 && b.y > 250 && b.x > 120);
-  check('a medium duct shot is caught on the Black Market flipper', r.made.includes('duct') && r.caught, r.made.join());
+  const r = launch(f, shot[0], shot[1], shot[2], shot[3], 4);
+  check('the right flipper shoots the Back Alley into the CAM lanes', r.made.includes('alley') && r.made.includes('cam'), r.made.join());
+  // ...or, with the loop held open, round the top and down the right leg to the right inlane.
+  const { f: f2 } = newGame();
+  f2.alleyLoopOpen = true;
+  f2.update(1 / 60);
+  const r2 = follow(f2, shot, f2.flipperR, (b) => b.y > 880 && b.x > 425);
+  // (a slow one drops into the CAM lanes on the way and comes out of the pops into the same inlane)
+  check('with the loop held open it comes back to the right inlane', r2.lanes.includes('R-IN') && !r2.lanes.some((l) => l.endsWith('OUT')), `${r2.made.join()} ${r2.lanes.join()}`);
 }
 {
   // Wire returns: each drops into its inlane (never the outlane) and a held flipper catches it.
-  const cases: [string, number[], 'L' | 'R', string][] = [
-    ['Skyway', [320, 972, 56, 2950], 'L', 'L-IN'],
-    ['Black Market', [284, 284, 64, 1900], 'R', 'R-IN'],
-    ['Back Alley', [225, 166, 57, 2030], 'R', 'R-IN'],
+  const cases: [string, 'left' | 'right', Shot, 'L' | 'R', string][] = [
+    ['Skyway', 'left', 'skyway', 'L', 'L-IN'],
+    ['Black Market (left flipper)', 'left', 'market', 'R', 'R-IN'],
+    ['Black Market (right flipper)', 'right', 'market', 'R', 'R-IN'],
   ];
-  for (const [name, shot, side, lane] of cases) {
+  for (const [name, side, s, lane, rollover] of cases) {
+    const shot = realShot(side, s);
     const { f } = newGame();
-    const fl = side === 'L' ? f.flipperL : f.flipperR;
-    const r = follow(f, shot, fl, (b) => b.y > 880 && (side === 'L' ? b.x < 130 : b.x > 425));
-    check(`the ${name} returns down the ${side === 'L' ? 'left' : 'right'} inlane`, r.lanes.includes(lane) && !r.lanes.some((l) => l.endsWith('OUT')), r.lanes.join());
+    const fl = lane === 'L' ? f.flipperL : f.flipperR;
+    const r = follow(f, shot, fl, (b) => b.y > 880 && (lane === 'L' ? b.x < 130 : b.x > 425));
+    check(`the ${name} returns down the ${lane === 'L' ? 'left' : 'right'} inlane`, r.made.includes(s) && r.lanes.includes(rollover) && !r.lanes.some((l) => l.endsWith('OUT')), `${r.made.join()} ${r.lanes.join()}`);
     check(`...where a held flipper catches it`, r.caught);
   }
+}
+{
+  // The pops: a ball dropped through each CAM lane leaves by the exit lane into the right inlane.
+  const ends: string[] = [];
+  for (let i = 0; i < 3; i++) {
+    const { f } = newGame();
+    const lanes: string[] = [];
+    const o = f.rollover.bind(f);
+    f.rollover = (k: number) => (lanes.push(['L-OUT', 'L-IN', 'R-IN', 'R-OUT'][k]), o(k));
+    f.world.balls = [];
+    const [x0, x1] = L.CAM_LANES[i];
+    f.addBall((x0 + x1) / 2, 70, 0, 200);
+    for (let t = 0; t < 15 && !lanes.length; t += 1 / 480) {
+      f.world.step(1 / 480);
+      f.update(1 / 480);
+    }
+    ends.push(lanes[0] ?? 'stuck');
+  }
+  check('the pops send every ball out to the right inlane', ends.every((e) => e === 'R-IN'), ends.join());
+}
+{
+  // An Impound release rolls back down the Skyway's wire to the left inlane.
+  const { g, f } = newGame();
+  f.world.balls = [];
+  const b: Ball = f.addBall(0, 0);
+  f.removeBall(b);
+  f.locked = [b];
+  f.releaseQueue = 1;
+  const lanes: string[] = [];
+  const o = f.rollover.bind(f);
+  f.rollover = (k: number) => (lanes.push(['L-OUT', 'L-IN', 'R-IN', 'R-OUT'][k]), o(k));
+  for (let t = 0; t < 4 && !lanes.length; t += 1 / 60) g.update(1 / 60);
+  check('an Impound release comes down the Skyway wire to the left inlane', lanes[0] === 'L-IN', lanes.join());
 }
 {
   // Guards: a ball rolling down either side wall is turned away from the outlane.
@@ -594,13 +662,13 @@ console.log('Ball flow');
       return o(i);
     };
     f.world.balls = [];
-    f.addBall(x, 660, 0, 300);
+    f.addBall(x, 680, 0, 300);
     for (let t = 0; t < 1.5; t += 1 / 480) f.world.step(1 / 480);
     check(`the ${side === 'L-OUT' ? 'left' : 'right'} guard keeps a wall-hugging ball out of the outlane`, !lanes.includes(side), lanes.join());
   }
 }
 {
-  // SAFE and VENT, in the old dead zones: a switch with Black Market cash.
+  // SAFE and VENT: a switch with Black Market cash.
   const { g, f } = newGame();
   park(f);
   const s0 = g.score;
@@ -610,16 +678,13 @@ console.log('Ball flow');
   check('SAFE and VENT pay 25K and $10K each', g.score - s0 === 50_000 && f.cash - c0 >= 20_000, `${g.score - s0} $${f.cash - c0}`);
 }
 {
+  // The Back Alley diverter: closed unless the loop is held open.
   const { f } = newGame();
-  check('the top flipper shoots the Back Alley', launch(f, 225, 166, 57, 2030, 1.2).made.includes('alley'));
-}
-{
-  const { f } = newGame();
-  check('the middle flipper shoots the Black Market', launch(f, 284, 284, 64, 1900, 1.2).made.includes('market'));
-}
-{
-  const { f } = newGame();
-  check('the left flipper shoots the Skyway', launch(f, 320, 972, 56, 2950, 1.6).made.includes('skyway'));
+  f.update(1 / 60);
+  check('the Back Alley diverter is closed by default', f.diverter.enabled);
+  f.alleyLoopOpen = true;
+  f.update(1 / 60);
+  check('...and drops out of the way when the loop is held open', !f.diverter.enabled);
 }
 
 console.log('Flippers');
@@ -630,8 +695,6 @@ console.log('Flippers');
   for (const [name, fl, x0, y0] of [
     ['left', f.flipperL, 120, 990],
     ['right', f.flipperR, 435, 990],
-    ['top', f.topFlipper, 152, 150],
-    ['Black Market', f.midFlipper, 232, 300],
   ] as const) {
     f.world.balls = [];
     const b: Ball = f.addBall(x0, y0);

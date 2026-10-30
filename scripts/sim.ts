@@ -34,21 +34,26 @@ const inside = (p: P, poly: P[]) => {
   }
   return c;
 };
-const shrink = (poly: P[], k: number): P[] => {
-  const cx = poly.reduce((a, p) => a + p[0], 0) / poly.length;
-  const cy = poly.reduce((a, p) => a + p[1], 0) / poly.length;
-  return poly.map(([x, y]) => [cx + (x - cx) * k, cy + (y - cy) * k]);
+/** Distance from p to the polygon's outline: a ball deep inside a solid has leaked. */
+const depth = (p: P, poly: P[]) => {
+  let d = Infinity;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const [ax, ay] = poly[j];
+    const [bx, by] = poly[i];
+    const dx = bx - ax;
+    const dy = by - ay;
+    const t = Math.max(0, Math.min(1, ((p[0] - ax) * dx + (p[1] - ay) * dy) / (dx * dx + dy * dy || 1)));
+    d = Math.min(d, Math.hypot(p[0] - ax - dx * t, p[1] - ay - dy * t));
+  }
+  return d;
 };
+// the sealed outline goes round the Reactor's funnel: with the drops down a ball may run up to the captive ball
 const SOLIDS: [string, P[]][] = [
-  // the shell minus the funnel: with the drops down a ball may run up to the captive ball
-  ['reactor', shrink([L.REACTOR.pos(40), ...L.REACTOR.shell.slice(1, -1)], 0.8)],
-  ['bankL', shrink([L.BANK_L.top, L.BANK_L.bottom, L.BANK_L.outer, L.BANK_L.peak], 0.6)],
-  ['bankR', shrink([L.BANK_R.top, L.BANK_R.bottom, L.BANK_R.outer, L.BANK_R.peak], 0.6)],
-  ['leftMass', shrink(L.LEFT_MASS, 0.85)],
-  ['impound', shrink(L.IMPOUND_BOX, 0.85)],
-  ['machine', shrink(L.MACHINE, 0.8)],
-  ...L.RAMPS.map((r) => [`${r.id}-foot`, shrink([...r.walls.left.slice(1, r.baseTo), ...r.walls.right.slice(1, r.baseTo).reverse()], 0.7)] as [string, P[]]),
+  ['sealed', L.SEALED],
+  ['behind skyway', L.BEHIND_SKYWAY],
+  ...L.RAMPS.map((r) => [`${r.id}-foot`, [...r.walls.left.slice(0, r.baseTo + 1), ...r.walls.right.slice(0, r.baseTo + 1).reverse()]] as [string, P[]]),
 ];
+const inSolid = (p: P) => SOLIDS.find(([, poly]) => inside(p, poly) && depth(p, poly) > 6);
 
 const held = new Map<object, number>();
 const rest = new Map<object, number>();
@@ -56,7 +61,6 @@ function bot(t: Table) {
   const all = [
     { f: t.flipperL, left: true, zone: (b: { x: number; y: number }) => b.y > 960 && b.y < 1110 && b.x - t.flipperL.px > -20 && b.x - t.flipperL.px < 100 },
     { f: t.flipperR, left: false, zone: (b: { x: number; y: number }) => b.y > 960 && b.y < 1110 && t.flipperR.px - b.x > -20 && t.flipperR.px - b.x < 100 },
-    ...t.extraFlippers.map((x) => ({ f: x.f, left: x.side < 0, zone: (b: { x: number; y: number }) => Math.abs(b.x - x.f.px - 30) < 50 && b.y > x.f.py - 50 && b.y < x.f.py + 40 })),
   ];
   for (const { f, left, zone } of all) {
     // Like a player, cradle briefly, then drop the flipper long enough for the ball to roll into a flip.
@@ -106,7 +110,7 @@ while (time < SECONDS) {
       if (stuck < 8) console.log(`STUCK at (${b.x.toFixed(1)}, ${b.y.toFixed(1)}) layer ${b.layer}`);
     }
     const out = b.x < 19 || b.x > 581 || b.y < 15;
-    const solid = b.layer === FLOOR && !b.captured ? SOLIDS.find(([, poly]) => inside([b.x, b.y], poly)) : undefined;
+    const solid = b.layer === FLOOR && !b.captured ? inSolid([b.x, b.y]) : undefined;
     if (out || solid) {
       leaks++;
       if (leaks < 10) console.log(`LEAK ${solid?.[0] ?? 'out'} at (${b.x.toFixed(1)}, ${b.y.toFixed(1)}) layer ${b.layer} v=(${b.vx.toFixed(0)},${b.vy.toFixed(0)})`);

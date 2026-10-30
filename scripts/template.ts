@@ -11,6 +11,7 @@ import { HK } from '../src/game/tables/draw';
 import * as L from '../src/game/tables/psychosis-layout';
 import type { P } from '../src/game/tables/geom';
 import { TABLE_H, TABLE_W } from '../src/game/tables/table';
+import { measureGaps } from './gaps';
 
 const OUT = 'art/template';
 const SCALE = 3;
@@ -65,6 +66,7 @@ const C = {
   grid: '#e4e4e4',
   grid100: '#c4c4c4',
   note: '#444444',
+  gap: '#0a7f8f',
 };
 
 const targets = new Map<Segment, string>();
@@ -75,13 +77,9 @@ const slings = new Set<Segment>([t.lower.slingL, t.lower.slingR]);
 
 /** Raised structures nothing rolls through: shaded so the painter knows they're solid. */
 const SOLIDS: [string, P[]][] = [
+  ['SEALED (NO BALL ACCESS)', L.SEALED],
+  ['', L.BEHIND_SKYWAY],
   ['IMPOUND', L.IMPOUND_BOX],
-  ['MACHINERY', L.MACHINE],
-  ['MACHINERY', L.LEFT_MASS],
-  ['REACTOR', L.REACTOR.shell],
-  ['BREACH BANK', [L.BANK_L.peak, L.BANK_L.top, L.BANK_L.bottom, L.BANK_L.outer]],
-  ['BREACH BANK', [L.BANK_R.peak, L.BANK_R.top, L.BANK_R.bottom, L.BANK_R.outer]],
-  ['', L.BREACH_BOX],
   ...t.lower.slings.map((s: P[]) => ['', s] as [string, P[]]),
 ];
 
@@ -148,8 +146,6 @@ function solids(svg: Svg, labels: boolean) {
       svg.text(name, cx, cy, 7, C.note);
     }
   }
-  // the scoop housing above the cup is solid too
-  svg.path([L.BANK_L.peak, [128, 362], [196, 362], L.BANK_R.peak, ...L.BREACH_CUP.slice().reverse()], 'none', 0, true, C.solid);
   // the Reactor's funnel and captive ball channel are open: the ball goes in there
   const R = L.REACTOR;
   svg.path([R.mouthL, R.channelL0, R.channelL1, R.channelR1, R.channelR0, R.mouthR], 'none', 0, true, '#ffffff');
@@ -212,8 +208,8 @@ function round(svg: Svg, labels: boolean) {
 }
 
 function flippers(svg: Svg, labels: boolean) {
-  const names = ['LEFT', 'RIGHT', 'TOP', 'MIDDLE'];
-  [t.flipperL, t.flipperR, t.topFlipper, t.midFlipper].forEach((f: any, i: number) => {
+  const names = ['LEFT', 'RIGHT'];
+  [t.flipperL, t.flipperR].forEach((f: any, i: number) => {
     flipperOutline(svg, f, f.restAngle, C.flipper, 1.4, '#f3e6c8');
     flipperOutline(svg, f, f.upAngle, C.flipper, 0.9, 'none', 'stroke-dasharray="3 2"');
     if (labels) svg.text(`${names[i]} FLIPPER`, f.px, f.py + f.r0 + 10, 6, C.flipper);
@@ -223,17 +219,23 @@ function flippers(svg: Svg, labels: boolean) {
 function sensors(svg: Svg) {
   for (const s of w.lineSensors) svg.line([s.ax, s.ay], [s.bx, s.by], C.sensor, 1, 'stroke-dasharray="3 2"');
   const tag = (name: string, p: P[], dx = 0, dy = -4) => svg.text(name, (p[0][0] + p[1][0]) / 2 + dx, (p[0][1] + p[1][1]) / 2 + dy, 5.5, C.sensor);
-  tag('DUCT SWITCH', L.DUCT_SENSOR, 0, -4);
+  tag('BACK ALLEY SWITCH', L.ALLEY_SWITCH, -40, 14);
+  L.CAM_LANES.forEach(([x0, x1], i) => tag(`CAM ${i + 1}`, [[x0, L.CAM_Y], [x1, L.CAM_Y]], 0, -3));
   tag('SPINNER', [
     [L.SKY_LANE_X, 650],
     [535, 650],
   ]);
   // decorations drawn in code, so the painted art should leave room for them
-  svg.circle(L.TURBINE[0], L.TURBINE[1], 20, C.note, 0.8, 'none', 'stroke-dasharray="2 2"');
-  svg.text('TURBINE (drawn in code)', L.TURBINE[0], L.TURBINE[1] + 28, 4.5, C.note);
   svg.circle(L.CAMERAS[0][0], L.CAMERAS[0][1], 10, C.note, 0.8, 'none', 'stroke-dasharray="2 2"');
   svg.text('CAMERA', L.CAMERAS[0][0] - 20, L.CAMERAS[0][1] + 4, 4.5, C.note);
   tag('CHUTE IN', L.CHUTE.entry, 0, -4);
+  // the one-way gates
+  const gate = (name: string, p: P[], dx: number, dy: number) => svg.text(name, (p[0][0] + p[1][0]) / 2 + dx, (p[0][1] + p[1][1]) / 2 + dy, 5, C.oneWay);
+  gate('LEFT GATE', L.LEFT_GATE, -6, 30);
+  gate('DIVERTER', L.DIVERTER, 24, -3);
+  gate('(held open: loop)', L.DIVERTER, 30, 4);
+  gate('POP EXIT GATE', L.EXIT_GATE, 0, 12);
+  gate('SHOOTER GATE', L.GATE, -30, 0);
   L.ROLLOVERS.forEach(([x0, x1], i) => tag(['R', 'A', 'G', 'E'][i], [[x0, L.ROLL_Y], [x1, L.ROLL_Y]], 0, 9));
 }
 
@@ -269,10 +271,21 @@ function inserts(svg: Svg, labels: boolean) {
   }
 }
 
+/** A ball drawn to scale at every place it has to fit through, with the clearance. */
+const GAPS = measureGaps(t);
+function gapMarks(svg: Svg) {
+  for (const g of GAPS) {
+    const m: P = [(g.a[0] + g.b[0]) / 2, (g.a[1] + g.b[1]) / 2];
+    svg.line(g.a, g.b, C.gap, 0.9);
+    svg.circle(m[0], m[1], L.BALL_R, C.gap, 0.8, 'rgba(10,127,143,0.10)');
+    svg.text(`${Math.round(g.gap)}`, m[0], m[1] + 2, 5.5, C.gap);
+  }
+}
+
 function legend(svg: Svg) {
   const x = 26;
   let y = 1146;
-  svg.add(`<rect x="${x - 4}" y="${y - 8}" width="236" height="62" fill="#ffffff" stroke="#999" stroke-width="0.6"/>`);
+  svg.add(`<rect x="${x - 4}" y="${y - 8}" width="236" height="70" fill="#ffffff" stroke="#999" stroke-width="0.6"/>`);
   const item = (color: string, label: string, dash = '') => {
     svg.line([x, y], [x + 16, y], color, 2, dash ? `stroke-dasharray="${dash}"` : '');
     svg.text(label, x + 20, y + 2, 5.5, '#222', 'start');
@@ -285,6 +298,8 @@ function legend(svg: Svg) {
   item(C.target, 'target face: drops, standups, SAFE, VENT, pops');
   item(C.sensor, 'switch or sensor line', '3 2');
   item(C.insert, 'insert (lamp) outline, id below it; see inserts.json');
+  svg.circle(x + 8, y, 4, C.gap, 0.8, 'rgba(10,127,143,0.10)');
+  svg.text('ball to scale (28 across) at each gap; number = clearance in units', x + 20, y + 2, 5.5, '#222', 'start');
 }
 
 // ------------------------------------------------------------------ the files
@@ -302,6 +317,7 @@ function annotated() {
   flippers(s, true);
   sensors(s);
   inserts(s, true);
+  gapMarks(s);
   legend(s);
   s.text('CYBER PSYCHOSIS · PLAYFIELD TEMPLATE · 600 × 1200 units · 1 unit = 3 px', 300, 12, 7, '#222');
   return s.doc('#ffffff');
@@ -313,7 +329,7 @@ function lineartFloor() {
   solids(s, false);
   walls(s, false, true);
   round(s, false);
-  for (const f of [t.flipperL, t.flipperR, t.topFlipper, t.midFlipper]) flipperOutline(s, f, f.restAngle, '#000', 1.2, 'none');
+  for (const f of [t.flipperL, t.flipperR]) flipperOutline(s, f, f.restAngle, '#000', 1.2, 'none');
   inserts(s, false);
   return s.doc('#ffffff');
 }
@@ -332,7 +348,7 @@ function overlay(labels: boolean) {
   const box = L.MARKET_BOX.map(([x, y]) => [x, y - lift(70)] as P);
   s.path(box, labels ? C.market : '#000', 1.4, true, labels ? 'rgba(138,63,209,0.15)' : 'none');
   if (labels) {
-    s.text('BLACK MARKET BOX (top at z70)', 518, 338 - lift(70), 6, C.market);
+    s.text('BLACK MARKET BOX (top at z70)', 500, 372 - lift(70), 6, C.market, 'end');
     s.text('OVERLAY: ramps, wires and the market box at their drawn positions. Dashed grey = floor footprint.', 300, 12, 6, '#222');
     s.text(`Raised things are drawn ${HK} units up the screen per unit of height.`, 300, 21, 6, '#222');
   }
@@ -362,6 +378,9 @@ const files: [string, string, boolean][] = [
 ];
 for (const [name, svg] of files) writeFileSync(`${OUT}/${name}.svg`, svg);
 writeFileSync(`${OUT}/inserts.json`, JSON.stringify(insertList(), null, 1) + '\n');
+writeFileSync(`${OUT}/gaps.json`, JSON.stringify(GAPS.map((g) => ({ name: g.name, gap: f1(g.gap), a: g.a.map(f1), b: g.b.map(f1) })), null, 1) + '\n');
+console.log('Clearances (ball needs 28):');
+for (const g of GAPS) console.log(`  ${g.name.padEnd(34)} ${g.gap.toFixed(1).padStart(6)}  ${(g.gap / 28).toFixed(2)} balls`);
 console.log(`wrote ${files.length} SVGs and inserts.json (${t.lamps.length} inserts) to ${OUT}/`);
 
 // PNGs at 3 px per unit, if a Playwright Chromium is available on this machine.
