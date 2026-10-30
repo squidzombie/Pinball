@@ -300,12 +300,18 @@ export const BREACH_THROAT = {
 /** Mouth of the scoop: [screen-left post, screen-right post]. */
 export const BREACH_MOUTH: [P, P] = [bAt(44, 29), bAt(44, -29)];
 export const BANK_LEN = 44;
+/**
+ * A-C-H runs on until it meets the Black Market's left wall, so H has no gap or corner beside it
+ * (with a 44-unit bank, that corner took every right-flipper shot meant for H). The template's
+ * clearance list checks the join.
+ */
+export const BANK_R_LEN = 53.6;
 /** A standup bank facing `toward`, running from `start` away from the scoop (side -1 = left, +1 = right). */
-function bank(start: P, toward: P, side: number): [P, P] {
+function bank(start: P, toward: P, side: number, len = BANK_LEN): [P, P] {
   const n = unit(sub(toward, start));
   // along the face, away from the scoop
   const t: P = side < 0 ? [-n[1], n[0]] : [n[1], -n[0]];
-  return [start, add(start, t, BANK_LEN)];
+  return [start, add(start, t, len)];
 }
 /**
  * Each bank faces the opposite flipper: B-R-E the right flipper's pivot, A-C-H the middle of the
@@ -316,7 +322,7 @@ export const LF_BAT: P = [217, 1066];
 /** B-R-E: left of the mouth, faces the right flipper. Runs from the mouth outward. */
 export const BANK_L: [P, P] = bank(BREACH_MOUTH[0], RF_BAT, -1);
 /** A-C-H: right of the mouth, faces the left flipper. Runs from the mouth outward. */
-export const BANK_R: [P, P] = bank(BREACH_MOUTH[1], LF_BAT, 1);
+export const BANK_R: [P, P] = bank(BREACH_MOUTH[1], LF_BAT, 1, BANK_R_LEN);
 /** On the A-C-H bank's backing plate, near the Breach: where a flasher stands. */
 export const BANK_R_BACK: P = (() => {
   const [a, b] = BANK_R;
@@ -609,8 +615,23 @@ export const RAMP_LANDING = 2;
 /** Dropping off the wire into the inlane soaks up energy: the ball leaves along the wire at no more than this. */
 export const LANDING_SPEED = 900;
 
-/** Closes the gap between the A-C-H bank and the Black Market's mouth. */
-export const BANK_R_WALL: P[] = [BANK_R[1], MARKET.walls.left[0]];
+/**
+ * The Black Market's left wall at floor level, starting where the A-C-H bank meets it, so the bank
+ * and the wall join flush with no corner poking out beside H.
+ */
+export const MARKET_LEFT_BASE: P[] = (() => {
+  const [a, b] = BANK_R;
+  const d = unit(sub(b, a));
+  const w = MARKET.walls.left;
+  for (let i = 0; i < MARKET.baseTo; i++) {
+    const e = sub(w[i + 1], w[i]);
+    const den = d[0] * e[1] - d[1] * e[0];
+    const ap = sub(w[i], a);
+    const u = (ap[0] * d[1] - ap[1] * d[0]) / den;
+    if (u >= 0 && u <= 1) return [along(w[i], w[i + 1], u), ...w.slice(i + 1, MARKET.baseTo + 1)];
+  }
+  return w.slice(0, MARKET.baseTo + 1);
+})();
 /** The Black Market's right lip, which is also the Reactor housing's left side. */
 export const MARKET_LIP: P[] = [MARKET.walls.right[0], REACTOR.mouthL];
 

@@ -938,7 +938,7 @@ function paintLanes(ctx: CanvasRenderingContext2D, lower: LowerSection) {
   }
   // the pop nest's walls and its exit lane
   for (const wall of [L.NEST_LEFT, L.NEST_FLOOR, L.NEST_RIGHT, L.EXIT_LANE_L, L.EXIT_LANE_R]) rail(ctx, wall, 22, 7);
-  for (const wall of [L.BANK_R_WALL, L.MARKET_LIP]) rail(ctx, wall, 20, 6);
+  rail(ctx, L.MARKET_LIP, 20, 6);
   // the upper playfield's walls and gates
   for (const wall of [L.UPPER_LANE_WALL, L.UPPER_GUIDE_L, L.UPPER_GUIDE_R, L.UPPER_DRAIN_FLOOR, L.UPPER_DRAIN_ROOF, L.ARCH_INNER_NEST]) rail(ctx, wall, 20, 6);
   for (const gate of [L.UPPER_GATE, L.UPPER_EXIT_FLAP]) rail(ctx, gate, 10, 4, '#e8e4dc');
@@ -950,7 +950,7 @@ function paintLanes(ctx: CanvasRenderingContext2D, lower: LowerSection) {
   }
   // ramp feet: the lane walls up to where the ramp lifts off
   for (const r of L.RAMPS) {
-    rail(ctx, r.walls.left.slice(0, r.baseTo + 1), 20, 6);
+    rail(ctx, r === L.MARKET ? L.MARKET_LEFT_BASE : r.walls.left.slice(0, r.baseTo + 1), 20, 6);
     rail(ctx, r.walls.right.slice(0, r.baseTo + 1), 20, 6);
   }
   // inlane guides: steel rails with bolts

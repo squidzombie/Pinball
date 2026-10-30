@@ -208,7 +208,6 @@ export class Psychosis extends Table {
     [L.SAFE, L.VENT].forEach(([a, b], i) => {
       this.flanks.push(w.seg(a[0], a[1], b[0], b[1], { restitution: 0.35, onHit: (h) => h.speed > 70 && this.hitFlank(i) }));
     });
-    poly(w, L.BANK_R_WALL, { restitution: 0.4 });
 
     // The upper playfield: its entrance lane, gate, guides, drain, the tumblers and two half-size flippers
     poly(w, L.UPPER_LANE_WALL, { restitution: 0.35, friction: 0.02 });
@@ -261,7 +260,7 @@ export class Psychosis extends Table {
       const layer = RAMP_LAYER[idx];
       for (const part of r === L.MARKET ? L.MARKET_OUTER : [r.walls.left]) poly(w, part, { layers: layer, restitution: 0.3, friction: 0.02 });
       poly(w, r.walls.right, { layers: layer, restitution: 0.3, friction: 0.02 });
-      poly(w, r.walls.left.slice(0, r.baseTo + 1), { restitution: 0.35 });
+      poly(w, r === L.MARKET ? L.MARKET_LEFT_BASE : r.walls.left.slice(0, r.baseTo + 1), { restitution: 0.35 });
       poly(w, r.walls.right.slice(0, r.baseTo + 1), { restitution: 0.35 });
       const bl = r.walls.left[r.baseTo];
       const br = r.walls.right[r.baseTo];

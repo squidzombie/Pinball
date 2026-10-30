@@ -6,7 +6,7 @@ own pair of small flippers. The Skyway is rerouted to make room, the Impound is 
 orbit, and three security cameras pan over the CAM lanes. Hitting the vault's three tumblers in
 the order of a random code cracks it open and starts **VAULT MULTIBALL**. The geometry, its measurements and this
 document are done. **Rules beyond the cameras, the back door and the vault, and the art pass,
-haven't started.** The phone build is this layout (version 12; the fan is version 5 in its
+haven't started.** The phone build is this layout (version 13; the fan is version 5 in its
 history). Where
 the rule sheet differs from the code, the entry says **(change)**; nearly all of those come with
 Phase 4.
@@ -25,6 +25,22 @@ shot. `npm run template` regenerates the template and prints every clearance. Ba
 ---
 
 ## 0. The layout revisions (30 October 2026)
+
+### Ninth round: H can be hit
+
+You found H impossible to hit: the Black Market's left wall came down beside it with a corner
+poking out below the targets, and a short wall joined the two. Measured, every right-flipper shot
+aimed between the Black Market and C (about 96.5–98.5°) hit that corner instead: H got 0% of
+right-flipper flips and 1% of left. Now the A-C-H bank runs right up to the Black Market's wall
+(53.6 units instead of 44, so A, C and H are each about 20% wider), and the wall's bottom is
+trimmed to meet it flush.
+
+- **H:** 16% of cradled right-flipper flips and 10% of moving-ball flips (from 0%), and 8% of
+  moving-ball left-flipper flips (from 1%). Every hit on H comes back to a flipper.
+- **A** also gained: 5% / 7% from the right flipper (was 5% / 0%) and 5% of moving-ball flips from the left.
+- **Cost:** the Black Market from the right flipper drops from 12% / 16% to 11% / 12%. H's window
+  now meets the Black Market's, so the edge of one is the edge of the other. From the left
+  flipper it's unchanged (14% / 18%), and both still return 12/12.
 
 ### Eighth round: a gutter that finishes R-A-G-E saves the ball
 
@@ -206,8 +222,8 @@ Skyway 7.5%, Breach 2.7%, Reactor drops 4.9%.
 | **SAFE** (standup on the vault lane's wall) | Right | 109.2–112.7° | 7% / 2% | Bounces back. | Hack remote key. |
 | **B-R-E** standups (face the right flipper) | Right | B 109.4–109.7°, R 106°, E rarely | B 6% / 0%, R about 1% | Rebound: 0 down the middle; 2 of 9 to an outlane. | Letters. |
 | **Breach** scoop | Right | 101.6–102.7° | 2% / 11% | Kickout: left flipper 12/12. | Starts and selects jobs; mode shot. |
-| **A-C-H** standups (face the left flipper) | Right; left (live) | A 99.9–102°, C 98.5–99.5° (right); 89.2–90.9° (left) | A 5% / 0%, C 0% / 11% (right); about 13% live (left) | Rebound: 0 down the middle; 3 of 32 to an outlane. | Letters. |
-| **Black Market** (centre ramp) | **Both** | Left 83.5–87.5°, right 92.5–96.4° | Left 14% / 18%, right 12% / 16% | Right inlane → right flipper: 12/12 from each flipper. | Shop, mode shot, jackpot. |
+| **A-C-H** standups (face the left flipper; the bank runs right up to the Black Market's wall) | Right; left (live) | Right: H 95.5–98.6°, C 98.6–99.4°, A 98.5–102°. Left: 87.8–90.9° | Right: H 16% / 10%, C 0% / 5%, A 5% / 7%. Left: about 22% live (H 8%, C 9%, A 5%) | Rebound: 0 down the middle; 3 of 73 to an outlane (all off A from the right flipper). H sends every hit back to a flipper. | Letters. |
+| **Black Market** (centre ramp) | **Both** | Left 83.5–87.5°, right 92.5–96.4° | Left 14% / 18%, right 11% / 12% | Right inlane → right flipper: 12/12 from each flipper. | Shop, mode shot, jackpot. |
 | **Reactor**: 3 drops, then the captive ball | Left (right, live only) | Drops 77.2–81.5°; captive ball (drops down) from 77.4° | Drops 25% / 24%; captive ball 10% / 10% | Rebounds to either flipper. | Lights the lock; heat; starts Blackout; super jackpots. |
 | **VENT** (the Reactor's right flank) | Left | 67.3–74.7° | 13% / 8% | Bounces back. | Hack remote key. |
 | Pop exit gate | Left | 62.3–63.9° | 1% / 1% | Bounces back (one-way, exit only). | — |
@@ -230,7 +246,9 @@ Skyway 7.5%, Breach 2.7%, Reactor drops 4.9%.
 - **The vault lane is the hardest shot on the table** (1% of flips). The right flipper rarely
   launches at 116–118°. That's why the back door exists: when the cameras are down, the Back
   Alley (10%) feeds the vault instead.
-- **No two shots' windows overlap.** Each shot's approach is clear. One overlap of *paths* is
+- **No two major shots' windows overlap.** Each shot's approach is clear. From the right
+  flipper, the H standup's window (95.5–98.6°) touches the Black Market's (to 96.4°): which one
+  you hit at the edge depends on where the ball leaves the flipper. One overlap of *paths* is
   unavoidable: the Skyway's deck passes over the Black Market's climb (compromise 1).
 - **Posts.** About a third of the left flipper's cradled flips first hit a post or wall: mostly
   the Black Market's right lip (23 flips), and the Skyway's mouth or the right side of its lane
@@ -267,7 +285,7 @@ the right. The Breach crosses right to left; the Black Market crosses left to ri
 | Pop nest exits toward an outlane | ≤ 1/12 | **0/12**: all 12 visits leave by the exit lane into the right inlane and reach the right flipper. |
 | Pop nest: bumper hits and time | Busy for a few seconds, never trapped | 12 plunges: **3.1 hits** a visit on average (1–6) and **3.1 s** in the nest (1.1–5.7 s). Stress test from the first round (the nest hasn't changed), 72 visits: no ball trapped, median 2.3 s, 90% out within 4.7 s, longest 9.9 s. |
 | Breach kickout reaches a flipper | ≥ 10/12 | **12/12**, all to the left flipper. |
-| Breach target rebounds | Not down the middle | **0 down the middle** from any standup. 5 of 41 standup hits reach an outlane: 2 off B and 1 off A from the right flipper, 2 off C from the left. |
+| Breach target rebounds | Not down the middle | **0 down the middle** from any standup. 5 of 82 standup hits reach an outlane: 3 off A and 2 off B, all from the right flipper. All 40 hits on H come back to a flipper. |
 | Upper playfield drain reaches a flipper | 12/12 | **12/12** down the side drain to the right flipper (12 balls dropped in, nobody flipping; 1.9 s inside). |
 | Upper playfield with a player flipping | Playable, never trapped | 12 balls: **7.0 s** inside on average and **3.3 tumbler hits**. 5 go out the top (2 drop into a CAM lane, 3 roll on round the arch), 6 down the side drain, all to the right flipper. The twelfth sat cradled on the right upper flipper, which the test player held for 30 s. From a cradle, the left upper flipper reaches the tumblers (34 of 150 timings) and the top exit (9); the right one mostly tumbler 2. |
 | Leaks and stuck balls | — | Four 600 s bot runs: 0 leaks, 0 stuck. Rules tests: 135 pass. |
@@ -289,6 +307,7 @@ than the ball. The new ones are 72 across at the ring (2.6 balls), and the drawn
 | Breach throat / mouth | 44.0 / 52.0 | 1.57 / 1.86 |
 | Back Alley orbit lane | 44.0 | 1.57 |
 | Black Market mouth | 56.0 | 2.00 |
+| H to the Black Market's wall | 0.1 | 0 (flush on purpose: no corner beside H) |
 | Skyway mouth | 45.0 | 1.61 |
 | Vault lane / its gate | 31.4 / 31.8 | 1.12 / 1.14 (narrow, but it's a straight lane) |
 | Upper flippers, tip to tip at rest | 34.6 | 1.24 |

@@ -107,6 +107,7 @@ export function measureGaps(t: { world: World; bumpers: Circle[]; captive: { c: 
   const [oa, ob] = polyGap(leg, L.ARCH_OUTER.slice(0, 20));
   push('Back Alley orbit lane', oa, ob);
   push('Black Market mouth', L.MARKET.entry[0], L.MARKET.entry[1]);
+  push('H to the Black Market wall (should be 0)', L.BANK_R[1], L.MARKET_LEFT_BASE[0]);
   push('Upper playfield lane', [L.UPPER_LANE_X[0], 450], [L.UPPER_LANE_X[1], 450]);
   push('Upper playfield gate', L.UPPER_GATE[0], L.UPPER_GATE[1]);
   const [ul, ur] = [t.extraFlippers[0].f, t.extraFlippers[1].f];

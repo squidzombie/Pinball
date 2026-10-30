@@ -142,8 +142,8 @@
 <text x="502" y="898" font-size="5" fill="#9a9a9a" text-anchor="start" font-family="Arial, Helvetica, sans-serif" font-weight="700" >500,900</text>
 <text x="502" y="998" font-size="5" fill="#9a9a9a" text-anchor="start" font-family="Arial, Helvetica, sans-serif" font-weight="700" >500,1000</text>
 <text x="502" y="1098" font-size="5" fill="#9a9a9a" text-anchor="start" font-family="Arial, Helvetica, sans-serif" font-weight="700" >500,1100</text>
-<polygon points="95.4,330 95.4,530.6 135.6,512.7 136.9,493.4 128.1,468.9 127,463 127.5,457.1 129.6,451.4 133,446.5 137.6,442.6 143.1,440.1 149,439 154.9,439.5 160.6,441.6 165.5,445 169.4,449.6 171.9,455.1 178.8,480.1 190.9,495.2 234.9,493.2 243.5,498 243.9,496.1 244.6,492.4 245.8,486.8 247.3,478.8 249,470.7 250.5,463 251.5,455.5 253,447.4 256,438.6 260.2,430.4 265.5,422.8 300,450.2 297.9,453.1 296.5,455.9 295.6,458.6 294.9,462.5 294.2,467.7 294.6,473.5 295.7,479.7 297.3,486.8 298.4,492.4 299.1,496.1 299.5,498 321.8,549.4 342.4,536 359.1,488.3 391.2,499.6 374.5,547.2 382.2,570.6 389.7,581.3 433.7,643.9 445,660 445,560 440,520 440,457 300,426 266,418 180,408 121,356 118,342" stroke="none" stroke-width="0" fill="#d9d9d9" stroke-linejoin="round" stroke-linecap="round" />
-<text x="250.6" y="475.3" font-size="7" fill="#444444" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" >SEALED (NO BALL ACCESS)</text>
+<polygon points="95.4,330 95.4,530.6 135.6,512.7 136.9,493.4 128.1,468.9 127,463 127.5,457.1 129.6,451.4 133,446.5 137.6,442.6 143.1,440.1 149,439 154.9,439.5 160.6,441.6 165.5,445 169.4,449.6 171.9,455.1 178.8,480.1 190.9,495.2 244.5,492.7 243.5,498 243.9,496.1 244.6,492.4 245.8,486.8 247.3,478.8 249,470.7 250.5,463 251.5,455.5 253,447.4 256,438.6 260.2,430.4 265.5,422.8 300,450.2 297.9,453.1 296.5,455.9 295.6,458.6 294.9,462.5 294.2,467.7 294.6,473.5 295.7,479.7 297.3,486.8 298.4,492.4 299.1,496.1 299.5,498 321.8,549.4 342.4,536 359.1,488.3 391.2,499.6 374.5,547.2 382.2,570.6 389.7,581.3 433.7,643.9 445,660 445,560 440,520 440,457 300,426 266,418 180,408 121,356 118,342" stroke="none" stroke-width="0" fill="#d9d9d9" stroke-linejoin="round" stroke-linecap="round" />
+<text x="250.8" y="475.3" font-size="7" fill="#444444" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" >SEALED (NO BALL ACCESS)</text>
 <polygon points="265,330 440,420 440,422 300,385 249,356 251,342" stroke="none" stroke-width="0" fill="#d9d9d9" stroke-linejoin="round" stroke-linecap="round" />
 <polygon points="535,350 490,415 490,520 475,560 475,660 490,660 490,515.7 524.9,500.3" stroke="none" stroke-width="0" fill="#d9d9d9" stroke-linejoin="round" stroke-linecap="round" />
 <polygon points="152,170 222,156 222,69.9 220.7,69.8 209.6,69.1 200.8,69.4 193.3,70.4 187.3,72 181.8,74.4 175.3,78.1 168.2,82.9 160.6,88.9 152.4,96.2 152,96.6" stroke="none" stroke-width="0" fill="#d9d9d9" stroke-linejoin="round" stroke-linecap="round" />
@@ -353,7 +353,6 @@
 <text x="98.4" y="563.3" font-size="6" fill="#d01818" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" >SAFE</text>
 <line x1="389.7" y1="581.3" x2="433.7" y2="643.9" stroke="#d01818" stroke-width="3.2" stroke-linecap="round" />
 <text x="411.7" y="608.6" font-size="6" fill="#d01818" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" >VENT</text>
-<line x1="234.9" y1="493.2" x2="243.5" y2="498" stroke="#111111" stroke-width="1.8" stroke-linecap="round" />
 <line x1="95.4" y1="600" x2="95.4" y2="262" stroke="#111111" stroke-width="1.8" stroke-linecap="round" />
 <line x1="66" y1="250" x2="95.4" y2="262" stroke="#e07000" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="4 2"/>
 <line x1="84.5" y1="246.7" x2="76.9" y2="265.3" stroke="#e07000" stroke-width="1.2" stroke-linecap="round" marker-end="url(#arrow)"/>
@@ -406,12 +405,12 @@
 <text x="115.5" y="517.6" font-size="6" fill="#d01818" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" >R</text>
 <line x1="122.2" y1="518.7" x2="135.6" y2="512.7" stroke="#d01818" stroke-width="3.2" stroke-linecap="round" />
 <text x="128.9" y="511.7" font-size="6" fill="#d01818" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" >E</text>
-<line x1="190.9" y1="495.2" x2="205.6" y2="494.5" stroke="#d01818" stroke-width="3.2" stroke-linecap="round" />
-<text x="198.3" y="490.8" font-size="6" fill="#d01818" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" >A</text>
-<line x1="205.6" y1="494.5" x2="220.2" y2="493.8" stroke="#d01818" stroke-width="3.2" stroke-linecap="round" />
-<text x="212.9" y="490.2" font-size="6" fill="#d01818" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" >C</text>
-<line x1="220.2" y1="493.8" x2="234.9" y2="493.2" stroke="#d01818" stroke-width="3.2" stroke-linecap="round" />
-<text x="227.6" y="489.5" font-size="6" fill="#d01818" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" >H</text>
+<line x1="190.9" y1="495.2" x2="208.8" y2="494.4" stroke="#d01818" stroke-width="3.2" stroke-linecap="round" />
+<text x="199.9" y="490.8" font-size="6" fill="#d01818" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" >A</text>
+<line x1="208.8" y1="494.4" x2="226.6" y2="493.6" stroke="#d01818" stroke-width="3.2" stroke-linecap="round" />
+<text x="217.7" y="490" font-size="6" fill="#d01818" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" >C</text>
+<line x1="226.6" y1="493.6" x2="244.5" y2="492.7" stroke="#d01818" stroke-width="3.2" stroke-linecap="round" />
+<text x="235.6" y="489.1" font-size="6" fill="#d01818" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" >H</text>
 <line x1="299.5" y1="498" x2="321.8" y2="549.4" stroke="#111111" stroke-width="1.8" stroke-linecap="round" />
 <line x1="382.2" y1="570.6" x2="389.7" y2="581.3" stroke="#111111" stroke-width="1.8" stroke-linecap="round" />
 <line x1="433.7" y1="643.9" x2="445" y2="660" stroke="#111111" stroke-width="1.8" stroke-linecap="round" />
@@ -770,8 +769,7 @@
 <line x1="439.4" y1="879.4" x2="439.2" y2="892.6" stroke="#8a3fd1" stroke-width="1.2" stroke-linecap="round" />
 <line x1="439.2" y1="892.6" x2="439.1" y2="901.3" stroke="#8a3fd1" stroke-width="1.2" stroke-linecap="round" />
 <line x1="439.1" y1="901.3" x2="439" y2="905.7" stroke="#8a3fd1" stroke-width="1.2" stroke-linecap="round" />
-<line x1="243.5" y1="498" x2="243.9" y2="496.1" stroke="#111111" stroke-width="1.8" stroke-linecap="round" />
-<line x1="243.9" y1="496.1" x2="244.6" y2="492.4" stroke="#111111" stroke-width="1.8" stroke-linecap="round" />
+<line x1="244.6" y1="492.7" x2="244.6" y2="492.4" stroke="#111111" stroke-width="1.8" stroke-linecap="round" />
 <line x1="244.6" y1="492.4" x2="245.8" y2="486.8" stroke="#111111" stroke-width="1.8" stroke-linecap="round" />
 <line x1="245.8" y1="486.8" x2="247.3" y2="478.8" stroke="#111111" stroke-width="1.8" stroke-linecap="round" />
 <line x1="247.3" y1="478.8" x2="249" y2="470.7" stroke="#111111" stroke-width="1.8" stroke-linecap="round" />
@@ -927,12 +925,12 @@
 <text x="123.9" y="550.2" font-size="3.6" fill="#c81e1e" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" >letter:R</text>
 <path d="M0 -6.5 L7 6.5 L-7 6.5 Z" stroke="#c81e1e" stroke-width="0.9" fill="rgba(200,30,30,0.12)" stroke-linejoin="round" transform="translate(136.9 532.9) rotate(-24.7)"/>
 <text x="136.9" y="544.4" font-size="3.6" fill="#c81e1e" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" >letter:E</text>
-<path d="M0 -6.5 L7 6.5 L-7 6.5 Z" stroke="#c81e1e" stroke-width="0.9" fill="rgba(200,30,30,0.12)" stroke-linejoin="round" transform="translate(198.9 513.8) rotate(-1.9)"/>
-<text x="198.9" y="525.3" font-size="3.6" fill="#c81e1e" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" >letter:A</text>
-<path d="M0 -6.5 L7 6.5 L-7 6.5 Z" stroke="#c81e1e" stroke-width="0.9" fill="rgba(200,30,30,0.12)" stroke-linejoin="round" transform="translate(213.1 513.2) rotate(-0.4)"/>
-<text x="213.1" y="524.7" font-size="3.6" fill="#c81e1e" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" >letter:C</text>
-<path d="M0 -6.5 L7 6.5 L-7 6.5 Z" stroke="#c81e1e" stroke-width="0.9" fill="rgba(200,30,30,0.12)" stroke-linejoin="round" transform="translate(227.2 512.5) rotate(1.1)"/>
-<text x="227.2" y="524" font-size="3.6" fill="#c81e1e" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" >letter:H</text>
+<path d="M0 -6.5 L7 6.5 L-7 6.5 Z" stroke="#c81e1e" stroke-width="0.9" fill="rgba(200,30,30,0.12)" stroke-linejoin="round" transform="translate(200.4 513.8) rotate(-1.7)"/>
+<text x="200.4" y="525.3" font-size="3.6" fill="#c81e1e" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" >letter:A</text>
+<path d="M0 -6.5 L7 6.5 L-7 6.5 Z" stroke="#c81e1e" stroke-width="0.9" fill="rgba(200,30,30,0.12)" stroke-linejoin="round" transform="translate(217.7 513) rotate(0.1)"/>
+<text x="217.7" y="524.5" font-size="3.6" fill="#c81e1e" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" >letter:C</text>
+<path d="M0 -6.5 L7 6.5 L-7 6.5 Z" stroke="#c81e1e" stroke-width="0.9" fill="rgba(200,30,30,0.12)" stroke-linejoin="round" transform="translate(234.9 512.1) rotate(1.9)"/>
+<text x="234.9" y="523.6" font-size="3.6" fill="#c81e1e" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" >letter:H</text>
 <circle cx="0" cy="0" r="7.5" stroke="#c81e1e" stroke-width="0.9" fill="rgba(200,30,30,0.12)" transform="translate(331 113) rotate(0)"/>
 <text x="331" y="125.5" font-size="3.6" fill="#c81e1e" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" >cam:1</text>
 <circle cx="0" cy="0" r="7.5" stroke="#c81e1e" stroke-width="0.9" fill="rgba(200,30,30,0.12)" transform="translate(381 113) rotate(0)"/>
@@ -1021,8 +1019,8 @@
 <text x="62" y="267.5" font-size="4.5" fill="#e07000" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" >FLASHER 1</text>
 <circle cx="540" cy="365" r="11" stroke="#e07000" stroke-width="0.9" fill="none" stroke-dasharray="1.5 1.5"/>
 <text x="540" y="352" font-size="4.5" fill="#e07000" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" >FLASHER 2</text>
-<circle cx="199.5" cy="470.8" r="8" stroke="#e07000" stroke-width="0.9" fill="none" stroke-dasharray="1.5 1.5"/>
-<text x="199.5" y="460.8" font-size="4.5" fill="#e07000" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" >FLASHER 3</text>
+<circle cx="201.4" cy="470.7" r="8" stroke="#e07000" stroke-width="0.9" fill="none" stroke-dasharray="1.5 1.5"/>
+<text x="201.4" y="460.7" font-size="4.5" fill="#e07000" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" >FLASHER 3</text>
 <circle cx="379.8" cy="462.7" r="12" stroke="#e07000" stroke-width="0.9" fill="none" stroke-dasharray="1.5 1.5"/>
 <text x="379.8" y="448.7" font-size="4.5" fill="#e07000" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" >FLASHER 4</text>
 <circle cx="206" cy="83.5" r="9" stroke="#e07000" stroke-width="0.9" fill="none" stroke-dasharray="1.5 1.5"/>
@@ -1087,6 +1085,9 @@
 <line x1="243.5" y1="498" x2="299.5" y2="498" stroke="#0a7f8f" stroke-width="0.9" stroke-linecap="round" />
 <circle cx="271.5" cy="498" r="14" stroke="#0a7f8f" stroke-width="0.8" fill="rgba(10,127,143,0.10)" />
 <text x="271.5" y="500" font-size="5.5" fill="#0a7f8f" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" >56</text>
+<line x1="244.5" y1="492.7" x2="244.6" y2="492.7" stroke="#0a7f8f" stroke-width="0.9" stroke-linecap="round" />
+<circle cx="244.5" cy="492.7" r="14" stroke="#0a7f8f" stroke-width="0.8" fill="rgba(10,127,143,0.10)" />
+<text x="244.5" y="494.7" font-size="5.5" fill="#0a7f8f" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" >0</text>
 <line x1="64" y1="450" x2="95.4" y2="450" stroke="#0a7f8f" stroke-width="0.9" stroke-linecap="round" />
 <circle cx="79.7" cy="450" r="14" stroke="#0a7f8f" stroke-width="0.8" fill="rgba(10,127,143,0.10)" />
 <text x="79.7" y="452" font-size="5.5" fill="#0a7f8f" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" >31</text>
