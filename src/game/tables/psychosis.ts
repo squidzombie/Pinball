@@ -5,7 +5,7 @@ import type { DMD } from '../../engine/dmd';
 import type { Game } from '../game';
 import { fmt, short } from '../format';
 import { Blackout, MODES, Rage, type Mode, type ModeDef, type Shot, type Switch } from '../modes';
-import { buildLowerSection, poly, type LowerSection, type P } from './geom';
+import { buildLowerSection, insidePoly, poly, type LowerSection, type P } from './geom';
 import { drawBallAt, type Lamp, type LampState } from './draw';
 import * as L from './psychosis-layout';
 import { drawDrop, drawImpound, drawReactorEye, drawSpinner, drawStandup, drawTank, paintDynamic, paintRamps, paintStatic } from './psychosis-art';
@@ -94,7 +94,8 @@ export class Psychosis extends Table {
   /** The three standups at the back of the upper playfield. */
   tumblers: Segment[] = [];
   private tumblerFlash = [0, 0, 0];
-  /** The vault's combination: how many tumblers are in, in order (1, then 2, then 3). */
+  /** The vault's combination (tumbler indices, in the order to hit them; a new one after every crack), and how many are in. */
+  code = [0, 1, 2];
   tumblersIn = 0;
   /** Balls still to come out of the cracked vault, the clock to the next, and how long its hatch stays open. */
   private hatchQueue = 0;
@@ -444,7 +445,7 @@ export class Psychosis extends Table {
       const mid = L.along(a, b, 0.5);
       const n = L.unit([-(b[1] - a[1]), b[0] - a[0]]);
       const at = L.add(mid, n, 17);
-      lamp({ id: `tumbler:${i + 1}`, kind: 'tri', x: at[0], y: at[1], w: 14, h: 12, angle: dirAngle([-n[0], -n[1]]), color: INS.red, state: () => (this.tumblerFlash[i] > 0 || this.hatchOpen > 0 ? 3 : i < this.tumblersIn ? 1 : i === this.tumblersIn ? 2 : 0) });
+      lamp({ id: `tumbler:${i + 1}`, kind: 'tri', x: at[0], y: at[1], w: 14, h: 12, angle: dirAngle([-n[0], -n[1]]), color: INS.red, label: String(i + 1), labelSize: 6, state: () => (this.tumblerFlash[i] > 0 || this.hatchOpen > 0 ? 3 : this.code.indexOf(i) < this.tumblersIn ? 1 : this.code[this.tumblersIn] === i ? 2 : 0) });
     });
     // The vault jackpot, on the way out of its top
     lamp({ id: 'jackpot:vault', kind: 'circle', x: (L.UPPER_EXIT_X[0] + L.UPPER_EXIT_X[1]) / 2, y: 150, w: 15, color: INS.yellow, label: 'JP', labelSize: 6.5, state: () => (this.multiball === 'vault' ? 3 : 0) });
@@ -632,6 +633,7 @@ export class Psychosis extends Table {
     this.locked = [];
     this.multiball = null;
     this.tumblersIn = 0;
+    this.newCode();
     this.cash = 0;
     this.xballBought = false;
     this.reactorHeat = 0;
@@ -764,6 +766,7 @@ export class Psychosis extends Table {
   /** The ball has gone into the upper playfield: up its lane, or through the back door off the Back Alley. */
   private upperIn() {
     if (this.multiball !== 'vault') this.doorOpen = 0;
+    if (this.multiball !== 'vault') this.game.show('THE VAULT', `CODE ${this.codeText()}`, 1.6);
     this.sw('rollover');
     this.game.addScore(50_000, L.UPPER_LANE_X[0] + 18, L.UPPER_LANE_TOP_Y);
     this.flash(0, 0.6);
@@ -783,7 +786,7 @@ export class Psychosis extends Table {
 
   /**
    * The tumblers: three standups at the back of the upper playfield, and the vault's combination.
-   * Hit them in order, 1 then 2 then 3, to crack the vault. A wrong one starts the combination over.
+   * Hit them in the code's order to crack the vault. A wrong one starts the combination over.
    */
   private hitTumbler(i: number) {
     const g = this.game;
@@ -794,26 +797,45 @@ export class Psychosis extends Table {
     if (this.hatchOpen > 0) {
       g.addScore(25_000, x, y);
       sound.target();
-    } else if (i === this.tumblersIn) {
+    } else if (i === this.code[this.tumblersIn]) {
       this.tumblersIn++;
       if (this.tumblersIn === 3) this.crackVault();
       else {
         g.addScore(50_000 * this.tumblersIn, x, y);
-        g.show(`TUMBLER ${this.tumblersIn}`, `NEXT: TUMBLER ${this.tumblersIn + 1}`, 1.2);
+        g.show(`TUMBLER ${i + 1}`, `NEXT: TUMBLER ${this.code[this.tumblersIn] + 1}`, 1.2);
         sound.target();
       }
     } else {
-      this.tumblersIn = i === 0 ? 1 : 0;
+      // A wrong tumbler starts the combination over; if it was the code's first, that counts as the start.
+      this.tumblersIn = i === this.code[0] ? 1 : 0;
       g.addScore(10_000, x, y);
-      g.show('WRONG COMBINATION', i === 0 ? 'NEXT: TUMBLER 2' : 'START AT TUMBLER 1', 1.2);
+      g.show('WRONG COMBINATION', `CODE ${this.codeText()}`, 1.4);
       sound.warn();
     }
+  }
+
+  /** A new random combination, never the same as the last one. */
+  private newCode() {
+    const old = this.code.join();
+    do {
+      const c = [0, 1, 2];
+      for (let k = 2; k > 0; k--) {
+        const j = Math.floor(Math.random() * (k + 1));
+        [c[k], c[j]] = [c[j], c[k]];
+      }
+      this.code = c;
+    } while (this.code.join() === old);
+  }
+
+  codeText() {
+    return this.code.map((i) => i + 1).join('-');
   }
 
   /** The combination is in: the vault's hatch opens and balls drop out onto its deck. */
   private crackVault() {
     const g = this.game;
     this.tumblersIn = 0;
+    this.newCode();
     g.addScore(1_000_000);
     const room = Math.max(0, MAX_BALLS - this.world.balls.length - this.releasing);
     if (!this.multiball) {
@@ -1460,7 +1482,7 @@ export class Psychosis extends Table {
       }
 
     this.giTarget = g.tilted ? 0 : g.state === 'bonus' ? 0.35 : this.attract ? 0.9 : (this.wizard?.gi() ?? this.mode?.gi() ?? 1);
-    this.giFlicker = this.rage ? 0.55 : this.wizard ? 0.3 : 0;
+    this.giPulse = this.rage ? 0.55 : this.wizard ? 0.3 : 0;
 
     if (this.breachBall && this.breachTimer > 0 && this.selecting <= 0) {
       this.breachTimer -= dt;
@@ -1585,6 +1607,8 @@ export class Psychosis extends Table {
         : `JP ${short(this.jp)}`
       : this.blackoutLit
         ? 'BLACKOUT LIT'
+        : this.world.balls.some((b) => b.layer === FLOOR && insidePoly([b.x, b.y], L.UPPER_AREA))
+        ? `CODE ${this.codeText()}`
         : this.modesLit > 0 && this.available().length
           ? 'BREACH LIT'
           : this.lockLit

@@ -11,6 +11,17 @@ export function arc(cx: number, cy: number, r: number, a0: number, a1: number, n
   return pts;
 }
 
+/** Whether a point is inside a polygon (even-odd rule). */
+export function insidePoly(p: P, pts: P[]) {
+  let c = false;
+  for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+    const [xi, yi] = pts[i];
+    const [xj, yj] = pts[j];
+    if (yi > p[1] !== yj > p[1] && p[0] < ((xj - xi) * (p[1] - yi)) / (yj - yi) + xi) c = !c;
+  }
+  return c;
+}
+
 export function poly(world: World, pts: P[], o: ColliderOpts = {}, closed = false): Segment[] {
   const out: Segment[] = [];
   const n = closed ? pts.length : pts.length - 1;

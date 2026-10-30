@@ -658,21 +658,24 @@ console.log('Ball flow');
   check('the cameras come back and the door shuts again', f.cams.every((c: number) => c === 0) && f.doorOpen === 0);
 }
 {
-  // The vault's combination: tumblers 1, 2, 3 in order crack it; a wrong one starts it over.
+  // The vault's combination: its three tumblers in the code's (random) order crack it; a wrong one starts it over.
   const { g, f } = newGame();
   park(f);
-  f.hitTumbler(0);
-  f.hitTumbler(2);
+  const [a, b, c] = f.code;
+  check('the code is the three tumblers in some order', [...f.code].sort().join() === '0,1,2', f.code.join());
+  f.hitTumbler(a);
+  f.hitTumbler(c);
   check('a tumbler out of order starts the combination over', f.tumblersIn === 0 && !f.multiball);
-  f.hitTumbler(1);
-  f.hitTumbler(2);
-  check("...so 2 and 3 on their own don't open the vault", f.tumblersIn === 0 && !f.multiball);
-  f.hitTumbler(0);
-  f.hitTumbler(0);
-  check('hitting 1 again just starts over at 1', f.tumblersIn === 1);
-  f.hitTumbler(1);
-  f.hitTumbler(2);
-  check('1, 2, 3 in order cracks the vault: VAULT MULTIBALL', f.multiball === 'vault');
+  f.hitTumbler(b);
+  f.hitTumbler(c);
+  check("...so the last two on their own don't open the vault", f.tumblersIn === 0 && !f.multiball);
+  f.hitTumbler(a);
+  f.hitTumbler(a);
+  check("hitting the code's first tumbler again just starts over from it", f.tumblersIn === 1);
+  f.hitTumbler(b);
+  f.hitTumbler(c);
+  check('the whole code in order cracks the vault: VAULT MULTIBALL', f.multiball === 'vault');
+  check('...and the vault picks a new code', f.code.join() !== [a, b, c].join() && [...f.code].sort().join() === '0,1,2', f.code.join());
   check('...with two balls on their way out of its hatch', g.ballsInPlay === 3, `${g.ballsInPlay}`);
   const deck = (b: Ball) => b.x > L.UPPER_LANE_X[1] && b.x < 265 && b.y < L.UPPER_FLIPPER.y;
   let seen = 0;
@@ -694,9 +697,7 @@ console.log('Ball flow');
   const lanes: string[] = [];
   const o = f.rollover.bind(f);
   f.rollover = (k: number) => (lanes.push(['L-OUT', 'L-IN', 'R-IN', 'R-OUT'][k]), o(k));
-  f.hitTumbler(0);
-  f.hitTumbler(1);
-  f.hitTumbler(2);
+  for (const k of [...f.code]) f.hitTumbler(k);
   for (let t = 0; t < 12 && lanes.length < 2; t += 1 / 480) {
     f.world.step(1 / 480);
     f.substep(1 / 480);
@@ -707,8 +708,59 @@ console.log('Ball flow');
   const h = newGame();
   park(h.f);
   h.f.multiball = 'impound';
-  for (const k of [0, 1, 2]) h.f.hitTumbler(k);
+  for (const k of [...h.f.code]) h.f.hitTumbler(k);
   check('cracked during another multiball, the vault adds one ball', h.f.multiball === 'impound' && h.g.ballsInPlay === 2, `${h.g.ballsInPlay}`);
+  // Every crack picks a new code, so over a few cracks the order keeps changing.
+  const seen = new Set<string>();
+  let repeats = 0;
+  for (let k = 0; k < 12; k++) {
+    const before = h.f.code.join();
+    seen.add(before);
+    h.f.multiball = 'impound';
+    h.f.world.balls = [];
+    h.f.hatchQueue = 0;
+    h.f.hatchOpen = 0;
+    for (const i of [...h.f.code]) h.f.hitTumbler(i);
+    if (h.f.code.join() === before) repeats++;
+  }
+  check('the code changes after every crack, and varies', repeats === 0 && seen.size >= 3, `${seen.size} codes, ${repeats} repeats`);
+}
+
+console.log('Flash safety');
+{
+  // Nothing that lights or darkens the whole table flashes more than 3 times a second
+  // (fast full-screen flashing can trigger seizures).
+  const { g, f } = newGame();
+  park(f);
+  f.gi = 1;
+  f.giPulse = 0.55;
+  const samples: number[] = [];
+  for (let t = 0; t < 10; t += 1 / 1000) {
+    f.time += 1 / 1000;
+    samples.push(f.light);
+  }
+  // a dip is the light falling through halfway between its highest and lowest
+  const lo = Math.min(...samples);
+  const mid = (Math.max(...samples) + lo) / 2;
+  const dips = samples.filter((l, i) => i > 0 && samples[i - 1] >= mid && l < mid).length;
+  check('in Rage the lights pulse slowly and shallowly, never flicker', dips / 10 <= 3 && lo > 0.8, `${(dips / 10).toFixed(1)} dips a second, down to ${lo.toFixed(2)}`);
+  f.lampShow('strobe', 4);
+  let toggles = 0;
+  let was = f.forced(f.lamps[0], 0);
+  for (let t = 0; t < 4; t += 1 / 1000) {
+    f.show.t += 1 / 1000;
+    const on = f.forced(f.lamps[0], 0);
+    if (on !== was) toggles++;
+    was = on;
+  }
+  check('the all-lamps strobe show stays under 3 flashes a second', toggles / 2 / 4 <= 3, `${(toggles / 8).toFixed(1)} a second`);
+  g.doFlash('#ffffff', 0.5);
+  g.flash.a = 0;
+  g.doFlash('#ffffff', 0.5);
+  const again = g.flash.a;
+  run(g, 0.5);
+  g.doFlash('#ffffff', 0.5);
+  check('whole-screen flashes come at most one every 0.4 s', again === 0 && g.flash.a > 0);
 }
 {
   // Wire returns: each drops into its inlane (never the outlane) and a held flipper catches it.

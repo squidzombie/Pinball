@@ -41,6 +41,7 @@ export class Game {
 
   shake = 0;
   flash = { color: '#ffffff', a: 0 };
+  private flashCooldown = 0;
   private slowT = 0;
   private acc = 0;
   private msg: Message | null = null;
@@ -86,7 +87,10 @@ export class Game {
     this.shake = Math.max(this.shake, a);
   }
 
+  /** A whole-screen flash. At most one every 0.4 s, so big moments in a row can't strobe. */
   doFlash(color: string, a: number) {
+    if (this.flashCooldown > 0) return;
+    this.flashCooldown = 0.4;
     this.flash = { color, a: Math.max(this.flash.a, a) };
   }
 
@@ -305,6 +309,7 @@ export class Game {
     this.shake *= Math.pow(0.004, dt);
     if (this.shake < 0.2) this.shake = 0;
     this.flash.a = Math.max(0, this.flash.a - dt * 2.2);
+    this.flashCooldown -= dt;
     if (this.msg) {
       this.msg.t += dt;
       if (this.msg.t > this.msg.dur) this.msg = null;
@@ -409,7 +414,7 @@ export class Game {
 
     if (this.flash.a > 0) {
       ctx.globalCompositeOperation = 'lighter';
-      ctx.globalAlpha = this.flash.a * 0.45;
+      ctx.globalAlpha = this.flash.a * 0.3;
       ctx.fillStyle = this.flash.color;
       ctx.fillRect(-20, -20, TABLE_W + 40, TABLE_H + 40);
       ctx.globalAlpha = 1;

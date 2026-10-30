@@ -42,6 +42,8 @@ interface LampShow {
   y: number;
 }
 
+/** How fast the lights sag and recover in Rage and Blackout. */
+const GI_PULSE_HZ = 0.6;
 const ATTRACT_SHOWS: ShowKind[] = ['chase', 'sweepUp', 'radial', 'wipe', 'sweepDown', 'strobe'];
 
 export abstract class Table {
@@ -62,8 +64,8 @@ export abstract class Table {
   /** General illumination, 0 (dark) to 1. */
   gi = 1;
   giTarget = 1;
-  /** 0..1: how hard the GI flickers (riots, damage). */
-  giFlicker = 0;
+  /** 0..1: how deep the lights sag in their slow pulse (Rage, Blackout). */
+  giPulse = 0;
   private show: LampShow | null = null;
   private attractShow = 0;
 
@@ -182,13 +184,14 @@ export abstract class Table {
     return used === false ? null : c;
   }
 
-  /** Effective light level including flicker. */
+  /**
+   * Effective light level. With `giPulse` set (Rage, Blackout) the lights sag and recover in a
+   * slow, shallow pulse, never a flicker: anything that changes the brightness of the whole table
+   * stays under 3 flashes a second, since fast full-screen flashing can trigger seizures.
+   */
   get light() {
     let l = this.gi;
-    if (this.giFlicker > 0) {
-      const n = Math.sin(this.time * 31) * Math.sin(this.time * 17.3 + 1);
-      if (n > 0.55) l *= 1 - this.giFlicker * 0.75;
-    }
+    if (this.giPulse > 0) l *= 1 - this.giPulse * 0.25 * (0.5 - 0.5 * Math.cos(this.time * Math.PI * 2 * GI_PULSE_HZ));
     return l;
   }
 
@@ -215,7 +218,8 @@ export abstract class Table {
         return d < r && d > r - 160;
       }
       case 'strobe':
-        return Math.floor(s.t * 12) % 2 === 0;
+        // every light at once, so held to 2.5 flashes a second (see `light`)
+        return Math.floor(s.t * 5) % 2 === 0;
       case 'chase':
         return Math.sin(s.t * 6 - i * 0.55) > 0.4;
     }

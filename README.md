@@ -41,8 +41,9 @@ right:
   tumbler targets. Get in up the vault lane, or through the open back door with a Back Alley
   shot. Leave out the top into the CAM lanes, or past its flippers and out the side to the right
   flipper.
-- **Cracking the vault**: hit the tumblers in order, 1 then 2 then 3 (a wrong one starts the
-  combination over). The vault's hatch opens and two balls drop out for **VAULT MULTIBALL**:
+- **Cracking the vault**: hit the three tumblers in the order of the code. The code is random
+  and changes after every crack; the display shows it (as CODE 3-1-2, say) and the next tumbler's
+  light blinks. A wrong one starts the combination over. The vault's hatch opens and two balls drop out for **VAULT MULTIBALL**:
   every ball shot out the vault's top is a jackpot, and the back door stays open so the Back
   Alley feeds the vault.
 - **The Impound**: a three-ball lock, a cage over the orbit on the left. The Skyway feeds it when
@@ -155,7 +156,8 @@ The physics runs at 480 Hz with layered collision so ramps can pass over the flo
 flippers transfer real surface velocity to the ball. Physics is flat 2D. The renderer fakes height
 with an oblique 3/4 projection (`lift()` in `draw.ts`), and the CSS 3D tilt in `main.ts` supplies the
 perspective. Raised objects are depth-sorted against the ball, and the lighting is layered:
-general illumination (which modes can dim or flicker), insert lamps with lamp shows, and flashers.
+general illumination (which modes can dim or slowly pulse), insert lamps with lamp shows, and flashers.
+Nothing that lights or darkens a large part of the screen flashes more than 3 times a second.
 All art and sound is generated in code. There are no asset files yet, so swapping in real artwork
 later is straightforward.
 

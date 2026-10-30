@@ -4,9 +4,9 @@ Status: **second layout round built for your review (30 October 2026).** The fan
 round now has an upper playfield, **THE VAULT**, in the old dead area at the top left, with its
 own pair of small flippers. The Skyway is rerouted to make room, the Impound is a cage over the
 orbit, and three security cameras pan over the CAM lanes. Hitting the vault's three tumblers in
-order cracks it open and starts **VAULT MULTIBALL**. The geometry, its measurements and this
+the order of a random code cracks it open and starts **VAULT MULTIBALL**. The geometry, its measurements and this
 document are done. **Rules beyond the cameras, the back door and the vault, and the art pass,
-haven't started.** The phone build is this layout (version 7; the fan is version 5 in its
+haven't started.** The phone build is this layout (version 8; the fan is version 5 in its
 history). Where
 the rule sheet differs from the code, the entry says **(change)**; nearly all of those come with
 Phase 4.
@@ -26,6 +26,29 @@ shot. `npm run template` regenerates the template and prints every clearance. Ba
 
 ## 0. The layout revisions (30 October 2026)
 
+### Fourth round: a random code, and no more strobing
+
+- **The vault's code is random.** Every new game, and every time the vault is cracked, the three
+  tumblers get a new order (never the same as the last one). The tumbler lights are numbered 1–3,
+  and the code shows on the display, as **CODE 3-1-2** for example:
+  - when a ball goes into the vault, under THE VAULT;
+  - on the display's bottom line while a ball is in the vault;
+  - after a wrong tumbler, under WRONG COMBINATION.
+  The lights still guide you: tumblers already in are lit, and the next one blinks.
+- **The whole-table strobing is gone.** You saw the table flash light and dark like a strobe
+  light. There were three causes, all fixed:
+  - **Rage** (and, more faintly, Blackout) flickered the table's lighting: down to 59% in bursts,
+    about 4 times a second on average and faster within each burst. Now the lights sag and
+    recover in one slow, shallow pulse, 0.6 times a second and never below 86%.
+  - **The "strobe" lamp show** at multiball starts and other big moments blinked every light on
+    the table 6 times a second. It now blinks 2.5 times a second.
+  - **The full-screen colour flash** on big events could fire several times in quick succession.
+    Now there's at most one every 0.4 s, and it's a third dimmer.
+  The rule from now on: nothing that lights or darkens a large part of the screen flashes more
+  than 3 times a second. That's the usual safety limit for flashing content, since fast
+  full-screen flashing can trigger seizures. Rules tests check all three. Single small inserts
+  can still blink fast; that's normal pinball and only covers a small area.
+
 ### Third round: the vault's combination and VAULT MULTIBALL
 
 Your idea: the three tumblers at the top of the vault are a combination. Hit them in order, 1
@@ -33,11 +56,11 @@ then 2 then 3, and the vault opens and extra balls drop out as a multiball. As b
 
 - **The combination:** tumbler 1 (left), then 2, then 3. The lights in front of them show where
   you are: done ones lit, the next one blinking. A tumbler out of order is **WRONG
-  COMBINATION** and starts it over (tumbler 1 out of order counts as a fresh start).
+  COMBINATION** and starts it over (tumbler 1 out of order counts as a fresh start). (Fourth
+  round: the order is now random, a new code after every crack.)
 - **Cracked:** the vault's hatch, on top of the tumbler block, swings open with gold light
-  inside, and two
-  balls drop out onto the vault's deck one after the other: **VAULT MULTIBALL**. Rules are in
-  section 2.
+  inside, and two balls drop out onto the vault's deck one after the other: **VAULT
+  MULTIBALL**. Rules are in section 2.
 - **Renamed:** the door in the Back Alley's wall is now the **back door**, so "the vault opens"
   only ever means the hatch. (The tumbler block isn't called a safe, because SAFE is already the
   standup on the vault lane's wall.)
@@ -141,7 +164,7 @@ Skyway 7.5%, Breach 2.7%, Reactor drops 4.9%.
 | Pop exit gate | Left | 62.3–63.9° | 1% / 1% | Bounces back (one-way, exit only). | — |
 | **Skyway** (right ramp, deck straight across above the Breach, wire down the left) | Left | 54.7–57.2° | 19% / 2% | Left inlane → left flipper 12/12. | Lock (divert to the Impound), mode shot, jackpot, spinner. |
 | **CAM 1–3** top lanes | Plunge, Back Alley, the vault's top exit, the pops | — | — | Into the pops. | Each knocks out the camera above it; bonus X, pop value, skill shot. |
-| **Tumblers** (3 standups in the vault) | The upper flippers | — | — | Back down to the upper flippers. | The vault's combination: 1, 2, 3 in order starts VAULT MULTIBALL. |
+| **Tumblers** (3 standups in the vault) | The upper flippers | — | — | Back down to the upper flippers. | The vault's combination: the three in the code's (random) order start VAULT MULTIBALL. |
 | **Pops** (only from the lanes) | — | — | — | Out of the exit lane into the right inlane, right flipper 12/12. | Cash, Rage. |
 
 **Flags:**
@@ -316,7 +339,7 @@ with its own flippers, a way out the side and maybe one out the top. As built:
   lane's wall.
 - **Phone view:** the vault is in the smallest part of the tilted view. Its art is bold: a dark
   tread-plate deck, a big safe dial, a hazard-striped door.
-- **Cracking the vault (third round):** tumblers 1, 2, 3 in order crack it, and two balls drop
+- **Cracking the vault (third round):** the tumblers in the code's order crack it, and two balls drop
   out of its hatch onto the deck for VAULT MULTIBALL (section 2). With nobody flipping, both drain out the
   side to the right inlane (a rules test checks this).
 
@@ -487,11 +510,15 @@ against one fixed loop. Payload and Extract, the two tier-2 jobs, now share only
 
 ### Vault multiball (new; built)
 
-- **Start:** crack the vault. Hit its three tumblers in order: 1, then 2, then 3.
-  - Tumbler 1 pays 50K, tumbler 2 pays 100K, and cracking the vault pays 1M.
+- **Start:** crack the vault. Hit its three tumblers in the order of the code.
+  - **The code** is a random order of tumblers 1–3, for example 3-1-2. A new one is picked for
+    every game and after every crack, never the same as the last. It shows on the display when a
+    ball goes into the vault, on the bottom line while a ball is in there, and after a wrong
+    tumbler. The tumbler lights show progress: in = on, next = slow blink.
+  - The first tumbler pays 50K, the second 100K, and cracking the vault pays 1M.
   - A tumbler out of order pays 10K, shows **WRONG COMBINATION** and starts the combination
-    over.
-  - The combination carries over from ball to ball. It resets at a new game.
+    over. If it was the code's first tumbler, that counts as the new start.
+  - Progress carries over from ball to ball. It resets at a new game.
 - **Balls:** two drop out of the vault's hatch onto its deck, 0.9 s apart, with 12 s of
   ball save. The player can play them with the vault's flippers, or let them drain out the side
   to the right flipper.
@@ -758,6 +785,14 @@ The table is a **well-lit workshop**. Lights are physical inserts under red glas
 Lamp states: off, on, slow blink (available), fast blink (hurry, under 6 s), strobe (super, last
 chance, under 3 s or in grace).
 
+**Flash safety.** Nothing that lights or darkens a large part of the screen flashes more than 3
+times a second: fast full-screen flashing can trigger seizures. That covers:
+- the GI: in Rage and Blackout it pulses slowly (0.6 a second, never below 86%), never flickers;
+- lamp shows that light every insert at once: the strobe show blinks 2.5 times a second;
+- the full-screen colour flash: at most one every 0.4 s.
+Single inserts may blink faster, since each covers only a small area. Rules tests check all of
+this.
+
 ### Inserts
 
 | Insert | Meaning | States |
@@ -786,11 +821,11 @@ chance, under 3 s or in grace).
 | Lit shot made | The insert pops, flashers near the shot fire once, sparks. | Value, small. | Shot sound plus an award blip. |
 | Jackpot | Flashers at the shot; 3 px screen shake. | JACKPOT with the value counting up. | Jackpot hit. |
 | Super jackpot | All flashers; 6 px shake. | A burst animation, then the value. | Bigger jackpot hit. |
-| Multiball start | Lamp strobe; balls drop from the Impound one at a time. | Animated card (IMPOUND BREAKOUT, PAYLOAD, BLACKOUT). | Siren, then multiball music. |
+| Multiball start | Lamp strobe (2.5 a second); balls drop from the Impound or the vault one at a time. | Animated card (IMPOUND BREAKOUT, PAYLOAD, BLACKOUT). | Siren, then multiball music. |
 | Job done or over | — | Summary card: "HACK DONE 7.3M" or "ROUTE OVER 2.1M". | Rising or falling sting. |
 | Drain | Lamps fade to 70%. | Bonus count: one line per category, then × bonus X, then the total. | Drain thud, count ticks. |
 | Ball saved | SHOOT AGAIN flashes. | BALL SAVED. | Save chime. |
-| Tilt warning / tilt | Lamps flicker / go out. | DANGER / TILT. | Buzzer. |
+| Tilt warning / tilt | Lamps go out. | DANGER / TILT. | Buzzer. |
 | Extra ball, skill shot | Flashers. | Card. | Award. |
 
 ---
@@ -910,6 +945,16 @@ exactly where every wall, lane, ramp entrance and insert is. Regenerate them wit
 
 ## 8. Decisions
 
+### 30 October 2026, fourth round: random code, no strobing (built)
+
+1. **The vault's code changes every time:** a random order of the three tumblers, new every game
+   and after every crack, shown on the display and by the tumbler lights.
+2. **Whole-table strobing removed:** Rage's lighting flicker, the 6-a-second lamp strobe show and
+   back-to-back screen flashes. Large-area flashing now stays under 3 a second (section 5).
+3. **Physics unchanged.**
+4. **Open:** is two extra balls the right size, and should CAMERAS DOWN do more than open the
+   back door?
+
 ### 30 October 2026, third round: the vault's combination (built)
 
 1. **The tumblers are the vault's combination:** 1, then 2, then 3. A wrong one starts it over.
@@ -919,7 +964,7 @@ exactly where every wall, lane, ramp entrance and insert is. Regenerate them wit
 3. **The door off the Back Alley is renamed the back door.**
 4. **Physics unchanged.**
 5. **Open:**
-   - Should the combination stay 1-2-3, or change each time (for example, shown on the display)?
+   - Should the combination stay 1-2-3, or change each time? (Answered: random, fourth round.)
    - Is two extra balls the right size?
    - Should CAMERAS DOWN do more than open the back door?
 
