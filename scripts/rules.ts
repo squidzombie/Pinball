@@ -120,7 +120,7 @@ function launch(f: any, x: number, y: number, deg: number, speed: number, second
  * Launch a ball and follow it: when `arrive` says it has reached the flipper, hold that flipper
  * up as a player catching it would. Reports the shots, the lanes it rolled through, and the catch.
  */
-function follow(f: any, [x, y, deg, speed]: number[], flipper: any, arrive: (b: Ball) => boolean) {
+function follow(f: any, [x, y, deg, speed]: number[], flipper: any, arrive: (b: Ball) => boolean, max = 5) {
   const made: string[] = [];
   const lanes: string[] = [];
   for (const name of ['majorShot', 'camLane'] as const) {
@@ -140,7 +140,7 @@ function follow(f: any, [x, y, deg, speed]: number[], flipper: any, arrive: (b: 
   const b: Ball = f.addBall(x, y, Math.cos(r) * speed, -Math.sin(r) * speed);
   let caught = false;
   let holding = false;
-  for (let t = 0; t < 5 && !caught; t += 1 / 480) {
+  for (let t = 0; t < max && !caught; t += 1 / 480) {
     if (!holding && b.layer === 1 && arrive(b)) holding = true;
     flipper.pressed = holding;
     f.world.step(1 / 480);
@@ -586,6 +586,25 @@ console.log('Ball flow');
   check('a plunge from 50% to 100% drops into the CAM lanes', ok === 6, `${ok}/6`);
 }
 {
+  // A weak plunge either falls back to the plunger or, once past the shooter gate, drops into
+  // the chute to the right inlane: it never sits in the corner above the gate.
+  const stuck: string[] = [];
+  for (let i = 0; i <= 20; i++) {
+    const { g, f } = newGame();
+    f.world.balls = [];
+    const b: Ball = f.addBall(557.5, 1165);
+    for (let t = 0; t < 0.4; t += 1 / 480) f.world.step(1 / 480);
+    const pull = 0.34 + i * 0.004;
+    (g as any).fire(pull);
+    for (let t = 0; t < 5; t += 1 / 480) {
+      f.world.step(1 / 480);
+      f.substep(1 / 480);
+    }
+    if (b.y < 300) stuck.push(`${pull.toFixed(3)} at (${b.x.toFixed(0)},${b.y.toFixed(0)})`);
+  }
+  check('a weak plunge never sticks above the shooter gate', stuck.length === 0, stuck.join(', '));
+}
+{
   // The Back Alley: up the left orbit, over the top and into the CAM lanes...
   const shot = realShot('right', 'alley');
   const { f } = newGame();
@@ -595,9 +614,48 @@ console.log('Ball flow');
   const { f: f2 } = newGame();
   f2.alleyLoopOpen = true;
   f2.update(1 / 60);
-  const r2 = follow(f2, shot, f2.flipperR, (b) => b.y > 880 && b.x > 425);
+  const r2 = follow(f2, shot, f2.flipperR, (b) => b.y > 880 && b.x > 425, 15);
   // (a slow one drops into the CAM lanes on the way and comes out of the pops into the same inlane)
   check('with the loop held open it comes back to the right inlane', r2.lanes.includes('R-IN') && !r2.lanes.some((l) => l.endsWith('OUT')), `${r2.made.join()} ${r2.lanes.join()}`);
+}
+{
+  // The vault door: open, it turns the Back Alley into the upper playfield instead of the top.
+  const shot = realShot('right', 'alley');
+  const { f } = newGame();
+  f.vaultOpen = 10;
+  f.update(1 / 60);
+  const ups: string[] = [];
+  const o = f.upperIn.bind(f);
+  f.upperIn = () => (ups.push('in'), o());
+  const r = launch(f, shot[0], shot[1], shot[2], shot[3], 2);
+  check('with the vault door open, the Back Alley goes into the upper playfield', ups.length === 1 && !r.made.includes('alley'), r.made.join());
+  check('...and the door shuts behind it', f.vaultOpen === 0);
+}
+{
+  // The upper playfield: a ball nobody flips drains out the side to the right inlane.
+  const { f } = newGame();
+  const lanes: string[] = [];
+  const o = f.rollover.bind(f);
+  f.rollover = (k: number) => (lanes.push(['L-OUT', 'L-IN', 'R-IN', 'R-OUT'][k]), o(k));
+  f.world.balls = [];
+  f.addBall(80, L.UPPER_LANE_TOP_Y - 20, 100, -600);
+  for (let t = 0; t < 8 && !lanes.length; t += 1 / 480) {
+    f.world.step(1 / 480);
+    f.update(1 / 480);
+  }
+  check('the upper playfield drains out the side to the right inlane', lanes[0] === 'R-IN', lanes.join());
+}
+{
+  // Cameras: each lane or the bumper under it knocks one out; all three is CAMERAS DOWN, which opens the vault.
+  const { g, f } = newGame();
+  park(f);
+  f.camLane(0);
+  f.hitBumper(f.bumpers[1], f.world.balls[0]);
+  check('a lane and a bumper knock out their cameras', f.cams[0] > 0 && f.cams[2] > 0 && f.cams[1] === 0);
+  f.hitBumper(f.bumpers[2], f.world.balls[0]);
+  check('all three out is CAMERAS DOWN, and it opens the vault door', f.camerasDown > 0 && f.vaultOpen > 0);
+  run(g, 25);
+  check('the cameras come back and the door shuts again', f.cams.every((c: number) => c === 0) && f.vaultOpen === 0);
 }
 {
   // Wire returns: each drops into its inlane (never the outlane) and a held flipper catches it.

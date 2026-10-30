@@ -95,15 +95,15 @@ export const ARCH_PATH = smooth(
     [46, 240],
     [60, 185],
     [86, 136],
-    [124, 96],
-    [172, 66],
-    [228, 49],
-    [285, 43],
-    [350, 46],
-    [410, 51],
-    [460, 57],
-    [500, 67],
-    [532, 90],
+    [124, 92],
+    [160, 60],
+    [192, 46],
+    [240, 49],
+    [300, 51],
+    [370, 53],
+    [430, 57],
+    [480, 64],
+    [520, 82],
     [550, 120],
     [557.5, 165],
     [557.5, 215],
@@ -122,18 +122,49 @@ export const LANE_POST_R = 5;
 export const LANE_BOTTOM = 124;
 const innerAt = (x: number) => crossX(arch.right, x);
 const outerAt = (x: number) => crossX(arch.left, x);
-export const LANE_POSTS: P[] = LANE_POST_X.map((x) => innerAt(x)[1]);
+/** Posts sit just below the arch's inner line, so a slow ball rolling along it passes over them into the lanes. */
+export const LANE_POSTS: P[] = LANE_POST_X.map((x) => [x, innerAt(x)[1][1] + LANE_POST_R]);
 /** Lane guides from each post down to the nest. */
 export const LANE_GUIDES: [P, P][] = LANE_POSTS.map((p) => [p, [p[0], LANE_BOTTOM]]);
 /** [x0, x1] of each CAM lane, left to right, and the height of their rollover switches. */
 export const CAM_LANES: [number, number][] = [0, 1, 2].map((i) => [LANE_POST_X[i], LANE_POST_X[i + 1]]);
 export const CAM_Y = 98;
 
-/** Inner wall of the orbit: from the Back Alley's mouth up round the top-left to the CAM 1 post. */
+/** Where the upper playfield's top exit opens into the arch: [x0, x1]. */
+export const UPPER_EXIT_X: [number, number] = [222, 265];
+const innerBetween = (x0: number, x1: number): P[] => {
+  const [i0, p0] = innerAt(x0);
+  const [i1, p1] = innerAt(x1);
+  return [p0, ...arch.right.slice(i0 + 1, i1 + 1), p1];
+};
+/** Inner wall of the orbit: from the Back Alley's mouth up round the top-left to the upper playfield's top exit. */
 export const ARCH_INNER_L: P[] = (() => {
-  const [i, p] = innerAt(LANE_POST_X[0]);
+  const [i, p] = innerAt(UPPER_EXIT_X[0]);
   return [...arch.right.slice(0, i + 1), p];
 })();
+/**
+ * The vault door: a stretch of the orbit's inner wall where it starts to curve over, above the
+ * upper playfield's lane gate. When it's open, a deflector swings across the orbit and turns a
+ * Back Alley shot through the gap into the upper playfield. [lower end, upper end] into ARCH_INNER_L.
+ */
+const doorAt = (y: number) => ARCH_INNER_L.findIndex((p) => p[1] <= y);
+const DOOR: [number, number] = [doorAt(240), doorAt(160)];
+export const VAULT_DOOR: P[] = ARCH_INNER_L.slice(DOOR[0], DOOR[1] + 1);
+/** The orbit's inner wall with the door cut out: [below it, above it]. */
+export const ARCH_INNER_L_PARTS: [P[], P[]] = [ARCH_INNER_L.slice(0, DOOR[0] + 1), ARCH_INNER_L.slice(DOOR[1])];
+/** The deflector across the orbit lane while the door is open. */
+export const VAULT_DEFLECTOR: P[] = [
+  (() => {
+    const i = arch.left.findIndex((p) => p[1] <= 240);
+    const [a, b] = [arch.left[i - 1], arch.left[i]];
+    return [a[0] + ((b[0] - a[0]) * (240 - a[1])) / (b[1] - a[1]), 240] as P;
+  })(),
+  VAULT_DOOR[VAULT_DOOR.length - 1],
+];
+/** One-way flap in the arch's inner wall: balls shot up out of the upper playfield pass into the arch; balls in the arch roll over it. */
+export const UPPER_EXIT_FLAP: P[] = [innerAt(UPPER_EXIT_X[0])[1], innerAt(UPPER_EXIT_X[1])[1]];
+/** Inner wall over the pop nest's top-left corner, up to the CAM 1 post. */
+export const ARCH_INNER_NEST: P[] = innerBetween(UPPER_EXIT_X[1], LANE_POST_X[0]);
 /** Inner wall from the CAM 3 post round the top right and down the right leg to the shooter gate. */
 export const ARCH_INNER_R: P[] = (() => {
   const [i, p] = innerAt(LANE_POST_X[3]);
@@ -155,11 +186,11 @@ export const LEFT_GATE: P[] = [outerAt(LANE_POST_X[0])[1], LANE_POSTS[0]];
  */
 export const DIVERTER: P[] = [LANE_POSTS[3], outerAt(LANE_POST_X[3])[1]];
 /**
- * The Back Alley switch, at the top of the arch just before the CAM lanes: crossed clockwise, the
- * shot is made. From here the top run slopes gently down to the lanes, so a ball that crosses it
- * always reaches them; the plunge, coming the other way, climbs it and slows into the lanes.
+ * The Back Alley switch, at the top of the arch: crossed clockwise, the shot is made. From here
+ * the top run slopes gently down past the upper playfield's exit to the lanes, so a ball that
+ * crosses it always reaches them; the plunge, coming the other way, climbs it and slows into the lanes.
  */
-export const ALLEY_SWITCH: [P, P] = [outerAt(LANE_POST_X[0] - 24)[1], innerAt(LANE_POST_X[0] - 24)[1]];
+export const ALLEY_SWITCH: [P, P] = [outerAt(196)[1], innerAt(196)[1]];
 /** Mouth of the orbit, facing the right flipper. */
 export const ALLEY_MOUTH: [P, P] = [[20, ORBIT_POST[1]], ORBIT_POST];
 
@@ -232,16 +263,16 @@ export const DROPS: [P, P][] = [0, 1, 2].map((i) => [r(0, -32 + (64 / 3) * i), r
 // ------------------------------------------------------------------ the pop exit lane, between the Reactor and the Skyway
 
 export const EXIT_X: [number, number] = [440, SKY_LANE_X];
-export const EXIT_BOTTOM = 628;
+export const EXIT_BOTTOM = 660;
 /**
  * The lane narrows at the bottom into a short chute centred over the right inlane, so a ball
  * leaving the pops drops straight into the inlane, clear of the slingshot's top corner.
  */
 const CHUTE_X: [number, number] = [445, 475];
-/** Left wall of the exit lane: the Reactor housing's right side. */
-export const EXIT_LANE_L: P[] = [NEST_EXIT[0], [EXIT_X[0], 520], [CHUTE_X[0], 565], [CHUTE_X[0], EXIT_BOTTOM]];
+/** Left wall of the exit lane: the Reactor housing's right side. It opens at the top for the upper playfield's drain. */
+export const EXIT_LANE_L: P[] = [[EXIT_X[0], 457], [EXIT_X[0], 520], [CHUTE_X[0], 560], [CHUTE_X[0], EXIT_BOTTOM]];
 /** Right wall: beside the Skyway's lane. */
-export const EXIT_LANE_R: P[] = [NEST_EXIT[1], [EXIT_X[1], 520], [CHUTE_X[1], 565], [CHUTE_X[1], EXIT_BOTTOM]];
+export const EXIT_LANE_R: P[] = [NEST_EXIT[1], [EXIT_X[1], 520], [CHUTE_X[1], 560], [CHUTE_X[1], EXIT_BOTTOM]];
 /** One-way gate at the bottom of the exit lane: balls leave the pops through it; shots from below bounce off. */
 export const EXIT_GATE: P[] = [
   [CHUTE_X[1], EXIT_BOTTOM],
@@ -268,7 +299,7 @@ export const BREACH_THROAT = {
 };
 /** Mouth of the scoop: [screen-left post, screen-right post]. */
 export const BREACH_MOUTH: [P, P] = [bAt(44, 29), bAt(44, -29)];
-export const BANK_LEN = 48;
+export const BANK_LEN = 44;
 /** A standup bank facing `toward`, running from `start` away from the scoop (side -1 = left, +1 = right). */
 function bank(start: P, toward: P, side: number): [P, P] {
   const n = unit(sub(toward, start));
@@ -286,6 +317,13 @@ export const LF_BAT: P = [217, 1066];
 export const BANK_L: [P, P] = bank(BREACH_MOUTH[0], RF_BAT, -1);
 /** A-C-H: right of the mouth, faces the left flipper. Runs from the mouth outward. */
 export const BANK_R: [P, P] = bank(BREACH_MOUTH[1], LF_BAT, 1);
+/** On the A-C-H bank's backing plate, near the Breach: where a flasher stands. */
+export const BANK_R_BACK: P = (() => {
+  const [a, b] = BANK_R;
+  const d = unit(sub(b, a));
+  const n: P = d[0] > 0 ? [d[1], -d[0]] : [-d[1], d[0]];
+  return add(along(a, b, 0.2), n, 6);
+})();
 /** Six standups: B R E (outer to inner on the left bank), A C H (inner to outer on the right). */
 export const STANDUPS: [P, P][] = [
   ...[2, 1, 0].map((k) => [along(BANK_L[0], BANK_L[1], k / 3), along(BANK_L[0], BANK_L[1], (k + 1) / 3)].reverse() as [P, P]),
@@ -293,31 +331,112 @@ export const STANDUPS: [P, P][] = [
 ];
 export const BREACH_LETTERS = ['B', 'R', 'E', 'A', 'C', 'H'];
 
-/** Wall from the end of the B-R-E bank back to the orbit's inner wall. */
-export const SAFE_WALL: P[] = [BANK_L[1], [64, 584]];
+// ------------------------------------------------------------------ the upper playfield, in the old dead area at the top left
+
 /**
- * SAFE: a standup on the playfield face of the orbit's inner wall, below the B-R-E bank,
- * where right flipper shots at about 113-119° would otherwise hit plain wall.
+ * A small playfield of its own between the orbit, the Breach and the pops, with two half-size
+ * flippers on the main buttons. In: a lane up beside the orbit from the left of the B-R-E bank,
+ * through a one-way gate at its top. Out: past its flippers into a drain lane under the pops
+ * that joins the pop exit lane (to the right inlane), or up through a flap into the top arch
+ * (on to the CAM lanes).
  */
+/** The entrance lane: between the orbit's inner wall and this wall, which the B-R-E bank's end meets. */
+export const UPPER_LANE_X: [number, number] = [64, BANK_L[1][0]];
+export const UPPER_LANE_MOUTH_Y = 600;
+export const UPPER_LANE_TOP_Y = 262;
+export const UPPER_LANE_WALL: P[] = [
+  [UPPER_LANE_X[1], UPPER_LANE_MOUTH_Y],
+  [UPPER_LANE_X[1], UPPER_LANE_TOP_Y],
+];
+/** One-way gate at the lane's top, sloping down to the right so nothing rests on it: balls go up into the upper playfield and can't fall back down the lane. */
+export const UPPER_GATE: P[] = [
+  [66, UPPER_LANE_TOP_Y - 12],
+  [UPPER_LANE_X[1], UPPER_LANE_TOP_Y],
+];
+/** Switch across the lane, below the gate: crossed going up, the shot is made. */
+export const UPPER_SWITCH: [P, P] = [
+  [UPPER_LANE_X[0], 330],
+  [UPPER_LANE_X[1], 330],
+];
+/** SAFE: a standup on the lane wall's playfield face, below the B-R-E bank. */
 export const SAFE: [P, P] = [
-  [68, 590],
-  [68, 646],
+  [UPPER_LANE_X[1] + 3, BANK_L[1][1] + 8],
+  [UPPER_LANE_X[1] + 3, UPPER_LANE_MOUTH_Y - 4],
+];
+export const UPPER_FLIPPER = { y: 350, xl: 125, xr: 244, len: 44, rest: 0.52, up: -0.42, r0: 7, r1: 4 };
+/** Guides from the side walls onto each flipper, passing over the pivot caps. */
+export const UPPER_GUIDE_L: P[] = [
+  [UPPER_LANE_X[1], 330],
+  [UPPER_FLIPPER.xl - 7, UPPER_FLIPPER.y - 8],
+];
+export const UPPER_GUIDE_R: P[] = [
+  [265, 330],
+  [UPPER_FLIPPER.xr + 7, UPPER_FLIPPER.y - 8],
+];
+/**
+ * The drain: what falls past the flippers lands on this floor and rolls right, under the
+ * Black Market's turn and the pop nest, into the pop exit lane.
+ */
+export const UPPER_DRAIN_FLOOR: P[] = [
+  [UPPER_FLIPPER.xl - 4, UPPER_FLIPPER.y + 6],
+  [180, 408],
+  [266, 418],
+  [300, 426],
+  [440, 457],
+];
+export const UPPER_DRAIN_ROOF: P[] = [
+  [UPPER_FLIPPER.xr + 5, UPPER_FLIPPER.y + 6],
+  [300, 385],
+  [440, 422],
+];
+/** Switch across the drain lane. */
+export const UPPER_DRAIN_SWITCH: [P, P] = [
+  [330, 392],
+  [330, 433],
+];
+/** Three standups across the back, on a block up to the arch: the vault's tumblers. */
+const TUMBLER_LINE: [P, P] = [
+  [152, 170],
+  [UPPER_EXIT_X[0], 156],
+];
+export const TUMBLERS: [P, P][] = [0, 1, 2].map((k) => [along(TUMBLER_LINE[0], TUMBLER_LINE[1], k / 3), along(TUMBLER_LINE[0], TUMBLER_LINE[1], (k + 1) / 3)]);
+export const TUMBLER_BLOCK: P[] = [TUMBLER_LINE[0], TUMBLER_LINE[1], ...innerBetween(152, UPPER_EXIT_X[0]).reverse()];
+/** On top of the tumbler block, toward its back: where a flasher stands. */
+export const TUMBLER_TOP: P = [UPPER_EXIT_X[0] - 16, 100];
+/** Switch across the top exit, just under the flap. */
+export const UPPER_EXIT_SWITCH: [P, P] = [
+  [UPPER_EXIT_X[0], 110],
+  [UPPER_EXIT_X[1], 110],
+];
+/** The upper playfield's floor, for drawing. */
+export const UPPER_AREA: P[] = [
+  [UPPER_LANE_X[1], UPPER_LANE_TOP_Y],
+  ...arch.right.filter((p) => p[1] < UPPER_LANE_TOP_Y && p[0] < UPPER_EXIT_X[1]),
+  innerAt(UPPER_EXIT_X[1])[1],
+  [265, 330],
+  UPPER_GUIDE_R[1],
+  UPPER_DRAIN_ROOF[0],
+  along(UPPER_DRAIN_ROOF[0], UPPER_DRAIN_ROOF[1], 0.25),
+  [along(UPPER_DRAIN_ROOF[0], UPPER_DRAIN_ROOF[1], 0.25)[0], 417],
+  UPPER_DRAIN_FLOOR[1],
+  UPPER_DRAIN_FLOOR[0],
+  UPPER_GUIDE_L[1],
+  UPPER_GUIDE_L[0],
 ];
 
-// ------------------------------------------------------------------ the Impound, top left inside the orbit
+// ------------------------------------------------------------------ the Impound: a cage over the orbit lane, beside the Skyway's turn
 
 export const IMPOUND_BOX: P[] = [
-  [150, 96],
-  [244, 78],
-  [244, 186],
-  [112, 186],
-  [112, 140],
+  [22, 300],
+  [62, 300],
+  [62, 404],
+  [22, 404],
 ];
-/** Where locked balls sit behind the window, first to last. */
+/** Where locked balls sit in the cage, first to last (the first goes to the top). */
 export const IMPOUND_SLOTS: P[] = [
-  [148, 150],
-  [180, 150],
-  [212, 150],
+  [42, 322],
+  [42, 350],
+  [42, 378],
 ];
 
 // ------------------------------------------------------------------ ramps
@@ -388,9 +507,9 @@ function makeRamp(id: RampDef['id'], ctrl: P[], hw: (s: number) => [number, numb
 }
 
 /**
- * Skyway: shot from the left flipper up the lane beside the Reactor, then a deck across
- * under the pop nest (over the Black Market's climb) and up to the Impound, and a
- * wireform down the left to the left inlane. With the lock lit, the top bend feeds the Impound.
+ * Skyway: shot from the left flipper up the lane by the shooter lane, then a deck straight
+ * across under the pop nest (over the Black Market's climb) and above the Breach, and a wireform
+ * down the left to the left inlane. With the lock lit, the turn down the left feeds the Impound.
  */
 export const SKYWAY = makeRamp(
   'skyway',
@@ -404,18 +523,14 @@ export const SKYWAY = makeRamp(
     [448, 462],
     [400, 458],
     [330, 456],
-    [272, 450],
-    [234, 430],
-    [207, 400],
-    [187, 364],
-    [168, 328],
-    [146, 298],
-    [116, 278],
-    [86, 276],
-    [62, 292],
-    [48, 324],
-    [43, 364],
-    [42, 420],
+    [272, 448],
+    [220, 438],
+    [160, 434],
+    [112, 440],
+    [78, 458],
+    [56, 488],
+    [45, 530],
+    [42, 580],
     [42, 680],
     [48, 740],
     [66, 780],
@@ -430,17 +545,17 @@ export const SKYWAY = makeRamp(
     [120, 26],
     [260, 52],
     [420, 64],
-    [640, 66],
-    [800, 60],
-    [1200, 40],
+    [600, 64],
+    [700, 58],
+    [1050, 40],
   ],
   140,
   600,
-  780,
+  700,
   200,
 );
-SKYWAY.divertAt = nearestIndex(SKYWAY.path, [100, 276]);
-/** The shot counts once the ball is over the top, at the bend into the Impound. */
+SKYWAY.divertAt = nearestIndex(SKYWAY.path, [80, 456]);
+/** The shot counts at the turn down the left side, where a lit lock diverts it into the Impound. */
 SKYWAY.madeAt = SKYWAY.divertAt - 3;
 
 /**
@@ -563,8 +678,8 @@ export const GUARD_R: P[] = [
   [510, 744],
 ];
 
-/** Wire lane from the Skyway's top bend up into the Impound, for the lock animation. */
-export const IMPOUND_LANE: P[] = [SKYWAY.path[SKYWAY.divertAt!], [112, 240], [128, 196], [138, 168]];
+/** Wire from the Skyway's turn up into the Impound cage, for the lock animation. */
+export const IMPOUND_LANE: P[] = [SKYWAY.path[SKYWAY.divertAt!], [56, 440], [44, 408]];
 
 /** The Black Market box: the raised platform over the shooter lane where the ramp turns down. */
 export const MARKET_BOX: P[] = [
@@ -578,34 +693,33 @@ export const MARKET_BOX: P[] = [
 // ------------------------------------------------------------------ sealed areas (nothing rolls there; the art fills them)
 
 /**
- * Everything between the orbit, the fan and the nest that no ball reaches: under the
- * Skyway's climb and the Black Market's turn. The Impound and the Reactor housing sit in it.
+ * Ground no ball reaches between the upper playfield's drain and the fan: around the Breach,
+ * under the Black Market's base and behind the Reactor. The Reactor housing sits in it.
  */
 export const SEALED: P[] = [
-  ...ARCH_INNER_L.filter((p) => p[0] < 265 && p[1] < 584),
-  innerAt(265)[1],
-  ...NEST_LEFT.slice(1),
-  ...NEST_FLOOR.slice(1),
-  ...EXIT_LANE_L.slice(1),
-  VENT[1],
-  VENT[0],
-  REACTOR.mouthR,
-  REACTOR.channelR0,
-  REACTOR.channelR1,
-  REACTOR.channelL1,
-  REACTOR.channelL0,
-  REACTOR.mouthL,
-  ...MARKET_LIP.slice().reverse().slice(1),
-  ...MARKET.walls.right.slice(1, MARKET.baseTo + 1),
-  ...MARKET.walls.left.slice(0, MARKET.baseTo + 1).reverse(),
-  BANK_R[1],
-  BANK_R[0],
-  ...BREACH_THROAT.right.slice().reverse(),
-  ...BREACH_CUP.slice().reverse(),
-  ...BREACH_THROAT.left,
+  UPPER_GUIDE_L[0],
   BANK_L[1],
-  SAFE_WALL[1],
+  BANK_L[0],
+  ...BREACH_THROAT.left.slice().reverse().slice(1),
+  ...BREACH_CUP.slice(1),
+  ...BREACH_THROAT.right.slice(1),
+  BANK_R[1],
+  ...MARKET.walls.left.slice(0, MARKET.baseTo + 1),
+  ...MARKET.walls.right.slice(0, MARKET.baseTo + 1).reverse(),
+  REACTOR.mouthL,
+  REACTOR.channelL0,
+  REACTOR.channelL1,
+  REACTOR.channelR1,
+  REACTOR.channelR0,
+  REACTOR.mouthR,
+  VENT[0],
+  VENT[1],
+  ...EXIT_LANE_L.slice().reverse(),
+  ...UPPER_DRAIN_FLOOR.slice().reverse().slice(1),
+  UPPER_GUIDE_L[1],
 ];
+/** The sliver between the pop nest's floor and the upper playfield's drain. */
+export const SEALED_NEST: P[] = [NEST_FLOOR[0], NEST_FLOOR[1], UPPER_DRAIN_ROOF[2], UPPER_DRAIN_ROOF[1], UPPER_DRAIN_ROOF[0], UPPER_GUIDE_R[1]];
 /** Under the Skyway's bend and the market box, right of the exit lane. */
 export const BEHIND_SKYWAY: P[] = [NEST_RIGHT[0], NEST_RIGHT[1], ...EXIT_LANE_R.slice(1), [SKY_LANE_X, EXIT_BOTTOM], [SKY_LANE_X, SKYWAY.walls.left[SKYWAY.baseTo][1]], SKYWAY.walls.right[SKYWAY.baseTo]];
 
@@ -630,5 +744,5 @@ export const ROLLOVERS: [number, number][] = [
   [479.5, 535],
 ];
 
-/** Security camera on the cabinet's top right corner. */
-export const CAMERAS: P[] = [[562, 30]];
+/** Three security cameras on the top rail, one over each CAM lane, looking down the table. */
+export const CAMERAS: P[] = CAM_LANES.map(([x0, x1]) => [(x0 + x1) / 2, outerAt((x0 + x1) / 2)[1][1] + 2] as P);

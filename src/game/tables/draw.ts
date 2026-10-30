@@ -389,14 +389,17 @@ export interface Flasher {
   r: number;
   /** Mounting height of the dome. */
   z: number;
+  /** Height of what the flasher stands on (the floor if left out). */
+  z0?: number;
   color: string;
   level: number;
 }
 
 export function drawFlasherDome(g: CanvasRenderingContext2D, f: Flasher) {
   const y = f.y - lift(f.z);
-  drawShadowStatic(g, f.x + 3, f.y + 4, f.r * 1.4, f.r * 1.1);
-  cylinder(g, f.x, f.y, f.r + 2, 0, f.z, '#26292d', null);
+  const z0 = f.z0 ?? 0;
+  drawShadowStatic(g, f.x + 3, f.y + 4 - lift(z0), f.r * 1.4, f.r * 1.1);
+  cylinder(g, f.x, f.y, f.r + 2, z0, f.z, '#26292d', null);
   const gr = g.createRadialGradient(f.x - f.r * 0.35, y - f.r * 0.4, 0, f.x, y, f.r);
   gr.addColorStop(0, mix(f.color, '#ffffff', 0.35));
   gr.addColorStop(0.35, shade(f.color, -0.35));

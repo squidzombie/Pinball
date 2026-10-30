@@ -273,40 +273,12 @@ function rail(ctx: CanvasRenderingContext2D, pts: P[], h = 22, w = 7, top = STEE
   ctx.restore();
 }
 
-/** A pipe at height z: dark rim, body, highlight, ink outline. */
-function pipe(ctx: CanvasRenderingContext2D, pts: P[], r = 4, z = 8, color = STEEL) {
-  const dy = lift(z);
-  ctx.save();
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
-  softShadow(ctx, 3, 2, 3, 'rgba(40,30,20,0.4)', () => {
-    strokePath(ctx, pts);
-    ctx.lineWidth = r * 2;
-    ctx.stroke();
-  });
-  strokePath(ctx, pts, false, dy);
-  ctx.strokeStyle = INK;
-  ctx.lineWidth = r * 2 + 2;
-  ctx.stroke();
-  ctx.strokeStyle = shade(color, -0.35);
-  ctx.lineWidth = r * 2;
-  ctx.stroke();
-  strokePath(ctx, pts, false, dy + r * 0.25);
-  ctx.strokeStyle = color;
-  ctx.lineWidth = r * 1.2;
-  ctx.stroke();
-  strokePath(ctx, pts, false, dy + r * 0.5);
-  ctx.strokeStyle = 'rgba(255,255,255,0.65)';
-  ctx.lineWidth = Math.max(0.8, r * 0.35);
-  ctx.stroke();
-  ctx.restore();
-}
-
 /** A vertical cylinder from z0 to z1 with a lit top, in ink. */
 function can(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, z0: number, z1: number, side = STEEL, top: string | null = STEEL_L) {
   const y0 = y - lift(z0);
   const y1 = y - lift(z1);
-  const ry = r * 0.5;
+  // The table is drawn in oblique projection: a horizontal circle stays a circle, just lifted.
+  const ry = r;
   const g = ctx.createLinearGradient(x - r, 0, x + r, 0);
   g.addColorStop(0, shade(side, -0.45));
   g.addColorStop(0.3, mix(side, '#ffffff', 0.4));
@@ -399,6 +371,7 @@ export function paintStatic(ctx: CanvasRenderingContext2D, lower: LowerSection, 
   paintMap(ctx);
   paintSkull(ctx);
   paintFloorMarks(ctx);
+  paintVault(ctx);
   drawInserts();
   paintRampShadows(ctx);
   ctx.restore();
@@ -408,7 +381,6 @@ export function paintStatic(ctx: CanvasRenderingContext2D, lower: LowerSection, 
   paintLeftMass(ctx);
   paintBreach(ctx);
   paintReactor(ctx);
-  paintPopsBase(ctx);
   drawDomes();
   paintApron(ctx);
   paintCameraBody(ctx);
@@ -713,7 +685,6 @@ function paintMap(ctx: CanvasRenderingContext2D) {
   };
   for (const k of ['infiltrate', 'hack', 'route', 'payload', 'extract'] as const) plaque(M[k], 84, 28);
   plaque(M.blackout, 96, 34, true);
-  label(ctx, 'THE HEIST', L.CX, M.infiltrate[1] - 66, 8, 0, withAlpha(INK, 0.7), 800);
 }
 
 /** The big grey stencil skull between the flippers, as in the sketch. */
@@ -799,29 +770,6 @@ function paintSkull(ctx: CanvasRenderingContext2D) {
 
 /** Painted arrows, chevrons and stencils on the concrete. */
 function paintFloorMarks(ctx: CanvasRenderingContext2D) {
-  // yellow chevrons in front of the drops
-  const ra = L.REACTOR_AXIS;
-  const perp = L.REACTOR_PERP;
-  for (let i = 0; i < 3; i++) {
-    const c = L.add(L.add(L.REACTOR_MOUTH, ra, -30), perp, -22 + i * 22);
-    const p = L.add(c, ra, -14);
-    ctx.save();
-    ctx.translate(p[0], p[1]);
-    ctx.rotate(Math.atan2(ra[1], ra[0]));
-    ctx.beginPath();
-    ctx.rect(-10, -9, 20, 18);
-    ctx.clip();
-    stripes(ctx, -12, -11, 12, 11, 4, 30 + i);
-    ctx.restore();
-    ctx.save();
-    ctx.translate(p[0], p[1]);
-    ctx.rotate(Math.atan2(ra[1], ra[0]));
-    inkLine(ctx, 1);
-    ctx.strokeRect(-10, -9, 20, 18);
-    ctx.restore();
-  }
-  // Skyway lane: name
-  label(ctx, 'SKYWAY', 512.5, 728, 9, 0, withAlpha(INK, 0.75), 900);
   // shooter lane: SKILL SHOT, the arrows up it
   label(ctx, 'SKILL', 557.5, 1004, 10, 0, INK);
   label(ctx, 'SHOT', 557.5, 1016, 10, 0, INK);
@@ -834,14 +782,82 @@ function paintFloorMarks(ctx: CanvasRenderingContext2D) {
     const b = at(f + 0.02);
     return Math.atan2(b[1] - a[1], b[0] - a[0]);
   };
-  label(ctx, 'BACK ALLEY', at(0.14)[0], at(0.14)[1], 11, ang(0.14));
-  for (const f of [0.3, 0.45]) paintedArrow(ctx, at(f)[0], at(f)[1], 24, ang(f), RED, 2.4);
+  label(ctx, 'BACK ALLEY', at(0.3)[0], at(0.3)[1], 11, ang(0.3));
+  for (const f of [0.42, 0.55]) paintedArrow(ctx, at(f)[0], at(f)[1], 24, ang(f), RED, 2.4);
   // the Breach: its name on the scoop
   const ba = L.BREACH_AXIS;
   const lp = L.add(L.BREACH, ba, 30);
   label(ctx, 'BREACH', lp[0], lp[1], 9, Math.atan2(ba[1], ba[0]) - Math.PI / 2);
   // RAGE and bonus labels
   label(ctx, 'BONUS', L.CX, 968, 7.5, 0, withAlpha(INK, 0.7), 800);
+}
+
+/**
+ * The upper playfield: a dark tread-plate deck with a safe dial painted on it, and the raised
+ * block the three tumbler targets sit on.
+ */
+function paintVault(ctx: CanvasRenderingContext2D) {
+  const area = L.UPPER_AREA;
+  const b = bounds(area);
+  ctx.save();
+  strokePath(ctx, area, true);
+  ctx.fillStyle = '#8b8982';
+  ctx.fill();
+  ctx.clip();
+  hatch(ctx, b.x0, b.y0, b.x1, b.y1, 7, 0.8, 0.16, 0.7);
+  hatch(ctx, b.x0, b.y0, b.x1, b.y1, 7, -0.8, 0.16, 0.7);
+  // the dial: rings, numbered ticks and a red index at the top
+  const [cx, cy] = [182, 262];
+  ctx.fillStyle = withAlpha('#2a2826', 0.22);
+  ctx.beginPath();
+  ctx.arc(cx, cy, 62, 0, Math.PI * 2);
+  ctx.fill();
+  for (const [r, w, a] of [
+    [62, 2.2, 0.75],
+    [50, 1, 0.55],
+    [28, 1.6, 0.7],
+    [12, 1, 0.55],
+  ] as const) {
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    inkLine(ctx, w, a);
+    ctx.stroke();
+  }
+  for (let i = 0; i < 40; i++) {
+    const a = (i / 40) * Math.PI * 2 - Math.PI / 2;
+    const r0 = i % 5 ? 56 : 51;
+    ctx.beginPath();
+    ctx.moveTo(cx + Math.cos(a) * r0, cy + Math.sin(a) * r0);
+    ctx.lineTo(cx + Math.cos(a) * 61, cy + Math.sin(a) * 61);
+    inkLine(ctx, i % 5 ? 0.8 : 1.4, 0.7);
+    ctx.stroke();
+    if (i % 10 === 0) label(ctx, String(i * 2.5), cx + Math.cos(a) * 42, cy + Math.sin(a) * 42, 7, 0, withAlpha(INK, 0.75), 800);
+  }
+  // spokes of the handle
+  for (let k = 0; k < 3; k++) {
+    const a = (k / 3) * Math.PI * 2 + 0.3;
+    ctx.beginPath();
+    ctx.moveTo(cx + Math.cos(a) * 12, cy + Math.sin(a) * 12);
+    ctx.lineTo(cx + Math.cos(a) * 28, cy + Math.sin(a) * 28);
+    inkLine(ctx, 2.4, 0.55);
+    ctx.stroke();
+  }
+  ctx.beginPath();
+  ctx.moveTo(cx - 5, cy - 72);
+  ctx.lineTo(cx + 5, cy - 72);
+  ctx.lineTo(cx, cy - 63);
+  ctx.closePath();
+  ctx.fillStyle = RED;
+  ctx.fill();
+  ctx.restore();
+  strokePath(ctx, area, true);
+  inkLine(ctx, 1.6);
+  ctx.stroke();
+  label(ctx, 'THE VAULT', cx + 2, 336, 9, 0, withAlpha(INK, 0.8), 900);
+  // the tumbler block, with its name on top
+  block(ctx, L.TUMBLER_BLOCK, 24, '#8f8d86', STEEL_D);
+  const [a, c] = [L.TUMBLERS[0][0], L.TUMBLERS[2][1]];
+  label(ctx, 'TUMBLERS', (a[0] + c[0]) / 2 - 8, (a[1] + c[1]) / 2 - 22 - lift(24), 8, Math.atan2(c[1] - a[1], c[0] - a[0]), INK, 900);
 }
 
 /** Ramps cast a pencil-hatched shadow on the concrete below them. */
@@ -866,7 +882,9 @@ function paintRampShadows(ctx: CanvasRenderingContext2D) {
 /** Cabinet walls, the loop, the shooter lane, lower guides and slings. */
 function paintLanes(ctx: CanvasRenderingContext2D, lower: LowerSection) {
   rail(ctx, L.ARCH_OUTER, 30, 9);
-  rail(ctx, L.ARCH_INNER_L, 26, 8);
+  // the orbit's inner wall, with a gap for the vault door (drawn live, since it opens)
+  for (const part of L.ARCH_INNER_L_PARTS) rail(ctx, part, 26, 8);
+  for (const p of [L.VAULT_DOOR[0], L.VAULT_DOOR[L.VAULT_DOOR.length - 1]]) can(ctx, p[0], p[1], 5, 0, 28, STEEL_D, STEEL);
   rail(ctx, L.ARCH_INNER_R, 26, 8);
   rail(ctx, L.ORBIT_FLARE, 26, 8);
   can(ctx, L.ORBIT_POST[0], L.ORBIT_POST[1], 6, 0, 18, '#36322e', '#5a554f');
@@ -882,7 +900,10 @@ function paintLanes(ctx: CanvasRenderingContext2D, lower: LowerSection) {
   }
   // the pop nest's walls and its exit lane
   for (const wall of [L.NEST_LEFT, L.NEST_FLOOR, L.NEST_RIGHT, L.EXIT_LANE_L, L.EXIT_LANE_R]) rail(ctx, wall, 22, 7);
-  for (const wall of [L.SAFE_WALL, L.BANK_R_WALL, L.MARKET_LIP]) rail(ctx, wall, 20, 6);
+  for (const wall of [L.BANK_R_WALL, L.MARKET_LIP]) rail(ctx, wall, 20, 6);
+  // the upper playfield's walls and gates
+  for (const wall of [L.UPPER_LANE_WALL, L.UPPER_GUIDE_L, L.UPPER_GUIDE_R, L.UPPER_DRAIN_FLOOR, L.UPPER_DRAIN_ROOF, L.ARCH_INNER_NEST]) rail(ctx, wall, 20, 6);
+  for (const gate of [L.UPPER_GATE, L.UPPER_EXIT_FLAP]) rail(ctx, gate, 10, 4, '#e8e4dc');
   // rubber guards at the side lanes
   for (const g of [L.GUARD_L, L.GUARD_R]) {
     rail(ctx, g, 14, 8, '#3a3633');
@@ -967,26 +988,23 @@ function sling(ctx: CanvasRenderingContext2D, tri: P[]) {
   }
 }
 
-/** The Impound lock box at the top of the sealed yard, with a window onto the locked balls. */
+/** The Impound: a raised steel cage over the orbit lane, beside the Skyway's turn down the left. */
 function paintImpoundAndMachines(ctx: CanvasRenderingContext2D) {
-  const H = 44;
+  const H = 40;
   const lh = lift(H);
-  block(ctx, L.IMPOUND_BOX, H, '#a09e97', STEEL_D, true);
-  const [x0, y0] = L.IMPOUND_SLOTS[0];
-  const [x1] = L.IMPOUND_SLOTS[L.IMPOUND_SLOTS.length - 1];
-  label(ctx, 'IMPOUND', (x0 + x1) / 2, y0 - 36 - lh, 15, 0, INK);
-  ctx.beginPath();
-  ctx.roundRect(x0 - 20, y0 - 20 - lh, x1 - x0 + 40, 40, 12);
-  ctx.fillStyle = '#1d1b19';
+  const box = L.IMPOUND_BOX;
+  // four legs down to the floor either side of the orbit lane
+  for (const [x, y] of box) can(ctx, x, y, 3.5, 0, H, STEEL_D, STEEL);
+  // the cage floor the balls sit on, seen through the bars, and its frame
+  strokePath(ctx, box, true, lh);
+  ctx.fillStyle = '#2b2825';
   ctx.fill();
-  inkLine(ctx, 1.6);
+  inkLine(ctx, 2.2);
   ctx.stroke();
-  for (const [x, y] of L.IMPOUND_SLOTS) {
-    ctx.beginPath();
-    ctx.arc(x, y - lh - 2, 13, 0, Math.PI * 2);
-    ctx.fillStyle = '#2b2825';
-    ctx.fill();
-  }
+  strokePath(ctx, box, true, lh);
+  ctx.strokeStyle = '#a7aaac';
+  ctx.lineWidth = 1.2;
+  ctx.stroke();
   // lock wire from the Skyway's bend up into the box
   const lane = offsetPath(L.IMPOUND_LANE, 8);
   for (const side of [lane.left, lane.right]) {
@@ -1051,101 +1069,49 @@ function paintBreach(ctx: CanvasRenderingContext2D) {
   ctx.stroke();
 }
 
-/** The Reactor housing; its red eye is a sprite so it can glow. */
+/** The Reactor: a round drum round the core, with the funnel and channel cut into its front. Its red eye is a sprite so it can glow. */
 function paintReactor(ctx: CanvasRenderingContext2D) {
   const R = L.REACTOR;
-  const z = 36;
-  const lz = lift(z);
-  block(ctx, R.shell, z, '#97958e', STEEL_D, true);
-  // hazard rim round the top
-  ctx.save();
-  strokePath(ctx, R.shell, true, lz);
-  ctx.clip();
-  strokePath(ctx, R.shell, true, lz);
-  ctx.lineWidth = 9;
-  ctx.setLineDash([6, 6]);
-  ctx.strokeStyle = HAZ;
-  ctx.stroke();
-  ctx.lineDashOffset = 6;
-  ctx.strokeStyle = '#25211d';
-  ctx.stroke();
-  ctx.restore();
-  // the round reactor drum the eye sits in
   const [ex, ey] = R.eye;
-  can(ctx, ex + 4, ey + 18, 44, z, z + 10, '#9d9c96', null);
+  const z = 34;
+  const lz = lift(z);
+  const rr = 46;
+  // the drum, with a hazard band round its top
+  can(ctx, ex, ey, rr, 0, z, '#9d9c96', null);
   ctx.beginPath();
-  ctx.ellipse(ex + 4, ey + 18 - lift(z + 10), 44, 30, 0, 0, Math.PI * 2);
-  ctx.fillStyle = steelGrad(ctx, ex - 40, ey - 40, ex + 48, ey + 40, '#b9b8b1');
+  ctx.arc(ex, ey - lz, rr, 0, Math.PI * 2);
+  ctx.fillStyle = steelGrad(ctx, ex - rr, ey - lz - rr, ex + rr, ey - lz + rr, '#b9b8b1');
   ctx.fill();
   inkLine(ctx, 1.5);
   ctx.stroke();
   ctx.save();
-  ctx.clip();
   ctx.lineWidth = 7;
   ctx.setLineDash([6, 6]);
   ctx.strokeStyle = HAZ;
   ctx.beginPath();
-  ctx.ellipse(ex + 4, ey + 18 - lift(z + 10), 40, 26.5, 0, 0, Math.PI * 2);
+  ctx.arc(ex, ey - lz, rr - 5, 0, Math.PI * 2);
   ctx.stroke();
   ctx.lineDashOffset = 6;
   ctx.strokeStyle = '#25211d';
   ctx.stroke();
   ctx.restore();
   ctx.beginPath();
-  ctx.arc(ex, ey - lz, 33, 0, Math.PI * 2);
-  ctx.fillStyle = steelGrad(ctx, ex - 33, ey - lz - 33, ex + 33, ey - lz + 33, '#9a9ea1');
-  ctx.fill();
-  inkLine(ctx, 1.4);
+  ctx.arc(ex, ey - lz, rr - 10, 0, Math.PI * 2);
+  inkLine(ctx, 1, 0.7);
   ctx.stroke();
-  for (let i = 0; i < 12; i++) {
-    const a = (i / 12) * Math.PI * 2;
-    rivet(ctx, ex + Math.cos(a) * 29, ey - lz + Math.sin(a) * 29, 1.6);
+  for (let i = 0; i < 16; i++) {
+    const a = (i / 16) * Math.PI * 2;
+    rivet(ctx, ex + Math.cos(a) * (rr - 13), ey - lz + Math.sin(a) * (rr - 13), 1.5);
   }
-  // the channel the captive ball runs in, and the funnel behind the drops
-  ctx.fillStyle = '#24211e';
-  strokePath(ctx, [R.channelL0, R.channelL1, R.channelR1, R.channelR0], true);
+  // the funnel behind the drops and the channel up to the core, dark, on the floor
+  ctx.fillStyle = '#2a2724';
+  strokePath(ctx, [R.mouthL, R.channelL0, R.channelL1, R.channelR1, R.channelR0, R.mouthR], true);
   ctx.fill();
-  strokePath(ctx, [R.mouthL, R.channelL0, R.channelR0, R.mouthR], true);
-  ctx.fillStyle = '#3a3632';
-  ctx.fill();
-  rail(ctx, [R.mouthL, R.channelL0, R.channelL1], 24, 5);
-  rail(ctx, [R.mouthR, R.channelR0, R.channelR1], 24, 5);
-  label(ctx, 'REACTOR', ex + 4, ey - lz - 44, 13, 0, INK);
-  pipe(
-    ctx,
-    [
-      [488, 500],
-      [470, 520],
-      [470, 560],
-    ],
-    3.5,
-    36,
-    BRASS,
-  );
-}
-
-/** Pipework and posts round the pop bumpers. */
-function paintPopsBase(ctx: CanvasRenderingContext2D) {
-  pipe(
-    ctx,
-    [
-      [L.BUMPERS[0][0] + 20, L.BUMPERS[0][1] + 10],
-      [L.BUMPERS[2][0] - 20, L.BUMPERS[2][1] - 4],
-    ],
-    3.2,
-    14,
-    STEEL,
-  );
-  pipe(
-    ctx,
-    [
-      [L.BUMPERS[1][0] + 18, L.BUMPERS[1][1] + 16],
-      [L.BUMPERS[2][0] + 4, L.BUMPERS[2][1] - 22],
-    ],
-    3.2,
-    18,
-    BRASS,
-  );
+  inkLine(ctx, 1.2);
+  ctx.stroke();
+  rail(ctx, [R.mouthL, R.channelL0, R.channelL1], 20, 5);
+  rail(ctx, [R.mouthR, R.channelR0, R.channelR1], 20, 5);
+  label(ctx, 'REACTOR', ex, ey - lz - rr - 6, 12, 0, INK);
 }
 
 function paintApron(ctx: CanvasRenderingContext2D) {
@@ -1183,31 +1149,12 @@ function paintApron(ctx: CanvasRenderingContext2D) {
   }
 }
 
+/** Brackets on the top rail for the three cameras; their heads are drawn live so they can pan. */
 function paintCameraBody(ctx: CanvasRenderingContext2D) {
-  const [x, y] = L.CAMERAS[0];
-  const z = 60;
-  const lz = lift(z);
-  can(ctx, x + 6, y, 4, 0, z - 4, STEEL_D, null);
-  ctx.save();
-  ctx.translate(x, y - lz);
-  ctx.rotate(0.55);
-  ctx.beginPath();
-  ctx.roundRect(-24, -8, 34, 16, 3);
-  ctx.fillStyle = steelGrad(ctx, -24, -8, 10, 8, '#c9cbcc');
-  ctx.fill();
-  inkLine(ctx, 1.3);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.roundRect(-30, -10, 8, 20, 2);
-  ctx.fillStyle = '#6e7276';
-  ctx.fill();
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.arc(-31, 0, 5, 0, Math.PI * 2);
-  ctx.fillStyle = '#1b1a19';
-  ctx.fill();
-  ctx.stroke();
-  ctx.restore();
+  for (const [x, y] of L.CAMERAS) {
+    can(ctx, x, y, 3, 0, CAM_Z - 6, STEEL_D, STEEL);
+    bolt(ctx, x, y, 2.4);
+  }
 }
 
 // ------------------------------------------------------------------ ramps (drawn over floor balls)
@@ -1420,26 +1367,87 @@ function paintMarket(ctx: CanvasRenderingContext2D) {
 
 // ------------------------------------------------------------------ dynamic and sprites
 
-/** Security camera sweep and the plunger. */
-export function paintDynamic(ctx: CanvasRenderingContext2D, t: number, target: P | null, pull: number) {
-  const [cx, cy] = L.CAMERAS[0];
-  const ox = cx - 22;
-  const oy = cy - lift(60) + 12;
-  const sweep = target ?? ([L.CX + Math.sin(t * 0.5) * 200, 520 + Math.cos(t * 0.37) * 160] as P);
-  const a = Math.atan2(sweep[1] - oy, sweep[0] - ox);
-  const len = Math.hypot(sweep[0] - ox, sweep[1] - oy) + 40;
-  const spread = target ? 0.07 : 0.12;
-  const g = ctx.createRadialGradient(ox, oy, 0, ox, oy, len);
-  g.addColorStop(0, withAlpha(RED, target ? 0.34 : 0.16));
-  g.addColorStop(1, withAlpha(RED, 0));
-  ctx.fillStyle = g;
-  ctx.beginPath();
-  ctx.moveTo(ox, oy);
-  ctx.lineTo(ox + Math.cos(a - spread) * len, oy + Math.sin(a - spread) * len);
-  ctx.lineTo(ox + Math.cos(a + spread) * len, oy + Math.sin(a + spread) * len);
-  ctx.closePath();
-  ctx.fill();
-  if (target) drawGlow(ctx, target[0], target[1], 40, RED, 0.35 + 0.25 * Math.sin(t * 9));
+const CAM_Z = 30;
+
+/** A rail without its cast shadow, cheap enough to draw every frame, with hazard dashes on top. */
+function liveRail(ctx: CanvasRenderingContext2D, pts: P[], h: number, w: number) {
+  const lh = lift(h);
+  ctx.save();
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  strokePath(ctx, pts);
+  ctx.lineWidth = w + 2.6;
+  ctx.strokeStyle = INK;
+  ctx.stroke();
+  const steps = Math.max(2, Math.ceil(lh / 2));
+  for (let i = 1; i < steps; i++) {
+    strokePath(ctx, pts, false, (lh * i) / steps);
+    ctx.lineWidth = w;
+    ctx.strokeStyle = mix(STEEL_DD, STEEL_D, i / steps);
+    ctx.stroke();
+  }
+  strokePath(ctx, pts, false, lh);
+  ctx.lineWidth = w + 2.6;
+  ctx.strokeStyle = INK;
+  ctx.stroke();
+  ctx.lineWidth = w;
+  ctx.strokeStyle = HAZ;
+  ctx.stroke();
+  ctx.setLineDash([4, 4]);
+  ctx.lineCap = 'butt';
+  ctx.lineWidth = w * 0.7;
+  ctx.strokeStyle = INK;
+  ctx.stroke();
+  ctx.restore();
+}
+
+/**
+ * The three security cameras pan their red beams down the table; a knocked-out camera hangs
+ * dark. In Infiltrate the middle one tracks the watched shot. Also the vault door's deflector
+ * when it's open, and the plunger.
+ */
+export function paintDynamic(ctx: CanvasRenderingContext2D, t: number, cams: boolean[], target: P | null, pull: number, vaultOpen: boolean) {
+  L.CAMERAS.forEach(([cx, cy], i) => {
+    const down = !cams[i];
+    const ox = cx;
+    const oy = cy - lift(CAM_Z);
+    const aim = target && i === 1 ? target : ([cx + Math.sin(t * 0.55 + i * 2.1) * 170, 470 + Math.cos(t * 0.4 + i) * 90] as P);
+    const a = down ? Math.PI / 2 + 0.9 : Math.atan2(aim[1] - oy, aim[0] - ox);
+    if (!down) {
+      const len = Math.hypot(aim[0] - ox, aim[1] - oy) + 30;
+      const spread = target && i === 1 ? 0.06 : 0.09;
+      const g = ctx.createRadialGradient(ox, oy, 0, ox, oy, len);
+      g.addColorStop(0, withAlpha(RED, target && i === 1 ? 0.32 : 0.15));
+      g.addColorStop(1, withAlpha(RED, 0));
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.moveTo(ox, oy);
+      ctx.lineTo(ox + Math.cos(a - spread) * len, oy + Math.sin(a - spread) * len);
+      ctx.lineTo(ox + Math.cos(a + spread) * len, oy + Math.sin(a + spread) * len);
+      ctx.closePath();
+      ctx.fill();
+      if (target && i === 1) drawGlow(ctx, target[0], target[1], 40, RED, 0.35 + 0.25 * Math.sin(t * 9));
+    }
+    // the head: a small box with its lens toward the beam
+    ctx.save();
+    ctx.translate(ox, oy);
+    ctx.rotate(a);
+    ctx.beginPath();
+    ctx.roundRect(-6, -6, 20, 12, 2.5);
+    ctx.fillStyle = steelGrad(ctx, -6, -6, 14, 6, down ? '#8d9092' : '#c9cbcc');
+    ctx.fill();
+    inkLine(ctx, 1.2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(15, 0, 4, 0, Math.PI * 2);
+    ctx.fillStyle = '#1b1a19';
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+    lens(ctx, ox - 2, oy - 3, 2.4, down ? 0 : 0.6 + 0.4 * Math.sin(t * 5 + i));
+  });
+  // the vault door: shut in the orbit's inner wall, or swung across the orbit as a deflector
+  liveRail(ctx, vaultOpen ? L.VAULT_DEFLECTOR : L.VAULT_DOOR, 26, 7);
   // plunger: spring, rod and knob
   const py = 1180 + pull * 50;
   ctx.strokeStyle = INK;
@@ -1456,73 +1464,60 @@ export function paintDynamic(ctx: CanvasRenderingContext2D, t: number, target: P
   ctx.strokeRect(549.5, py - 4 - lift(10), 16, 8 + lift(10));
 }
 
-const TANK_H = 44;
+const TANK_H = 26;
 
 /** Industrial pop bumper: a riveted tank with a domed cap and a red lens. */
 export function drawTank(ctx: CanvasRenderingContext2D, x: number, y: number, r0: number, hit: number) {
   const lit = hit > 0;
-  const r = r0 + 3;
-  const pad = r + 12;
+  const skirt = L.BUMPER_SKIRT_R;
+  const pad = skirt + 10;
   const w = pad * 2;
-  const h = pad * 2 + lift(TANK_H + 16);
-  const c = sprite(`tank:${r}:${lit}`, w, h, (g) => {
+  const h = pad * 2 + lift(TANK_H);
+  const c = sprite(`tank:${r0}:${lit}`, w, h, (g) => {
     const X = pad;
     const Y = h - pad;
-    softShadow(g, 8, 4, 6, 'rgba(40,30,20,0.5)', () => {
+    // contact shadow and the steel skirt on the floor, so it sits on the deck
+    softShadow(g, 4, 2, 6, 'rgba(40,30,20,0.45)', () => {
       g.beginPath();
-      g.ellipse(X + 4, Y + 4, r + 8, (r + 8) * 0.6, 0, 0, Math.PI * 2);
+      g.arc(X + 2, Y + 2, skirt, 0, Math.PI * 2);
       g.fill();
     });
-    can(g, X, Y, r + 7, 0, 5, STEEL_DD, '#6e7276');
-    can(g, X, Y, r, 5, TANK_H, '#b3b6b8', null);
-    // rivet bands
-    for (const z of [12, TANK_H - 8]) {
-      const yy = Y - lift(z);
-      g.beginPath();
-      g.ellipse(X, yy, r, r * 0.5, 0, 0, Math.PI);
-      inkLine(g, 1, 0.7);
-      g.stroke();
-      for (let i = 1; i < 8; i++) {
-        const a = (i / 8) * Math.PI;
-        rivet(g, X + Math.cos(a) * r * 0.98, yy + Math.sin(a) * r * 0.49, 1.3);
-      }
+    can(g, X, Y, skirt, 0, 3, STEEL_DD, '#5d6064');
+    for (let i = 0; i < 12; i++) {
+      const a = (i / 12) * Math.PI * 2;
+      rivet(g, X + Math.cos(a) * (skirt - 3.5), Y - lift(3) + Math.sin(a) * (skirt - 3.5), 1.2);
     }
-    // weld streak in brass
-    g.strokeStyle = withAlpha(BRASS, 0.6);
-    g.lineWidth = 1.4;
-    g.beginPath();
-    g.moveTo(X - r * 0.5, Y - lift(16));
-    g.lineTo(X - r * 0.45, Y - lift(TANK_H - 10));
-    g.stroke();
-    // domed cap
+    // the ring the ball hits, then the drum, then its cap
+    can(g, X, Y, r0, 3, 10, '#2f2c29', '#4a4743');
+    can(g, X, Y, r0 - 6, 10, TANK_H, '#b3b6b8', null);
     const cy = Y - lift(TANK_H);
-    const dg = g.createRadialGradient(X - r * 0.35, cy - r * 0.55, 0, X, cy - r * 0.15, r * 1.1);
-    dg.addColorStop(0, '#ffffff');
-    dg.addColorStop(0.4, '#c4c7c9');
-    dg.addColorStop(1, '#6d7175');
+    const dg = g.createRadialGradient(X - r0 * 0.3, cy - r0 * 0.3, 0, X, cy, r0 - 6);
+    dg.addColorStop(0, '#f4f5f5');
+    dg.addColorStop(0.55, '#bfc2c4');
+    dg.addColorStop(1, '#7c8084');
     g.fillStyle = dg;
     g.beginPath();
-    g.ellipse(X, cy, r, r * 0.5, 0, 0, Math.PI);
-    g.bezierCurveTo(X - r, cy - r * 0.9, X + r, cy - r * 0.9, X + r, cy);
-    g.closePath();
+    g.arc(X, cy, r0 - 6, 0, Math.PI * 2);
     g.fill();
     inkLine(g, 1.3);
     g.stroke();
+    for (let i = 0; i < 10; i++) {
+      const a = (i / 10) * Math.PI * 2;
+      rivet(g, X + Math.cos(a) * (r0 - 11), cy + Math.sin(a) * (r0 - 11), 1.3);
+    }
     g.beginPath();
-    g.ellipse(X, cy, r, r * 0.5, 0, 0, Math.PI * 2);
-    inkLine(g, 0.9, 0.6);
+    g.arc(X, cy, r0 * 0.42, 0, Math.PI * 2);
+    g.fillStyle = '#3a3734';
+    g.fill();
+    inkLine(g, 1, 0.8);
     g.stroke();
-    lens(g, X, cy - r * 0.38, r * 0.34, lit ? 1 : 0.25);
-    g.beginPath();
-    g.arc(X, cy - r * 0.38, r * 0.46, 0, Math.PI * 2);
-    inkLine(g, 1, 0.7);
-    g.stroke();
+    lens(g, X, cy, r0 * 0.3, lit ? 1 : 0.25);
   });
   const cw = c.width / art.k;
   const ch = c.height / art.k;
-  const thump = hit * 2;
+  const thump = hit * 1.5;
   ctx.drawImage(c, x - pad, y - (ch - pad) + thump, cw, ch);
-  if (lit) drawGlow(ctx, x, y - lift(TANK_H) - r * 0.38, r * (1.6 + hit * 1.6), RED, 0.3 + hit * 0.6);
+  if (lit) drawGlow(ctx, x, y - lift(TANK_H), r0 * (0.7 + hit * 0.8), RED, 0.25 + hit * 0.5);
 }
 
 /** A thin standing target from a to b: front face, lit top, ink edges. */
@@ -1612,26 +1607,37 @@ export function drawReactorEye(ctx: CanvasRenderingContext2D, heat: number, glow
   if (hot > 0.05) drawGlow(ctx, x, y, 30 + hot * 40, RED, 0.2 + hot * 0.7);
 }
 
-/** Locked balls behind the Impound's window. */
+/** Locked balls in the Impound cage, behind its bars. */
 export function drawImpound(ctx: CanvasRenderingContext2D, locked: number, t: number) {
-  const lh = lift(44);
+  const H = 40;
+  const lh = lift(H);
   for (let i = 0; i < locked; i++) {
     const [x, y] = L.IMPOUND_SLOTS[i];
-    drawBallAt(ctx, x, y - 2, 44);
+    drawBallAt(ctx, x, y, H);
   }
-  // window glass with a glint crossing it
+  // bars over the cage, with a glint sliding down them
+  const box = L.IMPOUND_BOX;
+  const [x0, y0] = box[0];
+  const [x1, y1] = box[2];
   ctx.save();
-  ctx.beginPath();
-  ctx.roundRect(52, 82 - lh, 108, 40, 12);
-  ctx.clip();
-  ctx.fillStyle = 'rgba(200,220,230,0.08)';
-  ctx.fillRect(52, 82 - lh, 108, 40);
+  ctx.lineCap = 'round';
+  for (let x = x0 + 6; x < x1 - 8; x += 6) {
+    ctx.beginPath();
+    ctx.moveTo(x, y0 - lh + 2);
+    ctx.lineTo(x, y1 - lh - 2);
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = 2.6;
+    ctx.stroke();
+    ctx.strokeStyle = '#c9cccd';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+  }
+  const gy = y0 - lh + ((t * 40) % (y1 - y0 + 40)) - 20;
   ctx.strokeStyle = 'rgba(255,255,255,0.35)';
   ctx.lineWidth = 3;
-  const sweep = 52 + ((t * 30) % 160) - 30;
   ctx.beginPath();
-  ctx.moveTo(sweep, 122 - lh);
-  ctx.lineTo(sweep + 30, 82 - lh);
+  ctx.moveTo(x0 + 2, gy + 10);
+  ctx.lineTo(x1 - 2, gy - 10);
   ctx.stroke();
   ctx.restore();
 }

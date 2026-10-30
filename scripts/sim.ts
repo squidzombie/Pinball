@@ -50,7 +50,9 @@ const depth = (p: P, poly: P[]) => {
 // the sealed outline goes round the Reactor's funnel: with the drops down a ball may run up to the captive ball
 const SOLIDS: [string, P[]][] = [
   ['sealed', L.SEALED],
+  ['sealed nest', L.SEALED_NEST],
   ['behind skyway', L.BEHIND_SKYWAY],
+  ['tumbler block', L.TUMBLER_BLOCK],
   ...L.RAMPS.map((r) => [`${r.id}-foot`, [...r.walls.left.slice(0, r.baseTo + 1), ...r.walls.right.slice(0, r.baseTo + 1).reverse()]] as [string, P[]]),
 ];
 const inSolid = (p: P) => SOLIDS.find(([, poly]) => inside(p, poly) && depth(p, poly) > 6);
@@ -61,6 +63,7 @@ function bot(t: Table) {
   const all = [
     { f: t.flipperL, left: true, zone: (b: { x: number; y: number }) => b.y > 960 && b.y < 1110 && b.x - t.flipperL.px > -20 && b.x - t.flipperL.px < 100 },
     { f: t.flipperR, left: false, zone: (b: { x: number; y: number }) => b.y > 960 && b.y < 1110 && t.flipperR.px - b.x > -20 && t.flipperR.px - b.x < 100 },
+    ...t.extraFlippers.map((x) => ({ f: x.f, left: x.side < 0, zone: (b: { x: number; y: number }) => Math.abs(b.x - (x.f.px + x.f.tipX) / 2) < 40 && b.y > x.f.py - 45 && b.y < x.f.py + 25 })),
   ];
   for (const { f, left, zone } of all) {
     // Like a player, cradle briefly, then drop the flipper long enough for the ball to roll into a flip.

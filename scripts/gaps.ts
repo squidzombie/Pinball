@@ -1,7 +1,7 @@
 // Clearances on the Cyber Psychosis playfield: every place the ball has to fit through.
 // Gaps are surface to surface (ball radius 14, so a ball needs 28).
 // Used by the art template (which draws a ball at each gap) and printed by `npm run template`.
-import { FLOOR, type Circle, type Segment, type World } from '../src/engine/physics';
+import { FLOOR, type Circle, type Flipper, type Segment, type World } from '../src/engine/physics';
 import * as L from '../src/game/tables/psychosis-layout';
 import type { P } from '../src/game/tables/geom';
 
@@ -41,7 +41,7 @@ function polyGap(p: P[], q: P[]): [P, P] {
   return best;
 }
 
-export function measureGaps(t: { world: World; bumpers: Circle[]; captive: { c: Circle } }): Gap[] {
+export function measureGaps(t: { world: World; bumpers: Circle[]; captive: { c: Circle }; extraFlippers: { f: Flipper }[] }): Gap[] {
   const w = t.world;
   const out: Gap[] = [];
   const push = (name: string, a: P, b: P, minus = 0) => out.push({ name, a, b, gap: dist(a, b) - minus });
@@ -107,6 +107,15 @@ export function measureGaps(t: { world: World; bumpers: Circle[]; captive: { c: 
   const [oa, ob] = polyGap(leg, L.ARCH_OUTER.slice(0, 20));
   push('Back Alley orbit lane', oa, ob);
   push('Black Market mouth', L.MARKET.entry[0], L.MARKET.entry[1]);
+  push('Upper playfield lane', [L.UPPER_LANE_X[0], 450], [L.UPPER_LANE_X[1], 450]);
+  push('Upper playfield gate', L.UPPER_GATE[0], L.UPPER_GATE[1]);
+  const [ul, ur] = [t.extraFlippers[0].f, t.extraFlippers[1].f];
+  push('Upper flippers, tip to tip at rest', [ul.tipX + ul.r1, ul.tipY], [ur.tipX - ur.r1, ur.tipY]);
+  const [da, db] = polyGap(L.UPPER_DRAIN_FLOOR.slice(2), L.UPPER_DRAIN_ROOF);
+  push('Upper playfield drain lane, narrowest', da, db);
+  push('Upper playfield top exit', [L.UPPER_EXIT_X[0], 130], [L.UPPER_EXIT_X[1], 130]);
+  const [ka, kb] = polyGap([L.TUMBLER_BLOCK[0]], L.ARCH_INNER_L);
+  push('Tumblers to the orbit wall', ka, kb);
   push('Skyway mouth (above the flare)', L.SKYWAY.walls.left[4], L.SKYWAY.walls.right[4]);
   push('Reactor funnel (drops down)', L.REACTOR.mouthL, L.REACTOR.mouthR);
   return out;

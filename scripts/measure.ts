@@ -40,6 +40,9 @@ wrap('hitStandup', (a) => `letter ${L.BREACH_LETTERS[a[0]]}`);
 wrap('hitFlank', (a) => (a[0] === 0 ? 'SAFE' : 'VENT'));
 wrap('camLane', (a) => `CAM${a[0] + 1}`);
 wrap('rollover', (a) => ['L-OUT', 'L-IN', 'R-IN', 'R-OUT'][a[0]]);
+wrap('upperIn', () => 'upper');
+wrap('upperOut', (a) => `upper ${a[0]}`);
+wrap('hitTumbler', (a) => `tumbler ${a[0] + 1}`);
 const sling = w.segments.filter((s: any) => s.tag === 'sling');
 for (const s of sling) {
   const o = s.onHit;
@@ -57,13 +60,14 @@ function reset(dropsDown = false) {
   m.locking = null;
   m.lockLit = false;
   m.alleyLoopOpen = false;
+  m.vaultOpen = 0;
   m.drops.forEach((d: any) => {
     d.down = dropsDown;
     d.seg.enabled = !dropsDown;
   });
   m.timers = [];
   ev = [];
-  for (const f of [m.flipperL, m.flipperR]) {
+  for (const f of [m.flipperL, m.flipperR, ...m.extraFlippers.map((x: any) => x.f)]) {
     f.pressed = false;
     f.angle = f.restAngle;
   }
@@ -119,7 +123,7 @@ interface Flip {
   s: number;
   k: string;
 }
-const SHOTS = ['alley', 'breach', 'market', 'skyway', 'reactor'];
+const SHOTS = ['alley', 'breach', 'market', 'skyway', 'reactor', 'upper'];
 /** The first shot made, else the first target or the first wall the ball meets. */
 function follow(b: Ball, max = 3): string {
   let firstHit = '';
@@ -186,7 +190,7 @@ const say = (s = '') => {
 say(`Ball diameter: ${L.BALL_R * 2} units. Pop bumper ring: ${L.BUMPER_R * 2} units across (${((L.BUMPER_R * 2) / 28).toFixed(1)} balls), skirt ${L.BUMPER_SKIRT_R * 2} (${((L.BUMPER_SKIRT_R * 2) / 28).toFixed(1)} balls).`);
 
 const F: Record<string, Flip[]> = {};
-if (want('windows') || want('ramps') || want('alley') || want('breach')) {
+if (want('windows') || want('ramps') || want('alley') || want('breach') || want('upper')) {
   F.left = [...sweep(m.flipperL, [93, 900], 'cradle'), ...sweep(m.flipperL, [93, 900], 'live')];
   F.right = [...sweep(m.flipperR, [462, 900], 'cradle'), ...sweep(m.flipperR, [462, 900], 'live')];
   F.leftDown = [...sweep(m.flipperL, [93, 900], 'cradle', true), ...sweep(m.flipperL, [93, 900], 'live', true)];
@@ -277,6 +281,19 @@ if (want('alley')) {
   }
   say(`up the orbit but short of the top (${back.length} flips): ${tally(back) || 'none'}`);
   trials(
+    'vault door open',
+    F.right,
+    'alley',
+    (b) => {
+      for (let t = 0; t < 4 && !ev.includes('upper'); t += DT) {
+        m.vaultOpen = 5;
+        step(b);
+      }
+      return ev.includes('upper') ? 'into the upper playfield' : `missed (${ev.join('>') || 'nothing'})`;
+    },
+    () => (m.vaultOpen = 5),
+  );
+  trials(
     'loop held open',
     F.right,
     'alley',
@@ -358,6 +375,69 @@ if (want('breach')) {
       (after[fl.k] ??= []).push(arrive(b));
     }
     for (const [k, v] of Object.entries(after).sort()) say(`  from the ${side} flipper, ${k}: ${tally(v)}`);
+  }
+}
+
+if (want('upper')) {
+  say('\n## Upper playfield');
+  // The way in: 12 right-flipper launches that make it, followed until the ball leaves again.
+  const ups = pick(F.right, 'upper');
+  say(`Way in from the right flipper: ${ups.length ? 'see the windows table' : 'never made'}`);
+  // Inside, with nobody flipping, and with a player who flips whenever the ball nears a bat.
+  const upper = m.extraFlippers.map((x: any) => x.f) as Flipper[];
+  for (const play of [false, true]) {
+    const res: string[] = [];
+    const times: number[] = [];
+    const tumblers: number[] = [];
+    for (let i = 0; i < 12; i++) {
+      reset();
+      const b = m.addBall(70 + (i % 4) * 9, L.UPPER_LANE_TOP_Y - 20, 30 + i * 25, -500 - i * 60);
+      let t = 0;
+      let out = '';
+      for (; t < 30 && !out; t += DT) {
+        if (play)
+          for (const f of upper) {
+            const near = Math.hypot(b.x - (f.px + f.tipX) / 2, b.y - (f.py + f.tipY) / 2) < 34 && b.vy > -50;
+            f.pressed = near || (f.pressed && Math.random() < 0.97);
+          }
+        step(b);
+        out = ev.find((e) => e === 'upper top' || e === 'upper drain') ?? '';
+      }
+      for (const f of upper) f.pressed = false;
+      times.push(t);
+      tumblers.push(ev.filter((e) => e.startsWith('tumbler')).length);
+      if (!out) {
+        res.push(`still inside at 30 s (${b.x.toFixed(0)},${b.y.toFixed(0)})`);
+        continue;
+      }
+      const end = arrive(b, 25);
+      res.push(`${out === 'upper top' ? 'out the top' : 'drained out the side'}${out === 'upper top' ? (ev.some((e) => e.startsWith('CAM')) ? ' → CAM lanes' : ' → no CAM lane') : ''} → ${end}`);
+    }
+    const avg = (xs: number[]) => (xs.reduce((a, c) => a + c, 0) / xs.length).toFixed(1);
+    say(`${play ? 'Flipping' : 'Not flipping'} (12 balls dropped in at the gate): ${tally(res)}; ${avg(times)} s inside on average, ${avg(tumblers)} tumbler hits`);
+  }
+  // Shots off the upper flippers: cradle on each, flip at each timing, see what it reaches.
+  for (const [k, f] of upper.entries()) {
+    const out: string[] = [];
+    for (let delay = 0.1; delay < 0.7; delay += 0.004) {
+      reset();
+      const b = m.addBall(f.px + (k ? -12 : 12), f.py - 30, 0, 50);
+      f.pressed = true;
+      for (let t = 0; t < 1.5; t += DT) w.step(DT);
+      f.pressed = false;
+      let flipped = false;
+      for (let t = 0; t < 2.5; t += DT) {
+        if (t > delay && !flipped) {
+          f.pressed = true;
+          flipped = true;
+        }
+        step(b);
+        if (ev.some((e) => e === 'upper top' || e === 'upper drain' || e.startsWith('tumbler'))) break;
+      }
+      f.pressed = false;
+      out.push(ev.find((e) => e === 'upper top' || e.startsWith('tumbler')) ?? (ev.includes('upper drain') ? 'drain' : 'nothing'));
+    }
+    say(`Cradle-and-flip off the upper ${k ? 'right' : 'left'} flipper (${out.length} timings): ${tally(out)}`);
   }
 }
 

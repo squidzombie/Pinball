@@ -1,4 +1,4 @@
-import { FLOOR, RAMP, RAMP2, LineSensor, ZoneSensor, type Ball, type Circle, type Segment } from '../../engine/physics';
+import { FLOOR, RAMP, RAMP2, Flipper, LineSensor, ZoneSensor, type Ball, type Circle, type Segment } from '../../engine/physics';
 import { sound } from '../../engine/audio';
 import { drawGlow } from '../../engine/fx';
 import type { DMD } from '../../engine/dmd';
@@ -6,7 +6,7 @@ import type { Game } from '../game';
 import { fmt, short } from '../format';
 import { Blackout, MODES, Rage, type Mode, type ModeDef, type Shot, type Switch } from '../modes';
 import { buildLowerSection, poly, type LowerSection, type P } from './geom';
-import { drawBallAt, lift, type Lamp, type LampState } from './draw';
+import { drawBallAt, type Lamp, type LampState } from './draw';
 import * as L from './psychosis-layout';
 import { drawDrop, drawImpound, drawReactorEye, drawSpinner, drawStandup, drawTank, paintDynamic, paintRamps, paintStatic } from './psychosis-art';
 import { Table, type Sprite } from './table';
@@ -34,6 +34,12 @@ const RAMP_LAYER = [RAMP, RAMP2];
 /** Everything a ball's `tags.ramp` can point at (1-based): the two ramps, then the Back Alley's exit chute. */
 const RAMP_DEFS = [...L.RAMPS, L.ALLEY_EXIT];
 const EXIT_RAMP = RAMP_DEFS.length;
+/** Normal of the shooter gate, pointing up out of the shooter lane. */
+const GATE_N: P = (() => {
+  const [[ax, ay], [bx, by]] = L.GATE;
+  const l = Math.hypot(bx - ax, by - ay);
+  return [(by - ay) / l, -(bx - ax) / l];
+})();
 
 interface Drop {
   seg: Segment;
@@ -42,6 +48,14 @@ interface Drop {
 }
 
 type Multiball = 'impound' | 'payload' | 'blackout' | null;
+
+/** A knocked-out camera reboots after this; after CAMERAS DOWN they all stay dark this long. */
+const CAMERA_REBOOT = 12;
+const CAMERAS_DOWN_TIME = 6;
+/** How long CAMERAS DOWN holds the vault door open. */
+const VAULT_OPEN_TIME = 20;
+/** Which camera each pop bumper sits under (bumpers are listed left, right, bottom). */
+const BUMPER_CAMERA = [0, 2, 1];
 
 const ITEMS = [
   { key: 'time', label: 'TIME', name: '+15 SECONDS', price: 30_000 },
@@ -58,13 +72,23 @@ export class Psychosis extends Table {
   diverter: Segment;
   /** Held open (combos, some modes): the Back Alley loops round to the Black Market's wire. */
   alleyLoopOpen = false;
+  /** The vault door on the orbit into the upper playfield, and how long it stays open. */
+  vaultDoor: Segment[] = [];
+  vaultDeflector!: Segment;
+  vaultOpen = 0;
   bumpers: Circle[] = [];
   drops: Drop[] = [];
   standups: Segment[] = [];
   /** SAFE (under the Breach) and VENT (under the Reactor). */
   flanks: Segment[] = [];
+  /** The three standups at the back of the upper playfield. */
+  tumblers: Segment[] = [];
+  private tumblerFlash = [0, 0, 0];
   private flankFlash = [0, 0];
   private camFlash = [0, 0, 0];
+  /** Seconds each camera stays dark (0 = watching), and the CAMERAS DOWN timer. */
+  cams = [0, 0, 0];
+  camerasDown = 0;
   /** Captive ball in the Reactor channel: position along the axis and speed. */
   captive: { c: Circle; s: number; v: number };
   private coreFlash = 0;
@@ -132,7 +156,13 @@ export class Psychosis extends Table {
     poly(w, L.PLUNGER_WALL, { restitution: 0.3 });
     w.seg(L.GATE[0][0], L.GATE[0][1], L.GATE[1][0], L.GATE[1][1], { oneWay: true, restitution: 0.3 });
     poly(w, L.ARCH_OUTER, { restitution: 0.35, friction: 0.02 });
-    poly(w, L.ARCH_INNER_L, { restitution: 0.35, friction: 0.02 });
+    for (const part of L.ARCH_INNER_L_PARTS) poly(w, part, { restitution: 0.35, friction: 0.02 });
+    // The vault door into the upper playfield: shut, it's orbit wall; open, a deflector turns the Back Alley into it
+    this.vaultDoor = poly(w, L.VAULT_DOOR, { restitution: 0.35, friction: 0.02 });
+    this.vaultDeflector = w.seg(L.VAULT_DEFLECTOR[0][0], L.VAULT_DEFLECTOR[0][1], L.VAULT_DEFLECTOR[1][0], L.VAULT_DEFLECTOR[1][1], { restitution: 0.3, friction: 0.02 });
+    this.vaultDeflector.enabled = false;
+    w.seg(L.UPPER_EXIT_FLAP[0][0], L.UPPER_EXIT_FLAP[0][1], L.UPPER_EXIT_FLAP[1][0], L.UPPER_EXIT_FLAP[1][1], { oneWay: true, restitution: 0.3 });
+    poly(w, L.ARCH_INNER_NEST, { restitution: 0.35, friction: 0.02 });
     poly(w, L.ARCH_INNER_R, { restitution: 0.35, friction: 0.02 });
     poly(w, L.ORBIT_FLARE, { restitution: 0.4 });
     w.circle(L.ORBIT_POST[0], L.ORBIT_POST[1], 5, { restitution: 0.6 });
@@ -149,8 +179,9 @@ export class Psychosis extends Table {
     poly(w, L.NEST_LEFT, { restitution: 0.35 });
     poly(w, L.NEST_FLOOR, { restitution: 0.35 });
     poly(w, L.NEST_RIGHT, { restitution: 0.35 });
-    poly(w, L.EXIT_LANE_L, { restitution: 0.35 });
-    poly(w, L.EXIT_LANE_R, { restitution: 0.35 });
+    // soft walls in the exit lane so a ball leaves its chute dropping straight
+    poly(w, L.EXIT_LANE_L, { restitution: 0.15 });
+    poly(w, L.EXIT_LANE_R, { restitution: 0.15 });
     w.seg(L.EXIT_GATE[0][0], L.EXIT_GATE[0][1], L.EXIT_GATE[1][0], L.EXIT_GATE[1][1], { oneWay: true, restitution: 0.3 });
 
     // Guards at the side lanes
@@ -162,8 +193,20 @@ export class Psychosis extends Table {
     [L.SAFE, L.VENT].forEach(([a, b], i) => {
       this.flanks.push(w.seg(a[0], a[1], b[0], b[1], { restitution: 0.35, onHit: (h) => h.speed > 70 && this.hitFlank(i) }));
     });
-    poly(w, L.SAFE_WALL, { restitution: 0.4 });
     poly(w, L.BANK_R_WALL, { restitution: 0.4 });
+
+    // The upper playfield: its entrance lane, gate, guides, drain, the tumblers and two half-size flippers
+    poly(w, L.UPPER_LANE_WALL, { restitution: 0.35, friction: 0.02 });
+    w.seg(L.UPPER_GATE[0][0], L.UPPER_GATE[0][1], L.UPPER_GATE[1][0], L.UPPER_GATE[1][1], { oneWay: true, restitution: 0.3 });
+    poly(w, L.UPPER_GUIDE_L, { restitution: 0.3 });
+    poly(w, L.UPPER_GUIDE_R, { restitution: 0.3 });
+    poly(w, L.UPPER_DRAIN_FLOOR, { restitution: 0.3 });
+    poly(w, L.UPPER_DRAIN_ROOF, { restitution: 0.3 });
+    poly(w, [L.TUMBLER_BLOCK[1], ...L.TUMBLER_BLOCK.slice(2)], { restitution: 0.35 });
+    poly(w, [L.TUMBLER_BLOCK[L.TUMBLER_BLOCK.length - 1], L.TUMBLER_BLOCK[0]], { restitution: 0.35 });
+    L.TUMBLERS.forEach(([a, b], i) => {
+      this.tumblers.push(w.seg(a[0], a[1], b[0], b[1], { restitution: 0.35, onHit: (h) => h.speed > 60 && this.hitTumbler(i) }));
+    });
 
     // Breach: cup, throat, and the two standup banks either side of the mouth
     poly(w, L.BREACH_CUP, { restitution: 0.25 });
@@ -240,12 +283,7 @@ export class Psychosis extends Table {
     const [ca, cb] = L.CHUTE.entry;
     w.lineSensors.push(
       new LineSensor(ca[0], ca[1], cb[0], cb[1], (b, dir) => {
-        if (dir < 0 && b.layer === FLOOR) {
-          b.layer = RAMP2;
-          b.tags.ramp = EXIT_RAMP;
-          b.tags.ri = 0;
-          b.tags.made = 1;
-        }
+        if (dir < 0 && b.layer === FLOOR) this.intoChute(b);
       }),
     );
 
@@ -256,6 +294,15 @@ export class Psychosis extends Table {
     });
     this.flipperL = this.lower.left;
     this.flipperR = this.lower.right;
+    const U = L.UPPER_FLIPPER;
+    for (const [side, x] of [
+      [-1, U.xl],
+      [1, U.xr],
+    ] as const) {
+      const f = side < 0 ? new Flipper(x, U.y, U.len, U.rest, U.up, U.r0, U.r1) : new Flipper(x, U.y, U.len, Math.PI - U.rest, Math.PI - U.up, U.r0, U.r1);
+      w.flippers.push(f);
+      this.extraFlippers.push({ f, side });
+    }
 
     L.BUMPERS.forEach(([x, y]) => {
       const c = w.circle(x, y, L.BUMPER_R, { restitution: 0.6, kick: 900, kickThreshold: 10, onHit: (h) => this.hitBumper(c, h.ball) });
@@ -267,6 +314,10 @@ export class Psychosis extends Table {
       w.lineSensors.push(new LineSensor(pts[0][0], pts[0][1], pts[1][0], pts[1][1], fn, layers));
     // The Back Alley counts once a ball is over the top, heading for the CAM lanes.
     line(L.ALLEY_SWITCH, (b, dir) => dir > 0 && this.alley(b));
+    line(L.UPPER_SWITCH, (_b, dir) => dir > 0 && this.upperIn());
+    line([L.VAULT_DOOR[0], L.VAULT_DOOR[L.VAULT_DOOR.length - 1]], (_b, dir) => dir < 0 && this.upperIn());
+    line(L.UPPER_EXIT_SWITCH, (_b, dir) => dir > 0 && this.upperOut('top'));
+    line(L.UPPER_DRAIN_SWITCH, (_b, dir) => dir > 0 && this.upperOut('drain'));
     L.CAM_LANES.forEach(([x0, x1], i) =>
       line(
         [
@@ -298,11 +349,12 @@ export class Psychosis extends Table {
 
     this.shooter = { x: 557.5, y: 1165, minX: 536, maxX: 580, minY: 700 };
     this.flashers = [
-      { x: 196, y: 92, r: 10, z: 46, color: INS.red, level: 0 },
+      // a beacon on the Impound cage, one on the A-C-H bank's backing, the Reactor's eye, and one on the vault's tumbler block
+      { x: L.IMPOUND_BOX[1][0], y: L.IMPOUND_BOX[1][1], r: 7, z0: 40, z: 47, color: INS.red, level: 0 },
       { x: 540, y: 400, r: 11, z: 70, color: INS.yellow, level: 0 },
-      { x: L.BREACH[0] - 26, y: L.BREACH[1] - 22, r: 9, z: 40, color: INS.red, level: 0 },
-      { x: L.REACTOR.eye[0], y: L.REACTOR.eye[1], r: 12, z: 36, color: INS.red, level: 0 },
-      { x: 400, y: 138, r: 9, z: 46, color: INS.orange, level: 0 },
+      { x: L.BANK_R_BACK[0], y: L.BANK_R_BACK[1], r: 8, z0: 28, z: 36, color: INS.red, level: 0 },
+      { x: L.REACTOR.eye[0], y: L.REACTOR.eye[1], r: 12, z0: 34, z: 36, color: INS.red, level: 0 },
+      { x: L.TUMBLER_TOP[0], y: L.TUMBLER_TOP[1], r: 9, z0: 24, z: 33, color: INS.orange, level: 0 },
     ];
     this.buildLamps();
   }
@@ -330,9 +382,10 @@ export class Psychosis extends Table {
     const mm = L.MARKET.path[0];
     stack('market', mm, L.unit(L.sub(mm, [L.CX, 1040])));
     stack('reactor', L.REACTOR_MOUTH, L.REACTOR_AXIS, [44, 70, 92]);
-    // The Skyway's stack runs up its own lane, with the lock insert at the top.
-    stack('skyway', [512.5, 600], [0, -1], [-86, -26, 4]);
-    lamp({ id: 'lock:skyway', kind: 'rect', x: 512.5, y: 568, w: 38, h: 13, color: INS.orange, label: 'LOCK', labelSize: 8, state: () => (this.lockLit ? 3 : 0) });
+    // The Skyway's stack sits out in front of its mouth like the others; the lock insert is just inside the lane.
+    const sm: P = [512.5, 712];
+    stack('skyway', sm, L.unit(L.sub(sm, [300, 1000])), [40, 70, 94]);
+    lamp({ id: 'lock:skyway', kind: 'rect', x: 512.5, y: 684, w: 34, h: 12, color: INS.orange, label: 'LOCK', labelSize: 7.5, state: () => (this.lockLit ? 3 : 0) });
 
     // SAFE and VENT inserts in front of their targets
     [L.SAFE, L.VENT].forEach(([a, b], i) => {
@@ -353,8 +406,8 @@ export class Psychosis extends Table {
         kind: 'tri',
         x: at[0],
         y: at[1],
-        w: 17,
-        h: 15,
+        w: 14,
+        h: 13,
         angle: dirAngle([-n[0], -n[1]]),
         color: INS.red,
         tint: () => (this.mode?.litStandup(idx) ? this.mode.color : INS.red),
@@ -366,8 +419,18 @@ export class Psychosis extends Table {
 
     // CAM 1-3: a light in each top lane
     L.CAM_LANES.forEach(([x0, x1], i) =>
-      lamp({ id: `cam:${i + 1}`, kind: 'circle', x: (x0 + x1) / 2, y: 113, w: 15, color: INS.red, label: String(i + 1), labelSize: 8, state: () => (this.camFlash[i] > 0 ? 3 : 0) }),
+      lamp({ id: `cam:${i + 1}`, kind: 'circle', x: (x0 + x1) / 2, y: 113, w: 15, color: INS.red, label: String(i + 1), labelSize: 8, state: () => (this.camFlash[i] > 0 ? 3 : this.cams[i] > 0 ? 1 : 0) }),
     );
+
+    // The tumblers' lights, in front of each standup, pointing at it
+    L.TUMBLERS.forEach(([a, b], i) => {
+      const mid = L.along(a, b, 0.5);
+      const n = L.unit([-(b[1] - a[1]), b[0] - a[0]]);
+      const at = L.add(mid, n, 17);
+      lamp({ id: `tumbler:${i + 1}`, kind: 'tri', x: at[0], y: at[1], w: 14, h: 12, angle: dirAngle([-n[0], -n[1]]), color: INS.red, state: () => (this.tumblerFlash[i] > 0 ? 3 : 0) });
+    });
+    // The upper playfield's way in: an arrow up its lane
+    lamp({ id: 'arrow:upper', kind: 'arrow', x: (L.UPPER_LANE_X[0] + L.UPPER_LANE_X[1]) / 2, y: L.UPPER_LANE_MOUTH_Y - 34, w: 22, h: 30, angle: 0, color: INS.white, state: () => (this.vaultOpen > 0 ? 2 : 0) });
 
     // Reactor drop lamps
     const ra = L.REACTOR_AXIS;
@@ -376,15 +439,17 @@ export class Psychosis extends Table {
       lamp({ id: `drop:${i + 1}`, kind: 'rect', x: m[0], y: m[1], w: 16, h: 7, angle: Math.atan2(ra[0], -ra[1]), color: INS.yellow, state: () => (this.drops[i].down ? 1 : 0) });
     });
     // Lock: the warning triangle on the Impound
-    lamp({ id: 'lock:impound', kind: 'tri', x: 226, y: 112 - lift(36), w: 16, h: 14, color: INS.red, state: () => (this.lockLit ? 3 : this.multiball === 'impound' ? 2 : 0) });
+    const [ix0, iy0] = L.IMPOUND_BOX[0];
+    const [ix1] = L.IMPOUND_BOX[1];
+    lamp({ id: 'lock:impound', kind: 'rect', x: (ix0 + ix1) / 2 + 2, y: iy0 - 38, w: 28, h: 11, color: INS.red, label: 'IMPOUND', labelSize: 5.5, state: () => (this.lockLit ? 3 : this.multiball === 'impound' ? 2 : 0) });
 
     // Black Market menu, under the market's stack: the item on offer blinks; the one you can afford is solid
     ITEMS.forEach((it, i) =>
       lamp({
         id: `shop:${it.key}`,
         kind: 'rect',
-        x: 214 + i * 25,
-        y: 662,
+        x: 210 + i * 25,
+        y: 664,
         w: 23,
         h: 12,
         color: INS.yellow,
@@ -489,7 +554,7 @@ export class Psychosis extends Table {
     if (s === 'breach') return this.modesLit > 0 && this.canStartMode() && this.available().length ? 2 : 0;
     if (s === 'reactor') return this.blackoutLit && this.canStartMode() ? 3 : this.dropsDown() ? 2 : 0;
     if (s === 'skyway') return this.lockLit ? 2 : this.comboTimer > 0 ? 2 : 0;
-    if (s === 'alley') return this.comboTimer > 0 ? 2 : 0;
+    if (s === 'alley') return this.vaultOpen > 0 ? 3 : this.comboTimer > 0 ? 2 : 0;
     if (s === 'market') return this.offer() && this.cash >= this.offer()!.price ? 2 : 0;
     return 0;
   }
@@ -518,6 +583,7 @@ export class Psychosis extends Table {
   // ---------------------------------------------------------------- game flow hooks
 
   resetForBall() {
+    this.vaultOpen = 0;
     this.combo = 0;
     this.comboTimer = 0;
     this.selecting = 0;
@@ -640,12 +706,66 @@ export class Psychosis extends Table {
     sound.target();
   }
 
-  /** A CAM lane under the top of the arch. Plain switch for now: the lane rules come with Phase 4. */
+  /** A CAM lane under the top of the arch: rolling through it knocks out the camera above it. */
   private camLane(i: number) {
     this.sw('rollover');
     this.game.addScore(5_000, (L.CAM_LANES[i][0] + L.CAM_LANES[i][1]) / 2, L.CAM_Y);
     this.camFlash[i] = 0.6;
+    this.knockCamera(i);
     sound.lane();
+  }
+
+  /**
+   * The three security cameras over the CAM lanes. A camera goes dark when its lane is rolled or
+   * the pop bumper under it is hit, and reboots after a while. All three dark at once is
+   * CAMERAS DOWN; then they all reboot together.
+   */
+  private knockCamera(i: number) {
+    if (this.camerasDown > 0) return;
+    const fresh = this.cams[i] <= 0;
+    this.cams[i] = CAMERA_REBOOT;
+    if (fresh) sound.tick();
+    if (this.cams.every((c) => c > 0)) {
+      const g = this.game;
+      this.camerasDown = CAMERAS_DOWN_TIME;
+      this.cams = this.cams.map(() => CAMERAS_DOWN_TIME);
+      g.addScore(100_000);
+      this.cash += 25_000;
+      g.show('CAMERAS DOWN', 'THE VAULT IS OPEN', 1.6, true);
+      // For now the vault door opens for the next Back Alley shot (the full rule comes with Phase 4).
+      this.vaultOpen = VAULT_OPEN_TIME;
+      this.flash(4, 0.8);
+      sound.award();
+    }
+  }
+
+  /** The ball has gone into the upper playfield: up its lane, or through the vault door off the Back Alley. */
+  private upperIn() {
+    this.vaultOpen = 0;
+    this.sw('rollover');
+    this.game.addScore(50_000, L.UPPER_LANE_X[0] + 18, L.UPPER_LANE_TOP_Y);
+    this.flash(0, 0.6);
+    sound.orbit();
+  }
+
+  /** Out of the upper playfield: up through the flap into the arch, or down its drain. */
+  private upperOut(way: 'top' | 'drain') {
+    if (way === 'top') {
+      this.sw('rollover');
+      this.game.addScore(100_000, (L.UPPER_EXIT_X[0] + L.UPPER_EXIT_X[1]) / 2, 110);
+      this.flash(0, 0.8);
+      sound.ramp();
+    } else sound.lane();
+  }
+
+  /** The tumblers: three standups at the back of the upper playfield. */
+  private hitTumbler(i: number) {
+    this.tumblerFlash[i] = 0.6;
+    this.sw('standup');
+    const [x, y] = L.along(L.TUMBLERS[i][0], L.TUMBLERS[i][1], 0.5);
+    this.game.addScore(25_000, x, y);
+    this.game.fx.sparks(x, y, INS.red, 8, 300);
+    sound.target();
   }
 
   private rampMade(s: 'skyway' | 'market', b: Ball) {
@@ -697,6 +817,7 @@ export class Psychosis extends Table {
     g.fx.sparks(c.x - (c.x - b.x) * 0.5, c.y - (c.y - b.y) * 0.5, INS.red, 10, 450);
     g.doShake(2);
     sound.bumper();
+    this.knockCamera(BUMPER_CAMERA[this.bumpers.indexOf(c)]);
   }
 
   private hitDrop(i: number, speed: number) {
@@ -1155,7 +1276,22 @@ export class Psychosis extends Table {
     return RAMP_DEFS[idx].z[b.tags.ri ?? 0] ?? 0;
   }
 
+  /** Off the floor and into the chute down the right leg to the market's wire. */
+  private intoChute(b: Ball) {
+    b.layer = RAMP2;
+    b.tags.ramp = EXIT_RAMP;
+    b.tags.ri = 0;
+    b.tags.made = 1;
+  }
+
   override substep(dt: number) {
+    // A weak plunge that clears the shooter gate but falls back short of the chute's entry would
+    // sit in the corner between the gate and the orbit's wall: it drops into the chute instead.
+    const [ga] = L.GATE;
+    for (const b of this.world.balls) {
+      if (b.layer !== FLOOR || b.vy <= 0 || b.x < L.CHUTE.entry[0][0] || b.y < L.CHUTE.entry[0][1] || b.y > ga[1]) continue;
+      if ((b.x - ga[0]) * GATE_N[0] + (b.y - ga[1]) * GATE_N[1] > 0) this.intoChute(b);
+    }
     // Captive ball: rolls up its channel when hit, back down under gravity.
     const cap = this.captive;
     const R = L.REACTOR;
@@ -1201,7 +1337,13 @@ export class Psychosis extends Table {
     for (let i = 0; i < 6; i++) this.standupWobble[i] = Math.max(0, this.standupWobble[i] - dt * 4);
     for (let i = 0; i < 2; i++) this.flankFlash[i] = Math.max(0, this.flankFlash[i] - dt);
     for (let i = 0; i < 3; i++) this.camFlash[i] = Math.max(0, this.camFlash[i] - dt);
+    for (let i = 0; i < 3; i++) this.tumblerFlash[i] = Math.max(0, this.tumblerFlash[i] - dt);
+    this.cams = this.cams.map((c) => Math.max(0, c - dt));
+    this.camerasDown = Math.max(0, this.camerasDown - dt);
     this.diverter.enabled = !this.alleyLoopOpen;
+    this.vaultOpen = Math.max(0, this.vaultOpen - dt);
+    for (const s of this.vaultDoor) s.enabled = this.vaultOpen <= 0;
+    this.vaultDeflector.enabled = this.vaultOpen > 0;
     for (const d of this.drops) d.anim += ((d.down ? 1 : 0) - d.anim) * Math.min(1, dt * 18);
     for (const x of this.timers) x.t -= dt;
     const due = this.timers.filter((x) => x.t <= 0);
@@ -1367,7 +1509,7 @@ export class Psychosis extends Table {
   }
 
   protected override drawDynamic(ctx: CanvasRenderingContext2D) {
-    paintDynamic(ctx, this.time, this.cameraTarget(), this.plungerPull);
+    paintDynamic(ctx, this.time, this.cams.map((c) => c <= 0), this.cameraTarget(), this.plungerPull, this.vaultOpen > 0);
     // The Breach glows when it has something to give.
     if (this.shotLamp('breach')) drawGlow(ctx, L.BREACH[0], L.BREACH[1], 36, this.shotTint('breach'), 0.35 + 0.3 * Math.sin(this.time * 6));
   }
@@ -1394,6 +1536,9 @@ export class Psychosis extends Table {
       const lit = this.letters[i] || !!this.mode?.litStandup(i);
       out.push({ y: Math.max(s.ay, s.by), draw: (ctx) => drawStandup(ctx, [s.ax + wob, s.ay], [s.bx + wob, s.by], lit) });
     });
+    this.tumblers.forEach((s, i) => {
+      out.push({ y: Math.max(s.ay, s.by), draw: (ctx) => drawStandup(ctx, [s.ax, s.ay], [s.bx, s.by], this.tumblerFlash[i] > 0) });
+    });
     this.flanks.forEach((s, i) => {
       out.push({ y: Math.max(s.ay, s.by), draw: (ctx) => drawStandup(ctx, [s.ax, s.ay], [s.bx, s.by], this.flankFlash[i] > 0) });
     });
@@ -1409,7 +1554,7 @@ export class Psychosis extends Table {
         drawReactorEye(ctx, heat, glow);
       },
     });
-    out.push({ y: 150, draw: (ctx) => drawImpound(ctx, this.locked.length, this.time) });
+    out.push({ y: L.IMPOUND_BOX[2][1], draw: (ctx) => drawImpound(ctx, this.locked.length, this.time) });
   }
 
   protected override drawTop(ctx: CanvasRenderingContext2D) {

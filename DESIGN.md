@@ -1,10 +1,13 @@
 # Cyber Psychosis — Design
 
-Status: **layout revision built for your review (30 October 2026).** The table is now a classic
-fan with only the two lower flippers. The geometry, its measurements and this document are done;
-**no rules or art work has started.** The phone build is now this layout for testing
-(version 5; the hotfix build is version 4 in its history). Where the rule sheet differs from the code, the entry says
-**(change)**; nearly all of those come with Phase 4.
+Status: **second layout round built for your review (30 October 2026).** The fan from the first
+round now has an upper playfield, **THE VAULT**, in the old dead area at the top left, with its
+own pair of small flippers. The Skyway is rerouted to make room, the Impound is a cage over the
+orbit, and three security cameras pan over the CAM lanes. The geometry, its measurements and this
+document are done. **Rules beyond the cameras and the vault door, and the art pass, haven't
+started.** The phone build is this layout (version 6; the fan is version 5 in its history). Where
+the rule sheet differs from the code, the entry says **(change)**; nearly all of those come with
+Phase 4.
 
 The art target is the concept sketch, saved as [`reference/sketch.png`](reference/sketch.png).
 The art template is in [`art/template/`](art/template/), regenerated from the new layout. The
@@ -19,7 +22,43 @@ shot. `npm run template` regenerates the template and prints every clearance. Ba
 
 ---
 
-## 0. The layout revision (30 October 2026)
+## 0. The layout revisions (30 October 2026)
+
+### Second round: the upper playfield, the cameras and a visual clean-up
+
+You said the top left still felt dead, and asked for its own small game up there. You also
+flagged the pop bumpers, the lights, the Reactor and the camera. What changed:
+
+- **THE VAULT (upper playfield)** fills the old sealed yard between the orbit, the Breach and the
+  pops. Details are at the end of section 1.
+  - **Ways in:** a lane up the left side beside the B-R-E bank, through a one-way gate. Or the
+    **vault door**: a stretch of the orbit's inner wall that swings across the orbit, so a Back
+    Alley shot goes straight in.
+  - **Inside:** two half-size flippers on the main buttons, and three **tumbler** standups on a
+    raised block at the back.
+  - **Ways out:** out the top through a one-way flap into the arch, then the CAM lanes. Or down
+    past its flippers, out the side along under the pops, into the pop exit lane and the right
+    inlane.
+- **Cameras:** three, one over each CAM lane, panning their beams down the table. A CAM lane or
+  the pop bumper below it knocks that camera out for 12 s. With all three out at once: **CAMERAS
+  DOWN**, which opens the vault door for 20 s.
+- **The Skyway** now runs straight across above the Breach and down the left side, instead of
+  climbing through the top left. It's easier: 19% of cradled flips, up from 11%.
+- **The Impound** is a raised cage over the orbit lane on the left, with a red beacon. The ball
+  you circled in green was a locked ball: the old box art was drawn at stale coordinates.
+- **SAFE** moved onto the face of the vault lane's wall, below the B-R-E bank.
+- **Visual fixes:**
+  - The pop bumpers are redrawn as round canisters whose tops match the table's perspective.
+  - The bars between them are gone.
+  - The Reactor is a round drum with its eye in the middle.
+  - The flashers stand on things: the Impound cage, the A-C-H bank and the tumbler block. Before,
+    they were posts in the middle of lanes.
+  - The SKYWAY floor label that sat under the Black Market's wire is gone.
+- **A dead spot fixed:** a weak plunge (about 37–40%) could clear the shooter gate and then sit in
+  the corner above it until the ball search kicked it. It now drops into the chute to the right
+  inlane, like a looped Back Alley shot. A rules test covers it.
+
+### First round: the fan
 
 **Removed:**
 - both upper flippers (top and middle), with their guides, gate and post
@@ -55,14 +94,15 @@ return to the inlanes…").
 Left to right across the fan:
 
 ```
- Back Alley  SAFE   B-R-E  BREACH  A-C-H   BLACK MARKET   REACTOR   VENT  pop exit  SKYWAY
- (orbit)                   scoop           (centre ramp)  drops +                 (right ramp)
-                                                          captive
+ Back Alley  VAULT  SAFE  B-R-E  BREACH  A-C-H   BLACK MARKET   REACTOR   VENT  pop exit  SKYWAY
+ (orbit)     lane                 scoop           (centre ramp)  drops +                 (right ramp)
+                                                                 captive
  ◄────────── right flipper ──────────────► ◄─ both ─► ◄────────── left flipper ─────────────►
 ```
 
 Over the top: the orbit arch, the three CAM lanes between a one-way gate (left) and the Back
-Alley diverter (right), and the pop nest under them.
+Alley diverter (right), and the pop nest under them. Top left, inside the orbit: THE VAULT, the
+upper playfield.
 
 **How to read the numbers.** "Share" is the share of flip timings that make the shot, from a
 cradled ball / from a ball rolling straight off the inlane. "Angles" are the launch angles of
@@ -71,17 +111,19 @@ Skyway 7.5%, Breach 2.7%, Reactor drops 4.9%.
 
 | Shot | Flipper | Angles | Share | Returns to | Role |
 |---|---|---|---|---|---|
-| **Back Alley** (left orbit, over the top) | Right | 122.8–124.8° | 10% / 2% | **Loop closed:** into the CAM lanes 12/12, then through the pops to the right flipper. **Loop held open:** round the top and down the right leg into the chute, onto the Black Market wire, to the right inlane. 12/12 back to the right flipper (6 loop all the way; 6 slower ones drop into the lanes and come out of the pops). | Mode shot, Impound jackpot, feeds the CAM lanes. |
-| **SAFE** (standup on the orbit's inner wall) | Right | 114.5–117.7° | 2% / 1% | Bounces back. | Hack remote key. |
-| **B-R-E** standups (face the right flipper) | Right | B 109.2–110.1°, R 106°, E rarely | B 12% / 1%, R about 1% | Rebound: 0 down the middle; 1 of 18 to an outlane. | Letters. |
+| **Back Alley** (left orbit, over the top) | Right | 122.8–124.8° | 10% / 2% | **Loop closed:** into the CAM lanes 12/12, then through the pops to the right flipper. **Loop held open:** round the top and down the right leg into the chute, onto the Black Market wire, to the right inlane. 12/12 back to the right flipper (2 loop all the way; 10 slower ones drop into the lanes and come out of the pops). **Vault door open:** 12/12 into the upper playfield. | Mode shot, Impound jackpot, feeds the CAM lanes and the vault. |
+| **Vault lane** (up the left into the upper playfield) | Right | 116.1–117.7° | 1% / 1% | Through the upper playfield and out (below). | The way into THE VAULT. |
+| **SAFE** (standup on the vault lane's wall) | Right | 109.2–112.7° | 7% / 2% | Bounces back. | Hack remote key. |
+| **B-R-E** standups (face the right flipper) | Right | B 109.4–109.7°, R 106°, E rarely | B 6% / 0%, R about 1% | Rebound: 0 down the middle; 2 of 9 to an outlane. | Letters. |
 | **Breach** scoop | Right | 101.6–102.7° | 2% / 11% | Kickout: left flipper 12/12. | Starts and selects jobs; mode shot. |
-| **A-C-H** standups (face the left flipper) | Right; left (live) | A 98.5–102°, C 98.6–99.4° (right); 88.9–91° (left) | A 5% / 5%, C 0% / 7% (right); 0% / 16% (left) | Rebound: 0 down the middle; 3 of 36 to an outlane (all off A from the right flipper). | Letters. |
+| **A-C-H** standups (face the left flipper) | Right; left (live) | A 99.9–102°, C 98.5–99.5° (right); 89.2–90.9° (left) | A 5% / 0%, C 0% / 11% (right); about 13% live (left) | Rebound: 0 down the middle; 3 of 32 to an outlane. | Letters. |
 | **Black Market** (centre ramp) | **Both** | Left 83.5–87.5°, right 92.5–96.4° | Left 14% / 18%, right 12% / 16% | Right inlane → right flipper: 12/12 from each flipper. | Shop, mode shot, jackpot. |
 | **Reactor**: 3 drops, then the captive ball | Left (right, live only) | Drops 77.2–81.5°; captive ball (drops down) from 77.4° | Drops 25% / 24%; captive ball 10% / 10% | Rebounds to either flipper. | Lights the lock; heat; starts Blackout; super jackpots. |
-| **VENT** (the Reactor's right flank) | Left | 68.9–74.7° | 13% / 8% | Bounces back. | Hack remote key. |
-| Pop exit gate | Left | about 65.5° | 1% / 0% | Bounces back (one-way, exit only). | — |
-| **Skyway** (right ramp, deck to the upper left, wire down the left) | Left | 55.3–57.2° | 11% / 2% | Left inlane → left flipper 12/12. | Lock (divert to the Impound), mode shot, jackpot, spinner. |
-| **CAM 1–3** top lanes | Plunge, Back Alley, the pops | — | — | Into the pops. | Bonus X, pop value, skill shot, "cameras down". |
+| **VENT** (the Reactor's right flank) | Left | 67.3–74.7° | 13% / 8% | Bounces back. | Hack remote key. |
+| Pop exit gate | Left | 62.3–63.9° | 1% / 1% | Bounces back (one-way, exit only). | — |
+| **Skyway** (right ramp, deck straight across above the Breach, wire down the left) | Left | 54.7–57.2° | 19% / 2% | Left inlane → left flipper 12/12. | Lock (divert to the Impound), mode shot, jackpot, spinner. |
+| **CAM 1–3** top lanes | Plunge, Back Alley, the vault's top exit, the pops | — | — | Into the pops. | Each knocks out the camera above it; bonus X, pop value, skill shot. |
+| **Tumblers** (3 standups in the vault) | The upper flippers | — | — | Back down to the upper flippers. | The vault job (Phase 4). |
 | **Pops** (only from the lanes) | — | — | — | Out of the exit lane into the right inlane, right flipper 12/12. | Cash, Rage. |
 
 **Flags:**
@@ -95,8 +137,9 @@ Skyway 7.5%, Breach 2.7%, Reactor drops 4.9%.
   44), cradled flips rose to 5% but flips off the inlane fell to 1–3%, so I kept 44. If you
   want it easier, the real lever is moving the scoop up to 2° clockwise, toward the right
   flipper's busiest angles, at the expense of the A standup.
-- **SAFE gets few flips** (2%), even though its 3.2° window is as wide as the others. The right
-  flipper rarely launches at 114–118° from a cradle.
+- **The vault lane is the hardest shot on the table** (1% of flips). The right flipper rarely
+  launches at 116–118°. That's why the vault door exists: when the cameras are down, the Back
+  Alley (10%) feeds the vault instead.
 - **No two shots' windows overlap.** Each shot's approach is clear. One overlap of *paths* is
   unavoidable: the Skyway's deck passes over the Black Market's climb (compromise 1).
 - **Posts.** About a third of the left flipper's cradled flips first hit a post or wall: mostly
@@ -113,6 +156,9 @@ left flipper  ── Black Market ───────────────�
 right flipper ── Black Market ───────────────────────────► right inlane ─► right flipper (repeatable)
 right flipper ── Back Alley (loop closed) ─► CAM lanes ─► pops ─► exit lane ─► right inlane ─► right flipper
 right flipper ── Back Alley (loop open) ─► chute ─► Black Market wire ─► right inlane ─► right flipper
+right flipper ── vault lane, or Back Alley with the door open ─► THE VAULT
+                 ├─ out the top ─► arch ─► CAM lanes ─► pops ─► right flipper
+                 └─ past its flippers ─► side drain ─► pop exit lane ─► right inlane ─► right flipper
 right flipper ── Breach ── kickout ──────────────────────► left flipper
 left flipper  ── Reactor ── rebound ─────────────────────► either flipper
 ```
@@ -126,13 +172,15 @@ the right. The Breach crosses right to left; the Black Market crosses left to ri
 |---|---|---|
 | Skyway reaches its inlane | ≥ 11/12, 0 drains | **12/12** left inlane → left flipper, 0 drains |
 | Black Market reaches its inlane | ≥ 11/12, 0 drains | **12/12** from the left flipper and **12/12** from the right, right inlane → right flipper, 0 drains |
-| Back Alley reaches the top lanes | ≥ 11/12 | **12/12** (loop closed). Held open: 12/12 back to the right flipper. Of 134 cradled flips, 12 more go up the orbit but fall back short of the top (the switch doesn't count them): 9 come back to the left flipper, 2 to the right, 1 to an outlane. |
-| Plunge reaches the top lanes | 12/12 | **12/12** at 50–100% pull; the auto-launch too. At 45% it doesn't clear the top and drops into the Back Alley chute to the right inlane; much weaker than that and it falls back to the plunger. |
+| Back Alley reaches the top lanes | ≥ 11/12 | **12/12** (loop closed). Held open: 12/12 back to the right flipper. Vault door open: 12/12 into the upper playfield. Of 134 cradled flips, 12 more go up the orbit but fall back short of the top (the switch doesn't count them): 7 come back to the left flipper, 5 to the right. |
+| Plunge reaches the top lanes | 12/12 | **12/12** at 50–100% pull; the auto-launch too. At about 37–50% it clears the shooter gate but not the top, and drops into the Back Alley chute to the right inlane. Weaker than that, it falls back to the plunger. No pull strength leaves it stuck (tested from 0 to 100%, and finely around the gate). |
 | Pop nest exits toward an outlane | ≤ 1/12 | **0/12**: all 12 visits leave by the exit lane into the right inlane and reach the right flipper. |
-| Pop nest: bumper hits and time | Busy for a few seconds, never trapped | 12 plunges: **4.2 hits** a visit on average (1–15) and **3.2 s** in the nest (1.1–9.4 s). Stress test of 72 visits (36 plunges and 36 balls dropped into the lanes at assorted speeds): no ball trapped, **median 2.3 s**, 90% out within 4.7 s, longest 9.9 s. |
+| Pop nest: bumper hits and time | Busy for a few seconds, never trapped | 12 plunges: **3.1 hits** a visit on average (1–6) and **3.1 s** in the nest (1.1–5.7 s). Stress test from the first round (the nest hasn't changed), 72 visits: no ball trapped, median 2.3 s, 90% out within 4.7 s, longest 9.9 s. |
 | Breach kickout reaches a flipper | ≥ 10/12 | **12/12**, all to the left flipper. |
-| Breach target rebounds | Not down the middle | **0 down the middle** from any standup. 4 of 54 standup hits reach an outlane: 3 off A from fast right-flipper flips, 1 off B. |
-| Leaks and stuck balls | — | 600 s soak test: 0 leaks, 0 stuck. Rules tests: 128 pass (ball-flow tests rewritten for the fan). |
+| Breach target rebounds | Not down the middle | **0 down the middle** from any standup. 5 of 41 standup hits reach an outlane: 2 off B and 1 off A from the right flipper, 2 off C from the left. |
+| Upper playfield drain reaches a flipper | 12/12 | **12/12** down the side drain to the right flipper (12 balls dropped in, nobody flipping; 1.9 s inside). |
+| Upper playfield with a player flipping | Playable, never trapped | 12 balls: **7.0 s** inside on average and **3.3 tumbler hits**. 5 go out the top (2 drop into a CAM lane, 3 roll on round the arch), 6 down the side drain, all to the right flipper. The twelfth sat cradled on the right upper flipper, which the test player held for 30 s. From a cradle, the left upper flipper reaches the tumblers (34 of 150 timings) and the top exit (9); the right one mostly tumbler 2. |
+| Leaks and stuck balls | — | Four 600 s bot runs: 0 leaks, 0 stuck. Rules tests: 135 pass. |
 
 **Pop bumpers.** The old bumpers were 54 units across (1.9 balls) with 14–17 unit gaps, narrower
 than the ball. The new ones are 72 across at the ring (2.6 balls), and the drawn skirt is 84
@@ -144,14 +192,19 @@ than the ball. The new ones are 72 across at the ring (2.6 balls), and the drawn
 |---|---:|---:|
 | Pop 1–2 / 1–3 / 2–3 | 42.0 / 42.2 / 42.2 | 1.50 / 1.51 / 1.51 |
 | Pop 1 / 2 / 3 to the nearest wall or post | 42.0 / 42.5 / 48.9 | 1.50 / 1.52 / 1.75 |
-| CAM 1 / 2 / 3 lane, post to post | 40.1 / 40.2 / 40.5 | 1.43–1.45 |
-| Arch lane over each lane post | 39.0 | 1.39 |
+| CAM 1 / 2 / 3 lane, post to post | 40.0 / 40.1 / 40.4 | 1.43–1.44 |
+| Arch lane over each lane post | 44.0 | 1.57 (the posts sit lower now, so slow balls roll over CAM 1's) |
 | Pop nest exit | 50.2 | 1.79 |
 | Pop exit chute and gate | **30.0** | **1.07** (on purpose: a tight chute drops the ball straight into the right inlane, clear of the slingshot's top corner, which kicks balls into the outlane) |
 | Breach throat / mouth | 44.0 / 52.0 | 1.57 / 1.86 |
 | Back Alley orbit lane | 44.0 | 1.57 |
 | Black Market mouth | 56.0 | 2.00 |
 | Skyway mouth | 45.0 | 1.61 |
+| Vault lane / its gate | 31.4 / 31.8 | 1.12 / 1.14 (narrow, but it's a straight lane) |
+| Upper flippers, tip to tip at rest | 34.6 | 1.24 |
+| Upper playfield side drain, narrowest | 34.2 | 1.22 |
+| Upper playfield top exit | 43.0 | 1.54 |
+| Tumbler block to the orbit wall | 49.8 | 1.78 |
 | Reactor funnel (drops down) | 64.0 | 2.29 |
 
 ### Compromises and open questions
@@ -168,11 +221,13 @@ than the ball. The new ones are 72 across at the ring (2.6 balls), and the drawn
    shots meet at the centre. But it sits at the edge of each flipper's range, which is why it's
    6 units left of the centre line (that balances the two). *Alternative:* lengthen the flipper
    stroke so the centre is in range. That changes the flipper feel, so I haven't touched it.
-3. **More sealed floor.** 18% of the playfield is ground no ball reaches (grey on the template),
-   against 13% for the old machinery, banks and housings. It's the ground under the two ramps:
-   under the Skyway's climb to the Impound (upper left) and under the Black Market's turn (centre
-   right). The Impound, the Reactor housing and the Black Market box sit in it, so the art can
-   fill it with those rather than with machinery.
+3. **Sealed floor is down to 8%** of the playfield (grey on the template), from 18% in the first
+   round and 13% on the old layout. The upper playfield took over the old sealed yard. What's
+   left:
+   - under the Black Market's turn: 5.4%
+   - behind the Skyway's mouth: 1.1%
+   - the tumbler block: 1.0%
+   - the wedge between the pop floor and the upper playfield's drain: 0.7%
 4. **The pop exit is a one-way gate between VENT and the Skyway.** It's a small dead spot: 1% of
    left flips, around 65°. *Alternative:* leave it open as a "pop lane" shot up into the pops.
 5. **The CAM lanes sit between the bumpers, not over their centres.** Lanes centred over the top
@@ -186,61 +241,61 @@ than the ball. The new ones are 72 across at the ring (2.6 balls), and the drawn
    Back Alley always reaches the lanes. Weak orbits that fall back don't count.
 9. **With the loop held open, slow Back Alley shots still drop into the CAM lanes.** They come
    back to the right flipper through the pops instead of round the loop.
-10. **A weak plunge (about 45%) drops into the Back Alley chute** to the right inlane instead of
-    falling back to the plunger.
-11. **The Impound lock is animated.** As before, the ball rides a short wire from the Skyway's
-    top bend into the box. At multiball, the balls drop back onto the Skyway's wire, one every
+10. **A weak plunge (about 37–50%) drops into the Back Alley chute** to the right inlane instead
+    of falling back to the plunger.
+11. **The Impound lock is animated.** The ball rides a short wire from the Skyway's turn down the
+    left up into the cage. At multiball, the balls drop back onto the Skyway's wire, one every
     0.9 s, to the left inlane.
 12. **The mode map moved down 24 units,** to make room for the Black Market menu under its light
     stack.
-13. **The in-game drawing is only patched,** so it shows the new geometry in the old procedural
-    style. It's not the art pass.
+13. **The in-game drawing is still procedural.** This round redrew the bumpers, Reactor,
+    cameras, Impound and vault, but it isn't the art pass.
 14. **Still in the code until Phase 4:**
     - The shop's 10X light is labelled, but the item isn't sold yet.
     - The old skill shot (Black Market within 7 s of the plunge) still works.
     - The CAM lanes are plain switches.
     - The diverter can be held open from code, but no rule opens it yet.
+    - The vault scores (in 50K, tumblers 25K, out the top 100K), but the VAULT job isn't built.
+      For now, CAMERAS DOWN just opens the door for 20 s.
+15. **The upper flippers flip with the main ones,** on the same buttons, as on real tables.
+    Flipping for the lower flippers also flips the vault's, which mostly doesn't matter, since
+    they're out of reach.
+16. **The vault's top exit can miss the CAM lanes.** A ball that leaves the top slowly rolls round
+    the arch instead (3 of 12 in the test above) and comes down the right leg to the right
+    flipper. It's still a safe return.
+### The upper playfield: THE VAULT (built)
 
-### Proposal: a mini-playfield in the upper left (your idea, 30 October; not built)
+Your idea from the first round: turn the dead yard in the upper left into its own small game,
+with its own flippers, a way out the side and maybe one out the top. As built:
 
-The sealed yard between the orbit, the Breach and the pops is the biggest dead area on the
-table: about 200 × 400 units, 11.5% of the playfield. You suggested turning it into its own
-small pinball game.
-
-**Your sketch:**
-- A lane goes up the left side where SAFE is, into the yard.
-- The yard becomes a mini-playfield with its own flippers.
-- A ball that falls past those flippers goes out the side, to the right along under the pops.
-- Maybe a second way out at the top.
-
-**How it would fit:**
-- **Size:** about the size of Twilight Zone's Powerfield, enough for two small flippers (about
-  45 units, half the main ones) and a few targets. They'd flip on the same buttons as the main
-  flippers, as on real tables.
-- **Out the side:** a lane under the Black Market's turn joins the pop exit lane, then the right
-  inlane and the right flipper. The same chute is already measured at 12/12.
-- **Out the top:** a lane from its flippers up to the top arch, into the CAM lanes and the pops.
-- Both exits return the ball to a flipper.
-- **Sealed area:** it would drop from 18% to about 7%.
-
-**What it would change:**
-- **The Skyway** climbs through that space to reach the Impound. It would cross to the left
-  side at mid-height under the pops and go straight down its wire.
-- **The Impound** would become the mini-playfield's backdrop. The lock is animated, so it can
-  sit anywhere.
-- **SAFE** gives up its spot to the entrance and moves.
-- **The way in is hard to hit.** The right flipper rarely launches at that angle: SAFE gets 2%
-  of flips. On its own, the lane would be one of the hardest shots. It could also be fed from
-  the Back Alley: a second diverter at the top of the orbit drops the ball in when the
-  mini-playfield is lit.
-- **Phone view:** the top left is the smallest part of the tilted view, so its art needs to be
-  bold.
-- **Its job:** it needs one obvious job. One idea that fits the heist is **THE VAULT**: a short
-  timed round with tumbler targets to crack, where shooting out the top pays the vault jackpot,
-  and draining out the side ends it.
-
-**Plan:** you test the fan layout first. Then we settle the questions above, and it gets built
-as the next layout step, before the art prompt is rebuilt.
+- **Size:** about 170 × 290 units (8.5% of the playfield), inside the orbit, from the top arch
+  down to just above the Breach.
+- **Ways in:**
+  - **The vault lane:** up the left side beside the B-R-E bank (31 units wide), through a sloped
+    one-way gate at the top. From the right flipper, 116–118°, 1% of flips: the hardest shot on
+    the table.
+  - **The vault door:** a 90-unit stretch of the orbit's inner wall, hazard-striped. When it's
+    open, it swings across the orbit lane, so a Back Alley shot goes straight in (12/12).
+    CAMERAS DOWN opens it for 20 s. Going in closes it.
+- **Inside:**
+  - **Two half-size flippers** (44 units, half the main ones) at the bottom. They're on
+    the main buttons.
+  - **Three tumbler standups** on a raised block at the back, under the arch. There's a painted
+    safe dial on the deck.
+- **Ways out:**
+  - **Out the top:** between the tumbler block and the pop nest's wall, over a one-way flap into
+    the arch. The ball rolls right into the CAM lanes and the pops (or on round the arch), then
+    to the right flipper. 100K.
+  - **Out the side:** past the upper flippers, down a drain lane under the pop nest's floor, into
+    the pop exit lane, the right inlane and the right flipper (12/12).
+- **What moved to make room:** the Skyway now runs straight across above the Breach and down the
+  left, and the Impound is a cage over the orbit lane beside it. SAFE moved onto the vault
+  lane's wall.
+- **Phone view:** the vault is in the smallest part of the tilted view. Its art is bold: a dark
+  tread-plate deck, a big safe dial, a hazard-striped door.
+- **Still to decide (Phase 4):** the VAULT job itself. The idea from the first round: a short
+  timed round where the tumblers crack the safe and the top exit pays the vault jackpot, and
+  draining out the side ends it.
 
 ---
 
@@ -413,12 +468,20 @@ against one fixed loop. Payload and Extract, the two tier-2 jobs, now share only
   - A first hit lights its letter (25K); a repeat hit pays 10K.
   - All six light a job (+200K) and reset the letters.
   - During a timed job, completing them adds 10 s and banks the next job.
+- **Security cameras (built):** three cameras pan over the CAM lanes.
+  - A CAM lane, or the pop bumper below it, knocks that camera out for 12 s. Its beam goes dark
+    and its head drops.
+  - With all three out at once: **CAMERAS DOWN**, worth 100K and $25K. The cameras stay dark for
+    6 s, and the vault door opens for 20 s.
+  - In Infiltrate, the middle camera tracks the watched shot.
 - **CAM 1–3 top lanes (change):**
-  - **Fed by:** the plunge, the Back Alley, and balls the pops kick back up.
+  - **Fed by:** the plunge, the Back Alley, the vault's top exit, and balls the pops kick back
+    up.
   - **Lane change:** either flipper button moves the lit lanes, the same as R-A-G-E.
   - **First pass:** 5K a lane, 25K for lighting one.
-  - **All three lit: CAMERAS DOWN.** This pays 100K, advances the bonus X (2× up to 6×) and
-    raises the pop value by 1K (to 5K at most, for the ball). The lanes reset.
+  - **All three lit:** this pays 100K, advances the bonus X (2× up to 6×) and raises the pop
+    value by 1K (to 5K at most, for the ball). The lanes reset. (Separately, the cameras above
+    can go down; see above.)
   - **During Infiltrate:** cameras down also adds time (above).
 - **Skill shot (change; replaces today's):**
   - On the plunge, one CAM lane blinks, and the flippers move it.
@@ -572,10 +635,12 @@ stencils. Raised machinery goes only in solid regions.
 
 One machine, with each part distinct:
 
-- **Impound:** a riveted steel lock box with a porthole window, three chrome balls visible
-  behind bars, a red warning triangle and a stencilled IMPOUND. It stands in the sealed yard
-  under the Skyway's climb, top left inside the orbit. A wire runs up from the Skyway's top bend
-  into it.
+- **Impound:** a raised steel cage on four legs over the orbit lane on the left, with a red
+  beacon on its corner and three chrome balls visible behind its bars. A wire runs up into it
+  from the Skyway's turn down the left.
+- **THE VAULT (upper playfield):** a dark tread-plate deck with a big painted safe dial, the
+  raised tumbler block at the back with its three red standups, and a hazard-striped vault door
+  in the orbit's wall.
 - **Skyway:** a wide steel trough on trusses, with visible side walls, a riveted lip, SKYWAY
   stencilled in ink and red chevron arrows. A worn steel wireform runs down the left.
 - **Black Market:** the centre ramp, under the Skyway's bridge, climbing into a raised dealer's
@@ -587,11 +652,13 @@ One machine, with each part distinct:
 - **Reactor:** a round drum with hazard banding and a concentric red eye. The three red drop
   targets are its blast doors, with yellow chevron floor plates in front.
 - **Back Alley:** a grimy steel gutter up the left side and over the top arch, with grating, oil
-  stains, BACK ALLEY stencilled with arrows, and the camera mounted over the top right.
+  stains, BACK ALLEY stencilled with arrows, and three cameras on the top rail over the CAM
+  lanes.
 - **CAM 1–3:** three rollover lanes under the arch with rubber-capped posts, each with a small
   camera icon and a red light.
 - **Pops:** three industrial canisters (ribbed, riveted, red lens caps), about three balls
-  across, on a ribbed steel deck in their own walled nest, with pipes between them.
+  across, on a ribbed steel deck in their own walled nest. No pipes between them (you found
+  them confusing).
 - **Drain and skull:** a faded, half-worn stencil skull on dark plates. Hazard stripes run down
   the drain throat, and the apron has mesh grilles.
 
@@ -791,6 +858,23 @@ exactly where every wall, lane, ramp entrance and insert is. Regenerate them wit
 ---
 
 ## 8. Decisions
+
+### 30 October 2026, second round: the upper playfield (built, waiting for your review)
+
+1. **Upper playfield: built** as THE VAULT, with its own flippers, a way out the side and one out
+   the top. Section 0 has the summary and section 1 the details. The lane in is very hard (1%),
+   so the vault door off the Back Alley is the main way in.
+2. **Skyway: rerouted** straight across above the Breach and down the left. It now takes 19% of
+   cradled flips.
+3. **Cameras:** three side by side over the CAM lanes. Knocking out all three (with the lanes or
+   the pops below) opens the vault door.
+4. **Visual fixes:** pop bumpers, the bars between them, the Reactor, the flashers and the
+   Impound, as listed in section 0.
+5. **The ball you circled** was an Impound lock. The Impound is now a cage you can see into.
+6. **Physics feel unchanged.** Flippers, gravity and bumpers are untouched. The one physics
+   change is the weak-plunge fix (section 0), which only affects a ball that used to get stuck.
+7. **Open:** the VAULT job's rules, and whether CAMERAS DOWN should do more than open the door.
+8. **Art:** still waiting for your approval of the layout. The template is regenerated.
 
 ### 30 October 2026: layout revision (built, waiting for your review)
 

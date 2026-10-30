@@ -73,13 +73,15 @@ const targets = new Map<Segment, string>();
 t.drops.forEach((d: any, i: number) => targets.set(d.seg, `DROP ${i + 1}`));
 t.standups.forEach((s: Segment, i: number) => targets.set(s, L.BREACH_LETTERS[i]));
 t.flanks.forEach((s: Segment, i: number) => targets.set(s, i === 0 ? 'SAFE' : 'VENT'));
+t.tumblers.forEach((s: Segment, i: number) => targets.set(s, `T${i + 1}`));
 const slings = new Set<Segment>([t.lower.slingL, t.lower.slingR]);
 
 /** Raised structures nothing rolls through: shaded so the painter knows they're solid. */
 const SOLIDS: [string, P[]][] = [
   ['SEALED (NO BALL ACCESS)', L.SEALED],
+  ['', L.SEALED_NEST],
   ['', L.BEHIND_SKYWAY],
-  ['IMPOUND', L.IMPOUND_BOX],
+  ['TUMBLERS', L.TUMBLER_BLOCK],
   ...t.lower.slings.map((s: P[]) => ['', s] as [string, P[]]),
 ];
 
@@ -208,8 +210,8 @@ function round(svg: Svg, labels: boolean) {
 }
 
 function flippers(svg: Svg, labels: boolean) {
-  const names = ['LEFT', 'RIGHT'];
-  [t.flipperL, t.flipperR].forEach((f: any, i: number) => {
+  const names = ['LEFT', 'RIGHT', 'UPPER L', 'UPPER R'];
+  [t.flipperL, t.flipperR, ...t.extraFlippers.map((x: any) => x.f)].forEach((f: any, i: number) => {
     flipperOutline(svg, f, f.restAngle, C.flipper, 1.4, '#f3e6c8');
     flipperOutline(svg, f, f.upAngle, C.flipper, 0.9, 'none', 'stroke-dasharray="3 2"');
     if (labels) svg.text(`${names[i]} FLIPPER`, f.px, f.py + f.r0 + 10, 6, C.flipper);
@@ -226,12 +228,25 @@ function sensors(svg: Svg) {
     [535, 650],
   ]);
   // decorations drawn in code, so the painted art should leave room for them
-  svg.circle(L.CAMERAS[0][0], L.CAMERAS[0][1], 10, C.note, 0.8, 'none', 'stroke-dasharray="2 2"');
-  svg.text('CAMERA', L.CAMERAS[0][0] - 20, L.CAMERAS[0][1] + 4, 4.5, C.note);
+  for (const [x, y] of L.CAMERAS) svg.circle(x, y, 8, C.note, 0.8, 'none', 'stroke-dasharray="2 2"');
+  svg.text('CAMERAS (pan; a pop knocks out the one above it)', L.CAMERAS[1][0], L.CAMERAS[1][1] - 12, 4.5, C.note);
   tag('CHUTE IN', L.CHUTE.entry, 0, -4);
   // the one-way gates
   const gate = (name: string, p: P[], dx: number, dy: number) => svg.text(name, (p[0][0] + p[1][0]) / 2 + dx, (p[0][1] + p[1][1]) / 2 + dy, 5, C.oneWay);
   gate('LEFT GATE', L.LEFT_GATE, -6, 30);
+  gate('UPPER GATE', L.UPPER_GATE, 0, -4);
+  gate('UPPER EXIT FLAP', L.UPPER_EXIT_FLAP, 0, -6);
+  // the vault door: part of the orbit's inner wall; when open it swings across the orbit (dashed)
+  svg.path(L.VAULT_DOOR, C.oneWay, 2.4, false, 'none');
+  svg.path(L.VAULT_DEFLECTOR, C.oneWay, 1, false, 'none', 'stroke-dasharray="3 2"');
+  gate('VAULT DOOR', L.VAULT_DEFLECTOR, 6, -6);
+  tag('UPPER PF IN', L.UPPER_SWITCH, 0, 9);
+  tag('UPPER EXIT', L.UPPER_EXIT_SWITCH, 0, 9);
+  tag('UPPER DRAIN', L.UPPER_DRAIN_SWITCH, 14, 0);
+  // the Impound is a raised cage over the orbit lane: the orbit runs under it
+  svg.path(L.IMPOUND_BOX, C.skyway, 0.9, true, 'rgba(31,111,214,0.08)', 'stroke-dasharray="3 2"');
+  svg.text('IMPOUND', (L.IMPOUND_BOX[0][0] + L.IMPOUND_BOX[1][0]) / 2, L.IMPOUND_BOX[0][1] - 4, 5, C.skyway);
+  svg.text('(raised cage)', (L.IMPOUND_BOX[0][0] + L.IMPOUND_BOX[1][0]) / 2, L.IMPOUND_BOX[2][1] + 7, 4, C.skyway);
   gate('DIVERTER', L.DIVERTER, 24, -3);
   gate('(held open: loop)', L.DIVERTER, 30, 4);
   gate('POP EXIT GATE', L.EXIT_GATE, 0, 12);
@@ -329,7 +344,7 @@ function lineartFloor() {
   solids(s, false);
   walls(s, false, true);
   round(s, false);
-  for (const f of [t.flipperL, t.flipperR]) flipperOutline(s, f, f.restAngle, '#000', 1.2, 'none');
+  for (const f of [t.flipperL, t.flipperR, ...t.extraFlippers.map((x: any) => x.f)]) flipperOutline(s, f, f.restAngle, '#000', 1.2, 'none');
   inserts(s, false);
   return s.doc('#ffffff');
 }

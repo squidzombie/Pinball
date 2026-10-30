@@ -13,7 +13,7 @@ folder holds the templates the art must line up with, and the prompt for generat
 | `template/overlay-lineart.png` / `.svg` | The same, outlines only, on a transparent background. The structure guide for the overlay layer. |
 | `template/inserts.json` | Every insert (lamp): id, shape, centre, size and rotation in table units, plus the centre in pixels. |
 | `template/gaps.json` | Every place the ball has to fit through, with the clearance (the template draws a ball to scale at each). |
-| `PROMPT.md` | Image-generator prompts for both layers, negative prompt, settings and a checklist. **Out of date:** it describes the layout before the fan revision, and will be rebuilt from the final template. |
+| `PROMPT.md` | Image-generator prompts for both layers, negative prompt, settings and a checklist. **Out of date:** it describes the layout before the fan and upper-playfield revisions, and will be rebuilt from the final template. |
 
 All of these come from the live physics world. **Regenerate them with `npm run template`
 after any geometry change**; never edit them by hand.
@@ -37,7 +37,7 @@ after any geometry change**; never edit them by hand.
 - shadows cast by the ramps
 
 It must **not** contain the ball, the flippers, the drop targets, the standup faces, the
-captive ball, the pop bumper caps, the spinner flag, the camera's beam or any lit light. The
+captive ball, the pop bumper caps, the spinner flag, the cameras' beams or any lit light. The
 code draws those so they can move and light up.
 
 **`art/overlay.png`, the overlay layer.** Transparent, 1800 × 3600. Only what the ball passes

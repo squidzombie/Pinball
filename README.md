@@ -14,25 +14,35 @@ bumper, target and ramp has height.
 
 ### The playfield
 
-A classic fan, all of it shot from the two flippers. Left to right:
+A classic fan shot from the two flippers, plus a small upper playfield at the top left. Left to
+right:
 
 - **Back Alley** (right flipper): the left orbit. It runs up the left side and over the top arch
   into the three **CAM** lanes. A diverter can hold the loop open, so the ball comes all the way
   round, down a chute onto the Black Market's wire, and back to the right flipper.
-- **SAFE**: a standup on the orbit's inner wall.
+- **The vault lane** (right flipper): a narrow lane up the left side into **THE VAULT**, the
+  upper playfield. It's the hardest shot on the table.
+- **SAFE**: a standup on the vault lane's wall.
 - **The Breach** (right flipper): a scoop between two banks of three standups that spell
   **B-R-E-A-C-H**, each bank angled at the opposite flipper.
 - **Black Market** (either flipper): the centre ramp. It runs under the Skyway into the market box
   over the shooter lane, then a wireform takes it down the right side to the right inlane.
 - **The Reactor** (left flipper): a captive ball behind three drop targets. Knock the drops down
   and slam the captive ball into the core. **VENT** is a standup on its right flank.
-- **Skyway** (left flipper): up the lane beside the shooter lane (past its spinner), across under
-  the pops and up to the Impound, then down the left side on a wireform to the left inlane.
+- **Skyway** (left flipper): up the lane beside the shooter lane (past its spinner), straight
+  across above the Breach, then down the left side on a wireform to the left inlane.
 - **CAM 1–3 and the pops**: three top lanes, fed by the plunge and the Back Alley, drop into three
   industrial pop bumpers in their own nest. The nest's one exit lane drops the ball into the right
   inlane.
-- **The Impound**: a three-ball lock at the top left. The Skyway feeds it when the lock is lit,
-  and at multiball the balls roll back down the Skyway's wire.
+- **The cameras**: three security cameras pan over the CAM lanes. A lane, or the pop bumper below
+  it, knocks its camera out for 12 s. Knock out all three at once for **CAMERAS DOWN**, which
+  opens the **vault door** in the Back Alley's wall for 20 s.
+- **THE VAULT**: the upper playfield, with two small flippers on the main buttons and three
+  tumbler targets. Get in up the vault lane, or through the open vault door with a Back Alley
+  shot. Leave out the top into the CAM lanes, or past its flippers and out the side to the right
+  flipper.
+- **The Impound**: a three-ball lock, a cage over the orbit on the left. The Skyway feeds it when
+  the lock is lit, and at multiball the balls roll back down the Skyway's wire.
 - **R-A-G-E**: the in/outlanes. The flippers move the lit lanes.
 
 The shot map, measurements and the rules still to build for this layout are in
