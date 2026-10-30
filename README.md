@@ -209,4 +209,6 @@ folder on the site (for example `squidzombie.com/pinball/`) and link to it.
 2. **TestFlight and the App Store**: the native app is set up with [Capacitor](https://capacitorjs.com/).
    Its Xcode project is in `ios/`, and its icon and launch screen are in `art/app/`. On a Mac with
    Xcode and an Apple Developer account, run `npm run ios` and `npm run ios:open`, then archive and
-   upload. The step-by-step guide, including inviting testers, is [`docs/TESTFLIGHT.md`](docs/TESTFLIGHT.md).
+   upload. [`docs/MAC-SETUP.md`](docs/MAC-SETUP.md) sets up a Mac click by click (double-click
+   `Open in Xcode.command` to build and open the project), and [`docs/TESTFLIGHT.md`](docs/TESTFLIGHT.md)
+   covers uploading and inviting testers.

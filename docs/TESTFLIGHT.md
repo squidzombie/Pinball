@@ -36,6 +36,10 @@ account.
 
 ## 1. Get the project ready (Terminal, on the Mac)
 
+**New to this?** [`MAC-SETUP.md`](MAC-SETUP.md) covers steps 1 to 3 click by click: what to
+download, connecting your Apple account, and getting the game onto your own iPhone. The project's
+`Open in Xcode.command` does the Terminal part below with a double-click.
+
 ```bash
 git clone https://github.com/squidzombie/Pinball.git
 cd Pinball
