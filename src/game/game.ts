@@ -242,8 +242,14 @@ export class Game {
     for (const f of this.main.flippers()) f.pressed = false;
   }
 
-  private onDrain() {
+  private onDrain(b: Ball) {
     const remaining = this.ballsInPlay;
+    if (!this.tilted && b.tags.rageSave) {
+      this.show('BALL SAVED', 'RAGE SAVED IT', 1.5, true);
+      sound.ballSave();
+      this.queueLaunches(1);
+      return;
+    }
     if (!this.tilted && this.ballSave > 0) {
       this.show('BALL SAVED', '', 1.5, true);
       sound.ballSave();
@@ -360,7 +366,7 @@ export class Game {
     const drained = t.world.balls.filter((b) => b.y > TABLE_H + 35 || b.x < -50 || b.x > TABLE_W + 50 || b.y < -100);
     for (const b of drained) {
       t.removeBall(b);
-      this.onDrain();
+      this.onDrain(b);
     }
   }
 

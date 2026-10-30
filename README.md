@@ -49,7 +49,8 @@ right:
   jackpot, and the back door stays open so the Back Alley feeds the vault.
 - **The Impound**: a three-ball lock, a cage over the orbit on the left. The Skyway feeds it when
   the lock is lit, and at multiball the balls roll back down the Skyway's wire.
-- **R-A-G-E**: the in/outlanes. The flippers move the lit lanes.
+- **R-A-G-E**: the in/outlanes. The flippers move the lit lanes. Finish R-A-G-E on a gutter lane
+  (an outlane) and RAGE saves that ball.
 
 The shot map, measurements and the rules still to build for this layout are in
 [`DESIGN.md`](DESIGN.md).

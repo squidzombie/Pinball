@@ -356,7 +356,7 @@ export class Psychosis extends Table {
           [x0, L.ROLL_Y],
           [x1, L.ROLL_Y],
         ],
-        (_b, dir) => dir < 0 && this.rollover(i),
+        (b, dir) => dir < 0 && this.rollover(i, b),
       ),
     );
 
@@ -990,7 +990,7 @@ export class Psychosis extends Table {
     return !!(this.mode?.wantsDropsDown() || this.wizard?.wantsDropsDown() || this.impoundSuper);
   }
 
-  private rollover(i: number) {
+  private rollover(i: number, b?: Ball) {
     const g = this.game;
     this.sw('rollover');
     g.addScore(5_000);
@@ -1003,6 +1003,8 @@ export class Psychosis extends Table {
     if (this.rageLit.every(Boolean)) {
       this.rageLit = [false, false, false, false];
       if (g.bonusMult < 6) g.bonusMult++;
+      // Finishing R-A-G-E on a gutter (an outlane) saves that ball when it drains.
+      if (b && (i === 0 || i === 3)) b.tags.rageSave = 1;
       this.startRage();
     }
   }

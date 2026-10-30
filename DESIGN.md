@@ -6,7 +6,7 @@ own pair of small flippers. The Skyway is rerouted to make room, the Impound is 
 orbit, and three security cameras pan over the CAM lanes. Hitting the vault's three tumblers in
 the order of a random code cracks it open and starts **VAULT MULTIBALL**. The geometry, its measurements and this
 document are done. **Rules beyond the cameras, the back door and the vault, and the art pass,
-haven't started.** The phone build is this layout (version 11; the fan is version 5 in its
+haven't started.** The phone build is this layout (version 12; the fan is version 5 in its
 history). Where
 the rule sheet differs from the code, the entry says **(change)**; nearly all of those come with
 Phase 4.
@@ -25,6 +25,15 @@ shot. `npm run template` regenerates the template and prints every clearance. Ba
 ---
 
 ## 0. The layout revisions (30 October 2026)
+
+### Eighth round: a gutter that finishes R-A-G-E saves the ball
+
+You pointed out that two of R-A-G-E's letters sit over the gutters (the outlanes), which end
+the ball. Lane change means you can spell it all on the two inlanes, but now the gutters have a
+reward too: if the letter that **finishes** R-A-G-E is collected on a gutter, RAGE starts and
+that ball is saved (BALL SAVED, RAGE SAVED IT) and launched back into play. A gutter that lights
+any other letter loses the ball as usual. Only that ball is saved, not any other ball draining
+at the same moment. The start screen says so too.
 
 ### Seventh round: the flipper buttons change lanes, not the pops
 
@@ -604,6 +613,9 @@ against one fixed loop. Payload and Extract, the two tier-2 jobs, now share only
   - The old skill shot (Black Market within 7 s of any plunge) goes.
 - **R-A-G-E lanes (the four in/outlanes):** the flippers move the lit letters. Completing R-A-G-E
   starts **RAGE**: 20 s where every switch pays 100K, pops 150K, and major shots 250K.
+  **Finishing it on a gutter (built):** if the last letter is lit by a ball rolling down an
+  outlane, that ball is saved when it drains and launched back into play. A gutter that lights
+  any other letter loses the ball as usual.
   Relighting adds 10 s. It runs alongside jobs. **(change)** R-A-G-E no longer advances the
   bonus X; the CAM lanes do, as on a classic table.
 - **The Back Alley diverter:**
@@ -985,6 +997,12 @@ exactly where every wall, lane, ramp entrance and insert is. Regenerate them wit
 ---
 
 ## 8. Decisions
+
+### 30 October 2026, eighth round: R-A-G-E gutter save (built)
+
+1. **Finishing R-A-G-E on a gutter saves that ball.** Any other letter on a gutter doesn't.
+2. **Open:** should the gutters also stay protected for the rest of RAGE mode (the fuller
+   version of option 2)? Not built, since you described only the finishing-letter save.
 
 ### 30 October 2026, seventh round: lane change on the flipper buttons (built)
 

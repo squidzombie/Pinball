@@ -489,6 +489,26 @@ console.log('RAGE');
   f.onFlipperPress(1);
   check('lane change rotates the letters', f.rageLit[1] && !f.rageLit[0]);
 }
+{
+  // A ball rolling down a gutter (outlane): if its letter finishes R-A-G-E, RAGE saves that ball;
+  // if it's any other letter, the ball is lost as usual.
+  const gutter = (lit: boolean[]) => {
+    const { g, f } = newGame();
+    const gg = g as any;
+    gg.ballSaveArmed = false;
+    g.ballSave = 0;
+    f.world.balls = [];
+    f.rageLit = lit;
+    const [x0, x1] = L.ROLLOVERS[0];
+    f.addBall((x0 + x1) / 2, L.ROLL_Y - 30, 0, 300);
+    for (let t = 0; t < 3 && g.state === 'play' && !gg.launchQueue; t += 1 / 60) g.update(1 / 60);
+    return { g, f, gg };
+  };
+  const last = gutter([false, true, true, true]);
+  check('finishing R-A-G-E on a gutter starts RAGE and saves that ball', !!last.f.rage && last.g.state === 'play' && last.gg.launchQueue + last.f.world.balls.length >= 1, `${last.g.state} queue ${last.gg.launchQueue}`);
+  const notLast = gutter([false, false, true, true]);
+  check('a gutter that lights any other letter loses the ball', !notLast.f.rage && notLast.f.rageLit[0] && notLast.g.state !== 'play', notLast.g.state);
+}
 
 console.log('Clock rules');
 {
