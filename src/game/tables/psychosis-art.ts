@@ -713,7 +713,7 @@ function hemisphere(side: -1 | 1): Path2D {
 
 /**
  * A top-down brain under the heist map, so the job plaques and their lights sit in it: two
- * dusty-pink hemispheres with a dark fissure between them, folds drawn in pen as broken wavy
+ * faintly pink-grey hemispheres with a dark fissure between them, folds drawn in pen as broken wavy
  * lines across each side, shaded toward the edges, on a hatched shadow.
  */
 function paintBrain(ctx: CanvasRenderingContext2D) {
@@ -730,7 +730,7 @@ function paintBrain(ctx: CanvasRenderingContext2D) {
   // the fissure between the hemispheres
   ctx.save();
   ctx.lineCap = 'round';
-  ctx.strokeStyle = '#4a3632';
+  ctx.strokeStyle = '#423b3a';
   ctx.lineWidth = 6;
   ctx.beginPath();
   ctx.moveTo(cx, T + 8);
@@ -742,9 +742,9 @@ function paintBrain(ctx: CanvasRenderingContext2D) {
     const h = halves[hi];
     ctx.save();
     const g = ctx.createRadialGradient(cx + side * 50, T + 110, 10, cx + side * 55, T + 130, 150);
-    g.addColorStop(0, '#e2cbc3');
-    g.addColorStop(0.6, '#cfb0a7');
-    g.addColorStop(1, '#a8857c');
+    g.addColorStop(0, '#d8d0cd');
+    g.addColorStop(0.6, '#c2b7b4');
+    g.addColorStop(1, '#9a8d8a');
     ctx.fillStyle = g;
     ctx.fill(h);
     ctx.clip(h);
@@ -766,9 +766,9 @@ function paintBrain(ctx: CanvasRenderingContext2D) {
         for (let e = d; e <= Math.min(132, d + len); e += 2) pts.push([cx + side * e, yAt(e)]);
         // a soft groove, the sulcus in it, and a lit crest on the fold just above
         for (const [dx, dy, col, w] of [
-          [0, 1, 'rgba(84,46,42,0.16)', 7],
-          [0, 0, 'rgba(84,46,42,0.78)', 2.2],
-          [-0.6, -2.6, 'rgba(255,238,230,0.5)', 1.6],
+          [0, 1, 'rgba(70,57,56,0.16)', 7],
+          [0, 0, 'rgba(70,57,56,0.78)', 2.2],
+          [-0.6, -2.6, 'rgba(247,241,238,0.5)', 1.6],
         ] as const) {
           ctx.beginPath();
           pts.forEach(([x, y], i) => (i ? ctx.lineTo(x + dx, y + dy) : ctx.moveTo(x + dx, y + dy)));
@@ -782,7 +782,7 @@ function paintBrain(ctx: CanvasRenderingContext2D) {
           ctx.beginPath();
           ctx.moveTo(sx, sy);
           ctx.quadraticCurveTo(sx + side * (2 + R() * 3), sy + up * 4, sx + side * (R() * 4 - 2), sy + up * (6 + R() * 3));
-          ctx.strokeStyle = 'rgba(84,46,42,0.65)';
+          ctx.strokeStyle = 'rgba(70,57,56,0.65)';
           ctx.lineWidth = 1.9;
           ctx.stroke();
         }
@@ -790,10 +790,10 @@ function paintBrain(ctx: CanvasRenderingContext2D) {
       }
     }
     // darker toward the rim, as the surface turns away
-    ctx.strokeStyle = 'rgba(70,40,36,0.28)';
+    ctx.strokeStyle = 'rgba(59,48,47,0.28)';
     ctx.lineWidth = 16;
     ctx.stroke(h);
-    ctx.strokeStyle = 'rgba(70,40,36,0.18)';
+    ctx.strokeStyle = 'rgba(59,48,47,0.18)';
     ctx.lineWidth = 30;
     ctx.stroke(h);
     ctx.restore();

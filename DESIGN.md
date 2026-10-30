@@ -6,7 +6,7 @@ own pair of small flippers. The Skyway is rerouted to make room, the Impound is 
 orbit, and three security cameras pan over the CAM lanes. Hitting the vault's three tumblers in
 the order of a random code cracks it open and starts **VAULT MULTIBALL**. The geometry, its measurements and this
 document are done. **Rules beyond the cameras, the back door and the vault, and the art pass,
-haven't started.** The phone build is this layout (version 17; the fan is version 5 in its
+haven't started.** The phone build is this layout (version 18; the fan is version 5 in its
 history). Where
 the rule sheet differs from the code, the entry says **(change)**; nearly all of those come with
 Phase 4.
@@ -886,7 +886,8 @@ One machine, with each part distinct:
   across, on a ribbed steel deck in their own walled nest. No pipes between them (you found
   them confusing).
 - **The brain (thirteenth round; replaces the skull):** a top-down brain under the heist map,
-  front up the table: two dusty-pink hemispheres with a dark fissure, folds in pen with soft
+  front up the table: two pale grey hemispheres with only a hint of pink (toned down at your
+  request, same brightness), a dark fissure, folds in pen with soft
   grooves and lit crests, darker toward the rim, on a hatched shadow. Every job plaque and light
   of the map sits inside it, with the map's links running over it like implants.
 - **Drain:** plain concrete between the flippers (the skull and its plate are gone), with the
