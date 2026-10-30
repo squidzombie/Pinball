@@ -661,9 +661,10 @@ export class Psychosis extends Table {
       sound.tick();
       return;
     }
-    // Lane change, like a real table.
+    // Lane change, like a real table: the lit R-A-G-E letters and CAM lanes shift that way.
     const l = this.rageLit;
     this.rageLit = side < 0 ? [...l.slice(1), l[0]] : [l[l.length - 1], ...l.slice(0, -1)];
+    this.rotateCamLanes(side);
   }
 
   // ---------------------------------------------------------------- switches
@@ -749,11 +750,11 @@ export class Psychosis extends Table {
     if (this.camLit.every(Boolean)) this.camerasDownAward();
   }
 
-  /** Every pop bumper hit shifts the lit CAM lanes one to the right (and round), like a real table's lane change. */
-  private rotateCamLanes() {
+  /** Lane change: a flipper button shifts the lit CAM lanes one place that way (and round the end). */
+  private rotateCamLanes(side: -1 | 1) {
     if (this.camerasDown > 0) return;
     const l = this.camLit;
-    this.camLit = [l[2], l[0], l[1]];
+    this.camLit = side < 0 ? [l[1], l[2], l[0]] : [l[2], l[0], l[1]];
   }
 
   /** All three cameras knocked out: the back door opens. The lanes reset once the cameras come back. */
@@ -924,7 +925,6 @@ export class Psychosis extends Table {
     g.fx.sparks(c.x - (c.x - b.x) * 0.5, c.y - (c.y - b.y) * 0.5, INS.red, 10, 450);
     g.doShake(2);
     sound.bumper();
-    this.rotateCamLanes();
   }
 
   private hitDrop(i: number, speed: number) {

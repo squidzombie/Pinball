@@ -6,7 +6,7 @@ own pair of small flippers. The Skyway is rerouted to make room, the Impound is 
 orbit, and three security cameras pan over the CAM lanes. Hitting the vault's three tumblers in
 the order of a random code cracks it open and starts **VAULT MULTIBALL**. The geometry, its measurements and this
 document are done. **Rules beyond the cameras, the back door and the vault, and the art pass,
-haven't started.** The phone build is this layout (version 10; the fan is version 5 in its
+haven't started.** The phone build is this layout (version 11; the fan is version 5 in its
 history). Where
 the rule sheet differs from the code, the entry says **(change)**; nearly all of those come with
 Phase 4.
@@ -26,11 +26,21 @@ shot. `npm run template` regenerates the template and prints every clearance. Ba
 
 ## 0. The layout revisions (30 October 2026)
 
+### Seventh round: the flipper buttons change lanes, not the pops
+
+- **Correction to the sixth round:** I had the pop bumpers shifting the lit CAM lanes. You meant
+  the flipper buttons. Now the pops don't touch the lanes at all. A lane lights only when the
+  ball rolls through it, and only the left and right flipper buttons shift the lit lanes, left
+  and right, the same way they already shift R-A-G-E.
+- **The start screen's rules** are rewritten as four plain steps: B-R-E-A-C-H, the Reactor and
+  lock, the lanes, and the vault. They fit on a small phone.
+
 ### Sixth round: CAM lanes like a real table, and a smoother frame
 
 - **CAM lanes light only when the ball rolls through them.** The pop bumpers no longer light them.
   Each pop bumper hit shifts the lit lanes one place to the right (and from the right end round
-  to the left), like a lane change on a real table. A lit lane is a knocked-out camera, so the
+  to the left), like a lane change on a real table. (Corrected in the seventh round: the flipper
+  buttons do this, not the pops.) A lit lane is a knocked-out camera, so the
   dark camera moves with it. Light all three for **CAMERAS DOWN** (back door open); the lanes
   reset once the cameras come back on, and at each new ball. Lit lanes no longer time out. The
   flipper buttons still only move R-A-G-E.
@@ -111,8 +121,8 @@ flagged the pop bumpers, the lights, the Reactor and the camera. What changed:
     inlane.
 - **Cameras:** three, one over each CAM lane, panning their beams down the table. A CAM lane or
   the pop bumper below it knocks that camera out for 12 s. With all three out at once: **CAMERAS
-  DOWN**, which opens the back door for 20 s. (Sixth round: now only the lanes knock cameras
-  out, and the pops shift them.)
+  DOWN**, which opens the back door for 20 s. (Since the seventh round, only the lanes knock
+  cameras out, and the flipper buttons shift them.)
 - **The Skyway** now runs straight across above the Breach and down the left side, instead of
   climbing through the top left. It's easier: 19% of cradled flips, up from 11%.
 - **The Impound** is a raised cage over the orbit lane on the left, with a red beacon. The ball
@@ -576,8 +586,9 @@ against one fixed loop. Payload and Extract, the two tier-2 jobs, now share only
     up.
   - **Lighting:** only rolling through a lane lights it: 25K, or 5K if it's already lit. A lit
     lane is a knocked-out camera: its beam goes dark and its head drops.
-  - **Lane change:** every pop bumper hit shifts the lit lanes one place to the right (the right
-    end wraps round to the left), and the dark cameras move with them.
+  - **Lane change:** the left and right flipper buttons shift the lit lanes one place that way
+    (round the end), together with R-A-G-E, and the dark cameras move with them. The pop bumpers
+    don't affect the lanes.
   - **All three lit: CAMERAS DOWN**, worth 100K and $25K. The cameras stay dark and the lanes
     blink for 6 s, then the lanes reset. The back door opens for 20 s.
   - Lit lanes don't time out. They reset at each new ball.
@@ -974,6 +985,12 @@ exactly where every wall, lane, ramp entrance and insert is. Regenerate them wit
 ---
 
 ## 8. Decisions
+
+### 30 October 2026, seventh round: lane change on the flipper buttons (built)
+
+1. **The CAM lanes shift only with the flipper buttons**, like R-A-G-E. The pop bumpers don't
+   touch them. (The sixth round wrongly had the pops shift them.)
+2. **The start screen explains the rules** in four plain steps.
 
 ### 30 October 2026, sixth round: CAM lanes, frame rate, speed (built)
 

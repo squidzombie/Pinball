@@ -646,26 +646,29 @@ console.log('Ball flow');
   check('the upper playfield drains out the side to the right inlane', lanes[0] === 'R-IN', lanes.join());
 }
 {
-  // CAM lanes: only rolling through a lane lights it (and knocks out its camera); pop bumpers
-  // shift the lit lanes round; all three lit is CAMERAS DOWN, which opens the back door.
+  // CAM lanes: only rolling through a lane lights it (and knocks out its camera); only the
+  // flipper buttons shift the lit lanes; all three lit is CAMERAS DOWN, which opens the back door.
   const { g, f } = newGame();
   park(f);
   const ball = f.world.balls[0];
-  f.hitBumper(f.bumpers[0], ball);
-  check('a pop bumper on its own lights no lane', f.camLit.every((x: boolean) => !x));
+  for (const c of f.bumpers) f.hitBumper(c, ball);
+  check('the pop bumpers light no lane', f.camLit.every((x: boolean) => !x));
   f.camLane(0);
   check('rolling through a lane lights it', f.camLit.join() === 'true,false,false');
-  f.hitBumper(f.bumpers[2], ball);
-  check('a pop bumper shifts the lit lane one to the right', f.camLit.join() === 'false,true,false');
-  f.hitBumper(f.bumpers[1], ball);
-  f.hitBumper(f.bumpers[1], ball);
-  check('...and round from the right end to the left', f.camLit.join() === 'true,false,false');
+  for (const c of f.bumpers) f.hitBumper(c, ball);
+  check('...and the pop bumpers leave the lit lanes alone', f.camLit.join() === 'true,false,false');
+  f.onFlipperPress(1);
+  check('the right flipper button shifts the lit lane one to the right', f.camLit.join() === 'false,true,false');
+  f.onFlipperPress(-1);
+  f.onFlipperPress(-1);
+  check('the left flipper button shifts it left, round from the left end to the right', f.camLit.join() === 'false,false,true');
+  f.onFlipperPress(1);
   f.camLane(0);
   check('rolling a lit lane again changes nothing', f.camLit.join() === 'true,false,false' && f.camerasDown === 0);
   f.camLane(1);
   f.camLane(2);
   check('all three lit is CAMERAS DOWN, and it opens the back door', f.camerasDown > 0 && f.doorOpen > 0);
-  f.hitBumper(f.bumpers[0], ball);
+  f.onFlipperPress(1);
   check('while the cameras are down the lanes stay lit', f.camLit.every(Boolean));
   run(g, 25);
   check('then the lanes reset and the door shuts again', f.camLit.every((x: boolean) => !x) && f.doorOpen === 0);
