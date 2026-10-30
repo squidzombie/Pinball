@@ -4,7 +4,7 @@ import { drawGlow } from '../../engine/fx';
 import type { DMD } from '../../engine/dmd';
 import type { Game } from '../game';
 import { fmt, short } from '../format';
-import { Blackout, MODES, Rage, type Mode, type ModeDef, type Shot, type Switch } from '../modes';
+import { Blackout, MODES, Rage, SUPER_TIME, type Mode, type ModeDef, type Shot, type Switch } from '../modes';
 import { buildLowerSection, insidePoly, poly, type LowerSection, type P } from './geom';
 import { drawBallAt, type Lamp, type LampState } from './draw';
 import * as L from './psychosis-layout';
@@ -65,7 +65,7 @@ const HATCH_OUT: P = (() => {
 const HATCH_DIR: P = L.unit(L.sub(HATCH_OUT, L.along(L.TUMBLERS[1][0], L.TUMBLERS[1][1], 0.5)));
 
 const ITEMS = [
-  { key: 'time', label: 'TIME', name: '+15 SECONDS', price: 30_000 },
+  { key: 'rage', label: 'RAGE', name: 'RAGE', price: 60_000 },
   { key: 'save', label: 'SAVE', name: 'BALL SAVE', price: 50_000 },
   { key: 'lock', label: 'LOCK', name: 'LIGHT LOCK', price: 40_000 },
   { key: 'tenx', label: '10X', name: 'NEXT SHOT 10X', price: 75_000 },
@@ -132,6 +132,12 @@ export class Psychosis extends Table {
   private jp = 1_000_000;
   private jackpots = 0;
   impoundSuper = false;
+  /** Seconds left on a lit Impound super jackpot. */
+  superT = 0;
+  /** The drop targets were held down for a super last frame (so they come back up when it goes). */
+  private dropsHeld = false;
+  /** What a paused job restarted when the last ball was lost, shown when the next ball starts. */
+  private resumeNote = '';
 
   // the heist
   letters = [false, false, false, false, false, false];
@@ -606,6 +612,10 @@ export class Psychosis extends Table {
     this.breachBall = null;
     this.locking = null;
     this.releaseQueue = 0;
+    if (this.mode) {
+      this.game.show(`${this.mode.name} CONTINUES`, this.resumeNote || this.mode.status(), 2.4, true);
+      this.resumeNote = '';
+    }
     this.hatchQueue = 0;
     this.hatchOpen = 0;
     this.camLit = [false, false, false];
@@ -1174,6 +1184,16 @@ export class Psychosis extends Table {
     this.selecting = 0;
   }
 
+  /**
+   * The ball drained. A job carries on with the next ball (only the step in progress restarts);
+   * RAGE ends, and multiballs end with their balls (the game ends those).
+   */
+  ballLost() {
+    if (this.mode && !this.mode.multiball) this.resumeNote = this.mode.onBallLost();
+    this.endRage(true);
+    this.selecting = 0;
+  }
+
   music() {
     const m = this.mode;
     const modeMusic = m && !m.inGrace ? 'mode' : 'main';
@@ -1252,6 +1272,7 @@ export class Psychosis extends Table {
     this.jp += 250_000;
     if (++this.jackpots >= 4) {
       this.impoundSuper = true;
+      this.superT = SUPER_TIME;
       g.show('SUPER JACKPOT', 'IS LIT AT THE REACTOR', 2.2, true);
     }
   }
@@ -1288,8 +1309,8 @@ export class Psychosis extends Table {
 
   private itemAvailable(k: ItemKey) {
     switch (k) {
-      case 'time':
-        return !!this.mode?.timed;
+      case 'rage':
+        return true;
       case 'save':
         return this.game.ballSave <= 0;
       case 'lock':
@@ -1319,8 +1340,8 @@ export class Psychosis extends Table {
     sound.award();
     this.flash(1);
     switch (it.key) {
-      case 'time':
-        this.mode?.addTime(15);
+      case 'rage':
+        this.startRage();
         break;
       case 'save':
         g.grantBallSave(15);
@@ -1484,16 +1505,26 @@ export class Psychosis extends Table {
       this.mode?.tick(dt);
       this.rage?.tick(dt);
       this.wizard?.tick(dt);
+      // A lit Impound super jackpot only waits so long; missed, two more jackpots relight it.
+      if (this.impoundSuper && (this.superT -= dt) <= 0) {
+        this.impoundSuper = false;
+        this.jackpots = 2;
+        g.show('SUPER JACKPOT LOST', '2 MORE JACKPOTS RELIGHT IT', 1.8, true);
+        sound.warn();
+      }
     }
     if (this.mode?.finished && !this.mode.multiball) this.endMode();
     if (this.rage?.finished) this.endRage();
 
-    // Drops come down on their own when a multiball wants the captive ball.
-    if (this.wantsDropsDown() && !this.dropsDown())
+    // Drops come down on their own when a multiball wants the captive ball, and back up if it stops wanting it.
+    const wants = this.wantsDropsDown();
+    if (wants && !this.dropsDown())
       for (const d of this.drops) {
         d.down = true;
         d.seg.enabled = false;
       }
+    if (this.dropsHeld && !wants) this.later(1, () => !this.wantsDropsDown() && this.dropsDown() && this.resetDrops());
+    this.dropsHeld = wants;
 
     this.giTarget = g.tilted ? 0 : g.state === 'bonus' ? 0.35 : this.attract ? 0.9 : (this.wizard?.gi() ?? this.mode?.gi() ?? 1);
     this.giPulse = this.rage ? 0.55 : this.wizard ? 0.3 : 0;
@@ -1608,6 +1639,7 @@ export class Psychosis extends Table {
       d.fitText(fmt(g.score), 64, 9, 126, 2, { align: 'center' });
       let status = m.status();
       if (this.rage && m !== this.rage && Math.floor(t / 2) % 2 === 1) status = this.rage.status();
+      else if (m.pace < 0.995 && Math.floor(t / 2) % 2 === 1) status = `SHOTS PAY ${Math.round(m.pace * 100)}%`;
       d.text(status, 64, 25, { align: 'center', level: 2 });
       return;
     }
@@ -1617,7 +1649,7 @@ export class Psychosis extends Table {
       ? `VAULT ${short(this.vaultJp)}`
       : this.multiball
       ? this.impoundSuper
-        ? 'SUPER LIT'
+        ? `SUPER ${Math.ceil(this.superT)}`
         : `JP ${short(this.jp)}`
       : this.blackoutLit
         ? 'BLACKOUT LIT'

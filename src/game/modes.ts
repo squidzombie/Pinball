@@ -37,6 +37,12 @@ export const GRACE = 2;
 const REFRESH = 10;
 /** Completion bonus per second left on the clock. */
 const TIME_BONUS = 100_000;
+/** Jobs pay full value for their first PACE_HOLD seconds in play, then drain to PACE_FLOOR over PACE_DRAIN more. */
+const PACE_HOLD = 30;
+const PACE_DRAIN = 120;
+const PACE_FLOOR = 0.5;
+/** A lit super jackpot stays lit this long (clock seconds); missed, it needs two more jackpots to relight. */
+export const SUPER_TIME = 20;
 
 export abstract class Mode {
   abstract readonly name: string;
@@ -55,6 +61,10 @@ export abstract class Mode {
   multiball = false;
   /** Set when the mode should end, by success or by failure. */
   finished = false;
+  /** Seconds this has been in play (the table's clock rules decide when that counts), across balls. */
+  elapsed = 0;
+  /** A job whose shot values drain the longer it takes: speed pays, but nothing fails. */
+  paced = false;
 
   constructor(
     protected f: Psychosis,
@@ -84,6 +94,7 @@ export abstract class Mode {
    * clock should run: a ball is on the playfield, not held, not stuck.
    */
   tick(dt: number) {
+    this.elapsed += dt;
     if (!this.timed) return;
     if (this.timer > 0) {
       const before = Math.ceil(this.timer);
@@ -126,6 +137,20 @@ export abstract class Mode {
     if (wasGrace) this.f.music();
   }
 
+  /** 1 for a fresh job, falling to PACE_FLOOR the longer it takes (1 for anything not paced). */
+  get pace() {
+    if (!this.paced) return 1;
+    return Math.max(PACE_FLOOR, 1 - (Math.max(0, this.elapsed - PACE_HOLD) / PACE_DRAIN) * (1 - PACE_FLOOR));
+  }
+
+  /**
+   * The ball was lost mid-job. The job carries on with the next ball, but the step in progress
+   * starts over; returns what restarted, for the display ('' if nothing did).
+   */
+  onBallLost(): string {
+    return '';
+  }
+
   /** 0..1 for the lamp ring: time left, or whatever an untimed mode is racing against. */
   meter() {
     return this.timed ? Math.max(0, this.timer) / this.clockMax : 1;
@@ -160,6 +185,11 @@ export abstract class Mode {
     return Math.round((n * this.mult) / 1000) * 1000;
   }
 
+  /** A job's value: scaled like `v`, and by its pace. */
+  protected pv(n: number) {
+    return this.v(n * this.pace);
+  }
+
   protected award(n: number, s?: Shot, big?: string) {
     const g = this.f.game;
     const p = s ? this.f.shotPos(s) : undefined;
@@ -189,6 +219,7 @@ class Infiltrate extends Mode {
   brief = 'AVOID THE CAMERAS';
   // No clock: a job lasts until you finish it (or drain), and only a finished job opens the next.
   time = Infinity;
+  paced = true;
   private sneak = new Set<Shot>(['alley', 'market', 'skyway', 'reactor']);
   /** The shot the cameras are watching right now. */
   watched: Shot | null = null;
@@ -225,7 +256,7 @@ class Infiltrate extends Mode {
     const g = this.f.game;
     if (s === 'breach' && this.sneak.size === 0) {
       this.f.hitFx(s, this.color);
-      return this.complete(this.v(3_000_000), 'YOU ARE INSIDE');
+      return this.complete(this.pv(3_000_000), 'YOU ARE INSIDE');
     }
     if (!this.sneak.has(s)) return;
     if (s === this.watched) {
@@ -236,7 +267,7 @@ class Infiltrate extends Mode {
       this.sweep();
       return;
     }
-    const v = this.v(Math.max(200_000, 500_000 + (4 - this.sneak.size) * 150_000 - this.spotted * 100_000));
+    const v = this.pv(Math.max(200_000, 500_000 + (4 - this.sneak.size) * 150_000 - this.spotted * 100_000));
     this.award(v, s);
     this.f.hitFx(s, this.color);
     this.sneak.delete(s);
@@ -263,6 +294,7 @@ class Hack extends Mode {
   color = '#3dff8a';
   brief = 'HIT THE FLASHING KEYS';
   time = Infinity;
+  paced = true;
   private code: number[] = [];
   private pos = 0;
   private cracked = 0;
@@ -293,7 +325,7 @@ class Hack extends Mode {
   override onStandup(i: number) {
     if (i !== this.code[this.pos]) return;
     this.pos++;
-    this.award(this.v(250_000), 'breach');
+    this.award(this.pv(250_000), 'breach');
     sound.tick();
     if (this.pos >= this.code.length) this.crack();
   }
@@ -305,14 +337,20 @@ class Hack extends Mode {
 
   private crack() {
     this.cracked++;
-    const v = this.v(1_500_000 * this.cracked);
+    const v = this.pv(1_500_000 * this.cracked);
     this.award(v, 'breach');
     this.f.hitFx('breach', this.color);
     this.progress();
-    if (this.cracked >= 3) return this.complete(this.v(3_000_000), 'SYSTEM HACKED');
+    if (this.cracked >= 3) return this.complete(this.pv(3_000_000), 'SYSTEM HACKED');
     this.f.game.show(`CODE ${this.cracked} CRACKED`, short(v), 1.4, true);
     sound.award();
     this.newCode();
+  }
+
+  override onBallLost() {
+    if (this.pos === 0) return '';
+    this.pos = 0;
+    return 'THIS CODE STARTS OVER';
   }
 
   status() {
@@ -326,6 +364,7 @@ class Route extends Mode {
   color = '#ffd23f';
   brief = 'SHOTS IN ORDER, TWICE';
   time = Infinity;
+  paced = true;
   private seq: Shot[] = ['skyway', 'alley', 'market', 'reactor'];
   private step = 0;
   private laps = 0;
@@ -336,17 +375,23 @@ class Route extends Mode {
 
   override onShot(s: Shot) {
     if (s !== this.seq[this.step]) return;
-    this.award(this.v(600_000 * (this.step + 1) + this.laps * 500_000), s);
+    this.award(this.pv(600_000 * (this.step + 1) + this.laps * 500_000), s);
     this.f.hitFx(s, this.color);
     this.step++;
     this.progress();
     if (this.step < this.seq.length) return;
     this.step = 0;
     this.laps++;
-    if (this.laps >= 2) return this.complete(this.v(3_000_000), 'ESCAPE ROUTE SET');
-    this.award(this.v(2_500_000));
+    if (this.laps >= 2) return this.complete(this.pv(3_000_000), 'ESCAPE ROUTE SET');
+    this.award(this.pv(2_500_000));
     this.f.game.show('ROUTE PLOTTED', 'ONE MORE LAP', 1.6, true);
     sound.award();
+  }
+
+  override onBallLost() {
+    if (this.step === 0) return '';
+    this.step = 0;
+    return 'THIS LAP STARTS OVER';
   }
 
   status() {
@@ -364,6 +409,19 @@ class Payload extends Mode {
   private jp = 1_500_000;
   private count = 0;
   private superLit = false;
+  private superT = 0;
+
+  override tick(dt: number) {
+    super.tick(dt);
+    if (!this.superLit) return;
+    this.superT -= dt;
+    if (this.superT > 0) return;
+    // Missed: two more ramp jackpots relight it.
+    this.superLit = false;
+    this.count = 1;
+    this.f.game.show('SUPER JACKPOT LOST', '2 MORE JACKPOTS RELIGHT IT', 1.8, true);
+    sound.warn();
+  }
 
   override lit(s: Shot): LampState {
     if (s === 'skyway' || s === 'market') return 3;
@@ -383,6 +441,7 @@ class Payload extends Mode {
       this.jp += 250_000;
       if (++this.count >= 3) {
         this.superLit = true;
+        this.superT = SUPER_TIME;
         g.show('SUPER JACKPOT', 'IS LIT AT THE REACTOR', 2, true);
       }
     } else if (s === 'reactor' && this.superLit) {
@@ -396,7 +455,7 @@ class Payload extends Mode {
   }
 
   status() {
-    return this.superLit ? 'SUPER AT THE REACTOR' : `JACKPOT ${short(this.v(this.jp))}`;
+    return this.superLit ? `SUPER ${Math.ceil(this.superT)}  REACTOR` : `JACKPOT ${short(this.v(this.jp))}`;
   }
 }
 

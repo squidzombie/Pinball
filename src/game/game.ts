@@ -264,7 +264,8 @@ export class Game {
   }
 
   private endBall() {
-    this.main.endModes(true);
+    // A tilt has already ended the job; a drain only pauses it until the next ball.
+    if (!this.tilted) this.main.ballLost();
     this.main.endMultiball();
     this.state = 'bonus';
     this.stateT = 0;

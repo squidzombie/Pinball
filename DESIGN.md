@@ -6,7 +6,7 @@ own pair of small flippers. The Skyway is rerouted to make room, the Impound is 
 orbit, and three security cameras pan over the CAM lanes. Hitting the vault's three tumblers in
 the order of a random code cracks it open and starts **VAULT MULTIBALL**. The geometry, its measurements and this
 document are done. **Rules beyond the cameras, the back door and the vault, and the art pass,
-haven't started.** The phone build is this layout (version 14; the fan is version 5 in its
+haven't started.** The phone build is this layout (version 15; the fan is version 5 in its
 history). Where
 the rule sheet differs from the code, the entry says **(change)**; nearly all of those come with
 Phase 4.
@@ -25,6 +25,21 @@ shot. `npm run template` regenerates the template and prints every clearance. Ba
 ---
 
 ## 0. The layout revisions (30 October 2026)
+
+### Eleventh round: jobs survive a drain, speed pays, timed supers, RAGE in the shop
+
+- **A drain pauses a job instead of failing it.** It carries on with the next ball (JOB
+  CONTINUES), and only the step you were in the middle of starts over: Route's current lap,
+  Hack's current code. Infiltrate keeps the shots you've snuck past; Extract keeps its finished
+  legs. Three balls (plus saves) to get through the whole map is still the challenge.
+- **Multiballs don't carry over.** Payload's multiball ending before its super still fails the
+  job, which is retried from scratch at the Breach. A tilt ends a job the same way.
+- **Speed pays.** Infiltrate's, Hack's and Route's values hold for 30 s of play, then drain to
+  half over two minutes. The display shows SHOTS PAY 75%, for example. This replaces the old
+  time bonus as the reward for a quick job.
+- **Timed super jackpots.** The Impound's and Payload's super jackpots stay lit for 20 s. Missed,
+  the drop targets come back up and two more jackpots relight it.
+- **RAGE in the shop.** The dead TIME item is now RAGE ($60K): it starts RAGE, or adds 10 s.
 
 ### Tenth round: jobs have no clock, and you must finish each one
 
@@ -463,10 +478,17 @@ against one fixed loop. Payload and Extract, the two tier-2 jobs, now share only
 
 - One job at a time. The ball is held in the Breach during the intro.
 - **No clock (built, tenth round):** a job lasts until you finish it. Only a **finished** job
-  counts: it lights its node and opens the next row of the map. A job that ends unfinished (the
-  ball drained, or a multiball job lost its balls) fails quietly: it doesn't count, and the
-  Breach relights so you can start it again from scratch. So you can't move on until you've
-  finished it.
+  counts: it lights its node and opens the next row of the map, so you can't move on until
+  you've finished it.
+- **A drain pauses a job (built, eleventh round).** It carries on with the next ball (JOB
+  CONTINUES on the display), but the step in progress starts over: Route's current lap, Hack's
+  current code. Infiltrate keeps the shots you've snuck past, and Extract its finished legs.
+- **Multiballs don't carry over.** If Payload's multiball ends before its super jackpot, the job
+  fails: it doesn't count, and the Breach relights so you can start it again from scratch. A
+  tilt ends any job the same way.
+- **Speed pays (built, eleventh round):** Infiltrate's, Hack's and Route's values hold for their
+  first 30 s in play (clock rules: not while the ball is held or stuck), then drain to half over
+  the next 120 s. The display alternates SHOTS PAY n%. Extract has its own drain (below).
 - Completion pays the job's bonus (no time bonus any more). Completed jobs also count toward
   Total Blackout.
 - If two jobs are available, the flippers choose while the ball sits in the Breach (4 s).
@@ -486,7 +508,7 @@ against one fixed loop. Payload and Extract, the two tier-2 jobs, now share only
     later shot pays 100K less.
   - Once all four are made, the camera gives up and the **Breach** lights **GET INSIDE**.
 - **Timer:** none.
-- **Ends:** success at the Breach (3M); a drain fails it.
+- **Ends:** success at the Breach (3M). A drain pauses it; the shots you've snuck past stay.
 - **Reward:** the Infiltrate node lights, and Hack and Route open.
 - **Shooting style:** read the camera and choose the shot, not the fastest one.
 
@@ -504,7 +526,7 @@ against one fixed loop. Payload and Extract, the two tier-2 jobs, now share only
     for +2M, and the next firewall needs only two keys **(change)**.
   - Shooting the Breach scoop itself cracks the current firewall at half value.
 - **Timer:** none.
-- **Ends:** three firewalls means **SYSTEM HACKED** (3M); a drain fails it.
+- **Ends:** three firewalls means **SYSTEM HACKED** (3M). A drain pauses it; the code in progress starts over.
 - **Reward:** the Hack node lights, and Payload and Extract open.
 - **Shooting style:** precise target work inside the Breach channel, broken up by one remote
   shot per code, with the Reactor as an optional shortcut.
@@ -521,7 +543,7 @@ against one fixed loop. Payload and Extract, the two tier-2 jobs, now share only
 - **Scoring:** steps pay 600K, 900K, 1.2M, 1.5M. A lap finished within 15 s of its first shot is
   a **CLEAN RUN** and pays double. Out-of-order shots score nothing for the mode.
 - **Timer:** none.
-- **Ends:** two laps means **ROUTE SET** (3M); a drain fails it.
+- **Ends:** two laps means **ROUTE SET** (3M). A drain pauses it; the lap in progress starts over.
 - **Reward:** the Route node lights, and Payload and Extract open.
 - **Shooting style:** flow, a learnable combo path.
 
@@ -537,8 +559,9 @@ against one fixed loop. Payload and Extract, the two tier-2 jobs, now share only
   - Losing a ball before cashing forfeits the uncashed crates.
 - **Timer:** none. It ends when the multiball does.
 - **Reward:** cashing three or more crates at once completes it (built today: collecting the super
-  jackpot at the Reactor). Only finishing it lights Blackout; losing the multiball first fails it,
-  and the Breach relights.
+  jackpot at the Reactor, lit for 20 s after three jackpots; missed, two more jackpots relight
+  it). Only finishing it lights Blackout; losing the multiball first fails it, and the Breach
+  relights.
 - **Shooting style:** risk and greed: how long do you keep loading?
 
 ### Extract (hurry-up race)
@@ -550,7 +573,7 @@ against one fixed loop. Payload and Extract, the two tier-2 jobs, now share only
 - **Scoring:** each leg is a hurry-up that starts at 6M, then 7M, then 8M and drains 200K a second
   down to 1.5M. Hitting it pays the current value and starts the next leg at full value.
 - **Timer:** none. The bleeding hurry-up value is the pressure.
-- **Ends:** all three legs means **EXTRACTED** (4M); a drain fails it.
+- **Ends:** all three legs means **EXTRACTED** (4M). A drain pauses it; finished legs stay.
 - **Reward:** the Extract node lights. Finishing it lights Blackout.
 - **Shooting style:** speed over precision.
 
@@ -588,6 +611,8 @@ against one fixed loop. Payload and Extract, the two tier-2 jobs, now share only
   - A collected jackpot relights after the other two are collected.
 - **Super:** with all three collected, the **Breach** lights **SUPER JACKPOT** (3× the jackpot).
   The ball is held 1 s, then kicked to the left flipper, and the three jackpots relight.
+  **(Built today:** four jackpots light the super at the **Reactor** for **20 s**; missed, two
+  more jackpots relight it.)
 - **Ends:** at one ball.
 - **Shooting style:** both ramps and the orbit, then the scoop. Compare Blackout, which adds the
   Reactor.
@@ -662,8 +687,8 @@ against one fixed loop. Payload and Extract, the two tier-2 jobs, now share only
   - The menu (five inserts) rotates every 4 s. Making the Black Market ramp buys the lit item if
     you can afford it; otherwise the DMD shows the price.
   - Items:
-    - **TIME:** +15 s on a timed job; $30K. Never offered now that jobs have no clock: its light
-      stays dark (open question: replace it).
+    - **RAGE (built, eleventh round; replaces TIME):** starts RAGE, or adds 10 s if it's
+      running; $60K. Unlike completing R-A-G-E, it doesn't raise the bonus multiplier.
     - **SAVE:** 15 s ball save; $50K.
     - **LOCK:** lights the lock, not during multiball; $40K.
     - **10X:** $75K, replacing today's +1X bonus item. Your next major shot scores ten
@@ -718,6 +743,8 @@ bumper-bashing ball (about 100 pops) is worth about 100K. One job is 7–20M.
 | Breach (no job running) | 25K | 50K |
 | Reactor core | 100K + 50K/heat | 250K + 50K/heat |
 | Combos | 50K × n | 100K / 250K / 500K / 1M |
+| Job shot values over time (built) | full for 30 s of play, then down to 50% over 2 min | same |
+| Black Market RAGE item (built) | $60K: starts RAGE or adds 10 s | same |
 | Skill / super skill (CAM lane, then Black Market) | 500K / – | 500K / 1.5M |
 | Infiltrate | 0.5–0.95M a shot, 3M finish | same |
 | Hack | 250K keys, 1.5/3/4.5M codes, 3M finish | 250K keys, 1/1.5/2M firewalls, +2M brute force, 3M finish |
@@ -1033,6 +1060,19 @@ exactly where every wall, lane, ramp entrance and insert is. Regenerate them wit
 ---
 
 ## 8. Decisions
+
+### 30 October 2026, ninth to eleventh rounds (built)
+
+1. **H can be hit:** the A-C-H bank runs flush to the Black Market's wall (ninth), and the
+   ramp's drawing matches (tenth).
+2. **Jobs have no clock** and only a finished job opens the next row (tenth).
+3. **A drain pauses a job;** only the step in progress restarts. Multiballs don't carry over:
+   Payload still fails if its multiball ends before the super (eleventh).
+4. **Speed pays:** job values drain to half after 30 s of play (eleventh).
+5. **Timed supers:** 20 s for the Impound's and Payload's super jackpots (eleventh).
+6. **RAGE replaces TIME** in the Black Market (eleventh).
+7. **Still open:** the shot balance (Black Market against the far sides), and whether to redraw
+   the targets as solid blocks.
 
 ### 30 October 2026, eighth round: R-A-G-E gutter save (built)
 

@@ -504,14 +504,14 @@
   }
  },
  {
-  "id": "shop:time",
+  "id": "shop:rage",
   "kind": "rect",
   "x": 210,
   "y": 664,
   "w": 23,
   "h": 12,
   "angleDeg": 0,
-  "label": "TIME",
+  "label": "RAGE",
   "px": {
    "x": 630,
    "y": 1992

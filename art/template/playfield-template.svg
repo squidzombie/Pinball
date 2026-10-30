@@ -956,7 +956,7 @@
 <path d="M-14 -5.5 h28 v11 h-28 Z" stroke="#c81e1e" stroke-width="0.9" fill="rgba(200,30,30,0.12)" stroke-linejoin="round" transform="translate(44 262) rotate(0)"/>
 <text x="44" y="272.5" font-size="3.6" fill="#c81e1e" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" >lock:impound</text>
 <path d="M-11.5 -6 h23 v12 h-23 Z" stroke="#c81e1e" stroke-width="0.9" fill="rgba(200,30,30,0.12)" stroke-linejoin="round" transform="translate(210 664) rotate(0)"/>
-<text x="210" y="675" font-size="3.6" fill="#c81e1e" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" >shop:time</text>
+<text x="210" y="675" font-size="3.6" fill="#c81e1e" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" >shop:rage</text>
 <path d="M-11.5 -6 h23 v12 h-23 Z" stroke="#c81e1e" stroke-width="0.9" fill="rgba(200,30,30,0.12)" stroke-linejoin="round" transform="translate(235 664) rotate(0)"/>
 <text x="235" y="675" font-size="3.6" fill="#c81e1e" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" >shop:save</text>
 <path d="M-11.5 -6 h23 v12 h-23 Z" stroke="#c81e1e" stroke-width="0.9" fill="rgba(200,30,30,0.12)" stroke-linejoin="round" transform="translate(260 664) rotate(0)"/>
