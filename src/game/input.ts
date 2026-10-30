@@ -66,7 +66,18 @@ export function bindInput(game: Game, toggleView: () => void) {
   window.addEventListener('pointercancel', release);
   window.addEventListener('contextmenu', (e) => e.preventDefault());
 
-  // Shake the phone to nudge.
+  // Shake the phone to nudge. iOS only sends motion events once the page has asked, and it only
+  // asks from a finished tap, so ask on the first one. (Safari shows its prompt then; the app
+  // grants it without one.)
+  let motionAsked = false;
+  const askMotion = () => {
+    if (motionAsked) return;
+    motionAsked = true;
+    const DME = window.DeviceMotionEvent as unknown as { requestPermission?: () => Promise<string> } | undefined;
+    if (typeof DME?.requestPermission === 'function') DME.requestPermission().catch(() => {});
+  };
+  window.addEventListener('touchend', askMotion);
+  window.addEventListener('click', askMotion);
   let lastShake = 0;
   window.addEventListener('devicemotion', (e) => {
     const a = e.acceleration;

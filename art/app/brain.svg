@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- The app icon's neon brain alone, on transparent (for the launch screen). -->
+  <defs>
+    <linearGradient id="steel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3a3e45"/>
+      <stop offset="1" stop-color="#121416"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ff2a1e" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#ff2a1e" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="neon" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="16" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <g id="half" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M500 176 C452 160 388 168 344 196 C300 222 268 262 254 312 C234 334 222 372 228 410 C214 446 214 490 228 526 C218 566 224 612 246 648 C250 696 276 742 318 772 C352 812 404 842 456 850 C476 854 492 852 500 848"/>
+      <path d="M330 250 C360 236 392 258 386 288 C380 316 414 330 440 314"/>
+      <path d="M494 360 C450 350 420 380 384 372 C348 364 318 388 296 420"/>
+      <path d="M262 470 C300 456 330 486 358 470 C388 452 420 476 446 462"/>
+      <path d="M476 520 C440 530 430 566 398 568 C366 570 350 548 318 560"/>
+      <path d="M270 620 C304 640 340 616 364 640 C388 664 422 650 446 668"/>
+      <path d="M330 742 C360 724 392 748 420 730 C440 716 466 732 478 760"/>
+    </g>
+  </defs>
+  <circle cx="512" cy="516" r="430" fill="url(#glow)"/>
+  <g filter="url(#neon)" stroke="#ff2a1e" stroke-width="26">
+    <use href="#half"/>
+    <use href="#half" transform="translate(1024 0) scale(-1 1)"/>
+    <path d="M512 172 C498 258 528 330 510 410 C494 490 530 560 512 640 C498 720 526 790 512 858" fill="none" stroke-linecap="round"/>
+  </g>
+  <g stroke="#ffd9d4" stroke-width="8" opacity="0.9">
+    <use href="#half"/>
+    <use href="#half" transform="translate(1024 0) scale(-1 1)"/>
+    <path d="M512 172 C498 258 528 330 510 410 C494 490 530 560 512 640 C498 720 526 790 512 858" fill="none" stroke-linecap="round"/>
+  </g>
+</svg>

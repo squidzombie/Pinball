@@ -113,7 +113,8 @@ export class Sound {
       const d = this.noiseBuf.getChannelData(0);
       for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
     }
-    if (this.ctx.state === 'suspended') void this.ctx.resume();
+    // 'suspended', or iOS's 'interrupted' after a call or another app took the sound
+    if (this.ctx.state !== 'running') void this.ctx.resume();
   }
 
   setMuted(m: boolean) {

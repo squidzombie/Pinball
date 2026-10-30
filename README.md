@@ -206,5 +206,7 @@ folder on the site (for example `squidzombie.com/pinball/`) and link to it.
 ## Getting it onto the iPhone
 
 1. **Now**: open the site in Safari, then Share → *Add to Home Screen*. It launches full-screen like an app.
-2. **App Store**: wrap the same `dist/` build with [Capacitor](https://capacitorjs.com/) to produce a native
-   Xcode project (`npx cap add ios`). That requires a Mac with Xcode and an Apple Developer account.
+2. **TestFlight and the App Store**: the native app is set up with [Capacitor](https://capacitorjs.com/).
+   Its Xcode project is in `ios/`, and its icon and launch screen are in `art/app/`. On a Mac with
+   Xcode and an Apple Developer account, run `npm run ios` and `npm run ios:open`, then archive and
+   upload. The step-by-step guide, including inviting testers, is [`docs/TESTFLIGHT.md`](docs/TESTFLIGHT.md).
