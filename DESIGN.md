@@ -1140,6 +1140,13 @@ exactly where every wall, lane, ramp entrance and insert is. Regenerate them wit
 
 ## 8. Decisions
 
+### 30 October 2026: colour schemes compared
+
+Five alternate colour schemes were previewed on the current table (recoloured screenshots, in
+[`art/palettes/`](art/palettes/)). **The current scheme stays.** Two of the alternates are set
+aside for future tables: **Toxic Yard** (green) for a post-apocalyptic fallout-shelter vault
+table, and **Oxide** (brown and turquoise) for a western.
+
 ### 30 October 2026, fourteenth round: the keys (built)
 
 You'd rather not have to spell B-R-E-A-C-H before every job: spell it once to break in, and let

@@ -13,6 +13,7 @@ folder holds the templates the art must line up with, and the prompt for generat
 | `template/overlay-lineart.png` / `.svg` | The same, outlines only, on a transparent background. The structure guide for the overlay layer. |
 | `template/inserts.json` | Every insert (lamp): id, shape, centre, size and rotation in table units, plus the centre in pixels. |
 | `template/gaps.json` | Every place the ball has to fit through, with the clearance (the template draws a ball to scale at each). |
+| `palettes/` | Colour-scheme previews: six schemes on the current table, with swatches. The current scheme stays; two are set aside for future tables. Not used by the game. |
 | `PROMPT.md` | Image-generator prompts for both layers, negative prompt, settings and a checklist. **Out of date:** it describes the layout before the fan and upper-playfield revisions, and will be rebuilt from the final template. |
 
 All of these come from the live physics world. **Regenerate them with `npm run template`
