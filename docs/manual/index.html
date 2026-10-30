@@ -1,0 +1,1357 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cyber Psychosis Game Manual</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Barlow+Condensed:wght@500;600;700&family=Yellowtail&display=swap">
+<style>
+/* Layout: US Letter sheets of ink on paper, laid on a dark steel bench on screen; one column on a phone.
+   Colours are the game's own palette tokens (DESIGN.md, section 4): concrete, ink, steel, hazard ochre, signal red. */
+:root {
+  --paper: #f7f4ed;
+  --bone: #e8e4da;
+  --concrete: #d6d0c2;
+  --ink: #2a2826;
+  --graphite: #55514b;
+  --steel: #a8a7a1;
+  --steel-deep: #3b3a37;
+  --bench: #23221f;
+  --hazard: #c9a227;
+  --red: #b3261e;
+  --glass: #e2503f;
+  --display: 'Anton', Impact, 'Arial Narrow Bold', sans-serif;
+  --body: 'Barlow', 'Helvetica Neue', Arial, sans-serif;
+  --label: 'Barlow Condensed', 'Arial Narrow', Arial, sans-serif;
+  --neon: 'Yellowtail', 'Brush Script MT', cursive;
+  --sheet-w: 8.5in;
+  --sheet-h: 11in;
+  --pad-x: 0.62in;
+  --pad-top: 0.5in;
+  --pad-bottom: 0.72in;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+img { max-width: 100%; }
+body {
+  margin: 0;
+  background: var(--bench);
+  color: var(--ink);
+  font: 400 9.6pt/1.4 var(--body);
+  padding-block: 24px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.sheet {
+  position: relative;
+  width: var(--sheet-w);
+  min-height: var(--sheet-h);
+  margin: 0 auto 28px;
+  padding: var(--pad-top) var(--pad-x) var(--pad-bottom);
+  background: var(--paper);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+.sheet > * { min-width: 0; }
+
+/* running head and foot */
+.runhead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding-bottom: 6px;
+  border-bottom: 2.5px solid var(--ink);
+  font: 600 8.5pt/1 var(--label);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--graphite);
+}
+.runhead b { color: var(--red); font-weight: 700; }
+.foot {
+  position: absolute;
+  left: var(--pad-x);
+  right: var(--pad-x);
+  bottom: 0.32in;
+  display: flex;
+  justify-content: space-between;
+  font: 600 7.5pt/1 var(--label);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--graphite);
+}
+.foot .pg { color: var(--ink); font-size: 9pt; letter-spacing: 0.08em; }
+.sheet::after {
+  /* the apron's hazard stripe along the bottom edge */
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 0.14in;
+  background: repeating-linear-gradient(-45deg, var(--hazard) 0 9px, var(--ink) 9px 18px);
+  opacity: 0.85;
+}
+
+/* type */
+h1, h2, h3 { margin: 0; text-wrap: balance; }
+h1 {
+  font: 400 30pt/0.95 var(--display);
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}
+h1 .num { color: var(--red); margin-right: 0.18em; }
+h2 {
+  font: 700 13pt/1.1 var(--label);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+h2::before { content: ''; width: 9px; height: 9px; background: var(--red); flex: none; transform: rotate(45deg); }
+h3 {
+  font: 700 10pt/1.15 var(--label);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--red);
+}
+p { margin: 0; }
+.lede { font-size: 10.6pt; line-height: 1.42; max-width: 70ch; }
+.small { font-size: 8.6pt; line-height: 1.36; }
+.muted { color: var(--graphite); }
+.k { font: 700 0.92em var(--label); letter-spacing: 0.06em; text-transform: uppercase; }
+.red { color: var(--red); }
+ul, ol { margin: 0; padding-left: 1.15em; }
+li + li { margin-top: 3px; }
+ul.tight li + li { margin-top: 1px; }
+strong { font-weight: 700; }
+.stack { display: flex; flex-direction: column; gap: 6px; }
+.stack-lg { display: flex; flex-direction: column; gap: 12px; }
+
+/* grids */
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 20px; align-items: start; }
+.cols-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px 18px; align-items: start; }
+.cols-wide { display: grid; grid-template-columns: 1.35fr 1fr; gap: 14px 22px; align-items: start; }
+.cols > *, .cols-3 > *, .cols-wide > * { min-width: 0; }
+
+/* boxes */
+.panel {
+  background: var(--bone);
+  border: 1.5px solid var(--ink);
+  padding: 10px 12px;
+}
+.panel.dark { background: var(--steel-deep); color: var(--paper); border-color: var(--steel-deep); }
+.panel.dark h3 { color: var(--hazard); }
+.note {
+  border-left: 4px solid var(--red);
+  padding: 4px 0 4px 10px;
+  font-size: 9.5pt;
+}
+.tag {
+  display: inline-block;
+  font: 700 7.5pt/1 var(--label);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 3px 6px 2px;
+  border: 1.2px solid currentColor;
+  vertical-align: 1px;
+}
+
+/* tables */
+.tbl { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 8.4pt; line-height: 1.27; }
+th {
+  text-align: left;
+  font: 700 8pt/1.1 var(--label);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--paper);
+  background: var(--ink);
+  padding: 4px 6px 3px;
+}
+td { padding: 3px 6px; border-bottom: 1px solid var(--concrete); vertical-align: top; }
+tr:nth-child(even) td { background: rgba(214, 208, 194, 0.35); }
+td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+td.k1 { font: 700 8.5pt/1.25 var(--label); letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap; }
+
+/* figures */
+figure { margin: 0; }
+.thumbs img { height: 2.5in; object-fit: cover; object-position: center top; }
+.toc td { font-size: 9.6pt; padding-block: 7px; }
+.toc td.k1 { font-size: 9.6pt; }
+figure img { display: block; width: 100%; height: auto; border: 1.5px solid var(--ink); }
+figcaption { font: 600 7.5pt/1.3 var(--label); letter-spacing: 0.1em; text-transform: uppercase; color: var(--graphite); margin-top: 4px; }
+.dmd { background: #0a0806; border: 0; }
+.dmd img { border: 0; }
+
+/* the playfield map */
+.cols.mapcols { grid-template-columns: 4.1in 1fr; gap: 16px; }
+.map { position: relative; }
+.map img { display: block; width: 100%; height: auto; border: 2px solid var(--ink); }
+.pin {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 0.205in;
+  height: 0.205in;
+  border-radius: 50%;
+  background: var(--red);
+  color: #fff;
+  font: 700 7.5pt/0.205in var(--label);
+  text-align: center;
+  box-shadow: 0 0 0 1.5px #fff, 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+.legend { counter-reset: none; list-style: none; padding: 0; margin: 0; font-size: 8.6pt; line-height: 1.28; }
+.legend li { display: grid; grid-template-columns: 0.24in 1fr; gap: 5px; align-items: baseline; }
+.legend li + li { margin-top: 3px; }
+.legend .b {
+  display: inline-block;
+  width: 0.19in;
+  height: 0.19in;
+  border-radius: 50%;
+  background: var(--red);
+  color: #fff;
+  font: 700 7pt/0.19in var(--label);
+  text-align: center;
+}
+.legend strong { font: 700 8.8pt/1.2 var(--label); letter-spacing: 0.04em; text-transform: uppercase; }
+
+/* the heist map diagram */
+.heist { display: grid; gap: 6px; }
+.row { display: grid; grid-template-columns: 1.1in 1fr; gap: 10px; align-items: stretch; }
+.key {
+  background: var(--ink);
+  color: var(--paper);
+  font: 700 8pt/1.2 var(--label);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 7px 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.key small { display: block; color: var(--hazard); font-size: 7pt; letter-spacing: 0.14em; margin-bottom: 2px; }
+.jobs { display: flex; gap: 8px; }
+.job {
+  flex: 1;
+  border: 2px solid var(--ink);
+  padding: 7px 9px;
+  background: var(--bone);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.job b { font: 400 15pt/1 var(--display); letter-spacing: 0.02em; text-transform: uppercase; }
+.job span { font-size: 8.5pt; color: var(--graphite); }
+.job.wiz { background: var(--red); color: #fff; border-color: var(--red); }
+.job.wiz span { color: #ffd9d4; }
+.arrowdown { text-align: center; font: 700 9pt/1 var(--label); color: var(--graphite); letter-spacing: 0.1em; }
+
+/* job pages */
+.jobcard { border-top: 3px solid var(--ink); padding-top: 8px; display: grid; grid-template-columns: 1.55in 1fr; gap: 6px 16px; }
+.jobcard .name { font: 400 22pt/0.95 var(--display); text-transform: uppercase; }
+.jobcard .meta { font: 600 8pt/1.35 var(--label); letter-spacing: 0.08em; text-transform: uppercase; color: var(--graphite); margin-top: 6px; }
+.jobcard dl { margin: 0; display: grid; grid-template-columns: 0.95in 1fr; gap: 3px 10px; font-size: 9.3pt; }
+.jobcard dt { font: 700 8.3pt/1.4 var(--label); letter-spacing: 0.08em; text-transform: uppercase; color: var(--red); }
+.jobcard dd { margin: 0; }
+
+/* cover */
+.cover {
+  background: var(--steel-deep);
+  color: var(--paper);
+  padding: 0.55in 0.6in 0.6in;
+  gap: 0;
+}
+.cover::after { height: 0.32in; opacity: 1; }
+.cover .brand {
+  display: flex;
+  justify-content: space-between;
+  font: 700 9pt/1 var(--label);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--steel);
+}
+.cover .logo { margin-top: 0.32in; text-align: center; }
+.cover .logo .neon {
+  display: block;
+  font: 400 46pt/0.9 var(--neon);
+  color: #ffd9d4;
+  text-shadow: 0 0 6px #ff2a1e, 0 0 18px #ff2a1e, 0 0 34px #e01e1e;
+  transform: rotate(-4deg);
+  margin-bottom: -0.06in;
+}
+.cover .logo .word {
+  display: block;
+  font: 400 76pt/0.9 var(--display);
+  letter-spacing: 0.02em;
+  color: #e4e6ea;
+  text-shadow: 0 4px 0 #15161a, 0 8px 22px rgba(0, 0, 0, 0.8);
+}
+.cover .tagline {
+  text-align: center;
+  margin-top: 0.14in;
+  font: 600 10pt/1 var(--label);
+  letter-spacing: 0.42em;
+  color: var(--steel);
+}
+.cover .art {
+  margin: 0.3in auto 0;
+  width: 4.3in;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  border: 3px solid #111;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+}
+.cover .art img { width: 100%; display: block; }
+.cover .title {
+  margin-top: 0.26in;
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 16px;
+  border-top: 2px solid var(--steel);
+  padding-top: 10px;
+}
+.cover .title .doc { font: 400 25pt/1 var(--display); text-transform: uppercase; letter-spacing: 0.03em; }
+.cover .title .doc span { color: var(--glass); }
+.cover .title .ver { font: 600 8.5pt/1.4 var(--label); letter-spacing: 0.16em; text-transform: uppercase; color: var(--steel); text-align: right; }
+
+/* apron cards */
+.cards { display: grid; grid-template-columns: 1fr 1fr; gap: 0.3in; }
+.card {
+  border: 1px dashed var(--graphite);
+  padding: 0.12in;
+}
+.card-inner {
+  background: var(--steel-deep);
+  color: var(--paper);
+  padding: 12px 13px 13px;
+  min-height: 6.2in;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 8.2pt;
+  line-height: 1.3;
+}
+.card-inner h4 { margin: 0; font: 400 15pt/1 var(--display); letter-spacing: 0.03em; text-transform: uppercase; }
+.card-inner h4 span { color: var(--glass); }
+.card-inner h5 { margin: 0; font: 700 8pt/1.1 var(--label); letter-spacing: 0.14em; text-transform: uppercase; color: var(--hazard); }
+.card-inner ol, .card-inner ul { padding-left: 1.05em; }
+.card-inner li + li { margin-top: 2px; }
+.card-inner .rule { height: 2px; background: repeating-linear-gradient(-45deg, var(--hazard) 0 5px, var(--ink) 5px 10px); }
+.card-inner table { font-size: 7.8pt; }
+.card-inner td { color: var(--paper); border-bottom-color: #55514b; padding: 2px 4px; }
+.card-inner tr:nth-child(even) td { background: transparent; }
+
+/* phone: sheets become a flowing column */
+@media screen and (max-width: 8.9in) {
+  body { padding-block: 0 24px; padding-left: 0; padding-right: 0; background: var(--paper); }
+  .sheet {
+    width: 100%;
+    min-height: 0;
+    margin: 0;
+    box-shadow: none;
+    padding: 28px max(16px, env(safe-area-inset-right, 0px)) 52px max(16px, env(safe-area-inset-left, 0px));
+    border-bottom: 1px solid var(--concrete);
+  }
+  .foot { left: max(16px, env(safe-area-inset-left, 0px)); right: max(16px, env(safe-area-inset-right, 0px)); bottom: 22px; }
+  .cover { padding: 28px max(16px, env(safe-area-inset-right, 0px)) 56px max(16px, env(safe-area-inset-left, 0px)); }
+  .cover .logo .word { font-size: clamp(44pt, 16vw, 76pt); }
+  .cover .logo .neon { font-size: clamp(30pt, 10vw, 46pt); }
+  .cover .art { width: min(100%, 4.3in); flex: none; }
+  .cols, .cols.mapcols, .cols-wide, .cols-3, .cards { grid-template-columns: 1fr; }
+  .jobcard { grid-template-columns: 1fr; }
+  .jobcard dl { grid-template-columns: 0.9in 1fr; }
+  .row { grid-template-columns: 1fr; }
+  .jobs { flex-direction: column; }
+  h1 { font-size: clamp(24pt, 8vw, 34pt); }
+}
+@media print {
+  @page { size: Letter; margin: 0; }
+  body { background: none; padding: 0; }
+  .sheet { margin: 0; box-shadow: none; height: var(--sheet-h); min-height: 0; break-after: page; }
+  .sheet:last-child { break-after: auto; }
+}
+</style>
+</head><body>
+<!-- ============================================================ COVER -->
+<section class="sheet cover" id="cover">
+  <div class="brand"><span>Squidzombie Pinball</span><span>Table 1</span></div>
+  <div class="logo">
+    <span class="neon">Cyber</span>
+    <span class="word">PSYCHOSIS</span>
+  </div>
+  <div class="tagline">SECTOR 9 · ONE HEIST · NO GHOSTS</div>
+  <div class="art"><img src="img/cover-table.jpg" alt="The Cyber Psychosis playfield, tilted as you play it on a phone"></div>
+  <div class="title">
+    <div class="doc">Game <span>Manual</span></div>
+    <div class="ver">Rules · Strategy · Operation<br>Software version 20 · October 2026</div>
+  </div>
+</section>
+
+<!-- ============================================================ CONTENTS -->
+<section class="sheet" id="contents">
+  <div class="runhead"><span>Cyber Psychosis</span><b>Contents</b></div>
+  <h1>Contents</h1>
+  <div class="cols-wide">
+    <div class="tbl">
+      <table class="toc">
+        <tbody>
+          <tr><td class="k1">1&nbsp; Welcome to Sector 9</td><td>The heist, the table and your first game</td><td class="n">3</td></tr>
+          <tr><td class="k1">2&nbsp; The playfield</td><td>Every shot, target and toy, numbered</td><td class="n">4</td></tr>
+          <tr><td class="k1">3&nbsp; The shots</td><td>The major shots and where they send the ball</td><td class="n">5</td></tr>
+          <tr><td class="k1">4&nbsp; Features</td><td>B-R-E-A-C-H, cameras, R-A-G-E, the Reactor, the Vault and more</td><td class="n">6</td></tr>
+          <tr><td class="k1">5&nbsp; The heist</td><td>The map, its keys and the five jobs</td><td class="n">9</td></tr>
+          <tr><td class="k1">6&nbsp; Multiball and Blackout</td><td>Impound, Vault, Payload and the wizard mode</td><td class="n">12</td></tr>
+          <tr><td class="k1">7&nbsp; The Black Market</td><td>Cash and what it buys</td><td class="n">13</td></tr>
+          <tr><td class="k1">8&nbsp; Scoring</td><td>What everything is worth</td><td class="n">14</td></tr>
+          <tr><td class="k1">9&nbsp; The display</td><td>Reading the dot-matrix display</td><td class="n">15</td></tr>
+          <tr><td class="k1">10&nbsp; Strategy</td><td>Measured shot odds, flow and the danger zones</td><td class="n">16</td></tr>
+          <tr><td class="k1">11&nbsp; Apron cards</td><td>The instruction card and the score card</td><td class="n">17</td></tr>
+          <tr><td class="k1">12&nbsp; Operator's section</td><td>Settings, switches, lamps and diagnostics</td><td class="n">18</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="panel stack">
+      <h3>At a glance</h3>
+      <table>
+        <tbody>
+          <tr><td>Balls per game</td><td class="n">3</td></tr>
+          <tr><td>Ball save at the start of each ball</td><td class="n">12 s</td></tr>
+          <tr><td>Jobs (no clock)</td><td class="n">5</td></tr>
+          <tr><td>Timed modes</td><td class="n">RAGE, 20 s</td></tr>
+          <tr><td>Multiballs</td><td class="n">4</td></tr>
+          <tr><td>Most balls in play</td><td class="n">4</td></tr>
+          <tr><td>Wizard mode</td><td class="n">Blackout</td></tr>
+          <tr><td>Flippers</td><td class="n">2 + 2 upper</td></tr>
+          <tr><td>Pop bumpers</td><td class="n">3</td></tr>
+          <tr><td>Ramps</td><td class="n">2</td></tr>
+          <tr><td>Display</td><td class="n">128 × 32 dots</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="cols">
+    <figure class="dmd"><img src="img/attract.png" alt="Display in attract mode: CYBER PSYCHOSIS, SQUIDZOMBIE PINBALL"><figcaption>Attract mode</figcaption></figure>
+    <figure class="dmd"><img src="img/blackout.png" alt="Display: BLACKOUT, EVERY SHOT A JACKPOT"><figcaption>The wizard mode</figcaption></figure>
+  </div>
+  <div class="panel dark stack" style="margin-top:auto">
+    <h3>How to use this manual</h3>
+    <p class="small">Sections 1 to 3 get you playing. Section 4 explains every feature and section 5 the heist, the table's main story. The measured shot odds in section 10 come from the game's own physics: thousands of simulated flips off each flipper, with the share of flip timings that make each shot. Section 11 has the two cards that sit on the apron of a real cabinet. Operators and the curious will find the switch and lamp lists in section 12.</p>
+  </div>
+  <div class="foot"><span>Cyber Psychosis · Game manual</span><span class="pg">2</span></div>
+</section>
+
+<!-- ============================================================ 1 WELCOME -->
+<section class="sheet" id="welcome">
+  <div class="runhead"><span>Section 1</span><b>Welcome to Sector 9</b></div>
+  <h1><span class="num">1</span>Welcome to Sector 9</h1>
+  <p class="lede">Under a brutalist concrete tower sits a corporate vault, a security net of cameras, and a reactor that keeps the lights on. Your crew has one night. Break in, work through the heist one job at a time, and finish by overloading the reactor for a total <strong>Blackout</strong>.</p>
+  <div class="cols">
+    <div class="stack">
+      <h2>The table</h2>
+      <p>Cyber Psychosis is a widebody-style table drawn in ink on cracked concrete: heavy riveted steel, hazard stripes, and red glass lights. It plays in a phone's browser, tilted away from you like a real cabinet, with the dot-matrix display above the playfield.</p>
+      <p>The playfield has two main flippers, a small upper playfield (<strong>The Vault</strong>) with its own pair of flippers, two ramps, an orbit, a scoop, a captive-ball reactor, three pop bumpers and a three-ball lock.</p>
+      <h2>Controls</h2>
+      <div class="tbl">
+        <table>
+          <thead><tr><th>Action</th><th>Touch</th><th>Keyboard</th></tr></thead>
+          <tbody>
+            <tr><td>Left flippers</td><td>Left half of the screen</td><td>Z, ←, left Shift</td></tr>
+            <tr><td>Right flippers</td><td>Right half of the screen</td><td>/, →, right Shift</td></tr>
+            <tr><td>Plunger</td><td>Hold the right half, release</td><td>Hold Space, ↓ or Enter, release</td></tr>
+            <tr><td>Start</td><td>Tap</td><td>Enter</td></tr>
+            <tr><td>Nudge</td><td>Shake the phone</td><td>X</td></tr>
+            <tr><td>Sound</td><td>Speaker button</td><td>M</td></tr>
+            <tr><td>Pause</td><td>—</td><td>P</td></tr>
+            <tr><td>Game speed</td><td>% button</td><td>—</td></tr>
+            <tr><td>Flat or tilted view</td><td>Add ?flat to the address</td><td>V</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="small muted">Each flipper button works both flippers on its side: the main flipper and the upper flipper in the Vault.</p>
+    </div>
+    <div class="stack">
+      <h2>Your first game</h2>
+      <ol class="stack">
+        <li><strong>Plunge.</strong> Hold and release. The ball rolls into the three CAM lanes at the top and drops into the pop bumpers. A 12-second ball save starts with the plunge.</li>
+        <li><strong>Break in.</strong> Hit the six red standup targets beside the glowing scoop, the <strong>Breach</strong>, to spell <span class="k">B-R-E-A-C-H</span>. The display says <span class="k">BROKEN IN</span> and the first job, <strong>Infiltrate</strong>, lights.</li>
+        <li><strong>Start the job.</strong> Shoot the Breach. The ball is held while the display explains the job, then kicked out to the left flipper.</li>
+        <li><strong>Shoot the lit shots.</strong> Each job lights its own shots in its own colour. Jobs have no clock: a job lasts until you finish it, and it carries on with your next ball if you drain.</li>
+        <li><strong>Find the next key.</strong> Each row of the heist map is lit by a different key (section 5). Finish all the rows and the Reactor lights for <strong>Blackout</strong>.</li>
+      </ol>
+      <div class="panel stack">
+        <h3>Five things worth knowing</h3>
+        <ul class="tight small">
+          <li>The flipper buttons move the lit <span class="k">R-A-G-E</span> and <span class="k">CAM</span> lanes, like a real lane change.</li>
+          <li>Finish R-A-G-E on an outlane and that ball is saved.</li>
+          <li>Everything earns cash. Make the Black Market ramp to buy the item on its menu.</li>
+          <li>Knock out all three cameras and the back door opens: the Back Alley then leads into the Vault.</li>
+          <li>Speed pays. Jobs pay full value for their first 30 seconds of play.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Cyber Psychosis · Game manual</span><span class="pg">3</span></div>
+</section>
+
+<!-- ============================================================ 2 PLAYFIELD -->
+<section class="sheet" id="playfield">
+  <div class="runhead"><span>Section 2</span><b>The playfield</b></div>
+  <h1><span class="num">2</span>The playfield</h1>
+  <div class="cols mapcols">
+    <div class="map">
+      <img src="img/table.jpg" alt="The whole playfield seen from above, with numbered callouts">
+      <!-- pins: left/top as percentages of the 600 x 1200 table -->
+      <span class="pin" style="left:8.5%;top:53%">1</span>
+      <span class="pin" style="left:14%;top:15.6%">2</span>
+      <span class="pin" style="left:31%;top:13.6%">3</span>
+      <span class="pin" style="left:14.5%;top:33.5%">4</span>
+      <span class="pin" style="left:30.6%;top:29.2%">5</span>
+      <span class="pin" style="left:7%;top:29.3%">6</span>
+      <span class="pin" style="left:63.5%;top:8.2%">7</span>
+      <span class="pin" style="left:66.7%;top:19.8%">8</span>
+      <span class="pin" style="left:16.3%;top:47.3%">9</span>
+      <span class="pin" style="left:25%;top:38.5%">10</span>
+      <span class="pin" style="left:19.3%;top:43.5%">11</span>
+      <span class="pin" style="left:36.3%;top:41.2%">11</span>
+      <span class="pin" style="left:45.3%;top:41.5%">12</span>
+      <span class="pin" style="left:89.3%;top:36.5%">13</span>
+      <span class="pin" style="left:58.7%;top:46.7%">14</span>
+      <span class="pin" style="left:63.3%;top:40%">15</span>
+      <span class="pin" style="left:68.7%;top:51.1%">16</span>
+      <span class="pin" style="left:85.3%;top:61.2%">17</span>
+      <span class="pin" style="left:88.3%;top:53.4%">18</span>
+      <span class="pin" style="left:43.3%;top:55.3%">19</span>
+      <span class="pin" style="left:46.3%;top:66%">20</span>
+      <span class="pin" style="left:46.3%;top:79.3%">21</span>
+      <span class="pin" style="left:11%;top:75.4%">22</span>
+      <span class="pin" style="left:81.5%;top:75.4%">22</span>
+      <span class="pin" style="left:23.3%;top:79%">23</span>
+      <span class="pin" style="left:70%;top:79%">23</span>
+      <span class="pin" style="left:46.3%;top:88.3%">24</span>
+      <span class="pin" style="left:92.8%;top:91.7%">25</span>
+      <span class="pin" style="left:46.3%;top:94%">26</span>
+    </div>
+    <ol class="legend">
+      <li><span class="b">1</span><span><strong>Back Alley</strong> · the left orbit, up and over the top into the CAM lanes. Right flipper.</span></li>
+      <li><span class="b">2</span><span><strong>Back door</strong> · opens in the Back Alley's wall after CAMERAS DOWN, leading into the Vault.</span></li>
+      <li><span class="b">3</span><span><strong>The Vault</strong> · the upper playfield and its three tumbler targets.</span></li>
+      <li><span class="b">4</span><span><strong>Vault lane</strong> · the narrow lane up into the Vault. The hardest shot on the table.</span></li>
+      <li><span class="b">5</span><span><strong>Upper flippers</strong> · the Vault's own pair, on the main buttons.</span></li>
+      <li><span class="b">6</span><span><strong>The Impound</strong> · a three-ball lock cage over the orbit.</span></li>
+      <li><span class="b">7</span><span><strong>CAM lanes and cameras</strong> · three top lanes, each watched by a camera.</span></li>
+      <li><span class="b">8</span><span><strong>Pop bumpers</strong> · three, in their own nest. One exit, to the right inlane.</span></li>
+      <li><span class="b">9</span><span><strong>SAFE</strong> · a standup on the orbit's inner wall. Right flipper.</span></li>
+      <li><span class="b">10</span><span><strong>The Breach</strong> · the scoop. Starts every job. Right flipper.</span></li>
+      <li><span class="b">11</span><span><strong>B-R-E-A-C-H</strong> · six standups in two banks of three.</span></li>
+      <li><span class="b">12</span><span><strong>Black Market ramp</strong> · the centre ramp. Either flipper.</span></li>
+      <li><span class="b">13</span><span><strong>Black Market</strong> · the shop at the top of the ramp.</span></li>
+      <li><span class="b">14</span><span><strong>Reactor drop targets</strong> · three, across the Reactor's mouth.</span></li>
+      <li><span class="b">15</span><span><strong>Reactor core</strong> · a captive ball behind the drops.</span></li>
+      <li><span class="b">16</span><span><strong>VENT</strong> · a standup on the Reactor's right flank. Left flipper.</span></li>
+      <li><span class="b">17</span><span><strong>Skyway</strong> · the right ramp, over to the left inlane. Left flipper.</span></li>
+      <li><span class="b">18</span><span><strong>Spinner</strong> · in the Skyway's lane.</span></li>
+      <li><span class="b">19</span><span><strong>Black Market menu</strong> · five lights: the item on offer.</span></li>
+      <li><span class="b">20</span><span><strong>Heist map</strong> · the five jobs and Blackout, in the brain.</span></li>
+      <li><span class="b">21</span><span><strong>Bonus multiplier</strong> · 2X to 6X.</span></li>
+      <li><span class="b">22</span><span><strong>R-A-G-E lanes</strong> · the two outlanes and two inlanes.</span></li>
+      <li><span class="b">23</span><span><strong>Slingshots</strong></span></li>
+      <li><span class="b">24</span><span><strong>Flippers</strong></span></li>
+      <li><span class="b">25</span><span><strong>Shooter lane</strong> · the plunger. Every plunge goes to the CAM lanes.</span></li>
+      <li><span class="b">26</span><span><strong>Shoot Again</strong> · lit for a ball save or an extra ball.</span></li>
+    </ol>
+  </div>
+  <div class="foot"><span>Cyber Psychosis · Game manual</span><span class="pg">4</span></div>
+</section>
+<!-- ============================================================ 3 SHOTS -->
+<section class="sheet" id="shots">
+  <div class="runhead"><span>Section 3</span><b>The shots</b></div>
+  <h1><span class="num">3</span>The shots</h1>
+  <p class="lede">Five major shots drive the game, plus the vault lane. Every major shot pays its value, $5K cash and a twentieth of its value to the bonus, and feeds whatever job, multiball or RAGE is running.</p>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Shot</th><th>From</th><th class="n">Value</th><th>Comes back to</th><th>What it does</th></tr></thead>
+      <tbody>
+        <tr><td class="k1">Skyway</td><td>Left flipper</td><td class="n">75K</td><td>Left inlane</td><td>Up the lane past the spinner, over the top and down the wire. Feeds the Impound when the lock is lit.</td></tr>
+        <tr><td class="k1">Black Market</td><td>Either flipper</td><td class="n">100K</td><td>Right inlane</td><td>Buys the item on the menu if you have the cash. The skill shot.</td></tr>
+        <tr><td class="k1">Back Alley</td><td>Right flipper</td><td class="n">75K</td><td>CAM lanes, pops, right inlane</td><td>Round the orbit and over the top. With the back door open, into the Vault instead (still counts as the Back Alley).</td></tr>
+        <tr><td class="k1">The Breach</td><td>Right flipper</td><td class="n">25K</td><td>Left flipper</td><td>Starts jobs. Collects a lit Breach jackpot or extra ball.</td></tr>
+        <tr><td class="k1">Reactor core</td><td>Left flipper, drops down</td><td class="n">100K + 50K × heat</td><td>Back to the flippers</td><td>The captive ball hits the core. Raises the heat, pays supers and starts Blackout.</td></tr>
+        <tr><td class="k1">Vault lane</td><td>Right flipper</td><td class="n">50K</td><td>The Vault</td><td>The narrow lane into the upper playfield. The hardest shot on the table.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="cols-3 thumbs">
+    <figure><img src="img/breach.jpg" alt="The Breach scoop between its two banks of standups"><figcaption>The Breach and B-R-E-A-C-H</figcaption></figure>
+    <figure><img src="img/reactor.jpg" alt="The Reactor: drop targets across its mouth and the captive ball behind"><figcaption>The Reactor</figcaption></figure>
+    <figure><img src="img/market.jpg" alt="The Black Market box over the shooter lane and the Skyway's lane"><figcaption>Black Market and Skyway</figcaption></figure>
+  </div>
+  <div class="cols">
+    <div class="stack">
+      <h2>Combos</h2>
+      <p>Make a major shot within 3.5 seconds of the last one for a combo. A 2-way combo pays 50K, a 3-way 100K, a 4-way 150K, and so on: 50K for every shot in the chain after the first two.</p>
+    </div>
+    <div class="stack">
+      <h2>The ball's paths</h2>
+      <p>The ramps bring the ball back to an inlane, so you can catch it and go again. The pops and the Back Alley drop it into the right inlane. The Breach kicks it out to the left flipper, and the plunger always sends it into the CAM lanes.</p>
+    </div>
+  </div>
+  <div class="foot"><span>Cyber Psychosis · Game manual</span><span class="pg">5</span></div>
+</section>
+
+<!-- ============================================================ 4 FEATURES (1) -->
+<section class="sheet" id="features1">
+  <div class="runhead"><span>Section 4</span><b>Features</b></div>
+  <h1><span class="num">4</span>Features</h1>
+  <div class="cols-wide">
+    <div class="stack">
+      <h2>B-R-E-A-C-H</h2>
+      <p>Six red standups in two banks of three, either side of the Breach. A new letter pays 25K, and a letter that's already lit 5K. The two posts at the Breach's mouth count as E and A. Lit letters stay lit from ball to ball, and reset at the start of each game.</p>
+      <ul>
+        <li><strong>The first spelling of the game breaks in:</strong> <span class="k">BROKEN IN</span>, and Infiltrate lights at the Breach.</li>
+        <li><strong>Every spelling after that lights a Breach jackpot:</strong> 1M, plus 250K for each one you've already collected. Spell it twice before collecting and the two add up.</li>
+        <li><strong>The third spelling of the game also lights an extra ball</strong> at the Breach. One a game.</li>
+        <li>Any shot into the Breach collects them. The Breach's JP light blinks while either is waiting.</li>
+      </ul>
+      <h2>The Breach</h2>
+      <p>The scoop holds the ball for a moment and kicks it out to the left flipper. When it starts a job it holds the ball while the display explains the job. When two jobs are lit, it holds the ball for 4 seconds while the flipper buttons choose between them, and starts whichever is showing.</p>
+    </div>
+    <figure><img src="img/breach.jpg" alt="The Breach close up"><figcaption>B-R-E on the left bank, A-C-H on the right. The right lip flares wider, for the right flipper's shots.</figcaption></figure>
+  </div>
+  <div class="cols-wide">
+    <div class="stack">
+      <h2>CAM lanes and the cameras</h2>
+      <p>Three security cameras pan over the three CAM lanes at the top. Roll through a lane to light it (25K, or 5K if it's already lit) and knock out the camera above it. Every plunge and every Back Alley shot drops into the CAM lanes.</p>
+      <ul>
+        <li><strong>Lane change:</strong> each flipper button shifts the lit lanes one place that way, round the end, together with the R-A-G-E letters.</li>
+        <li><strong>All three lit: CAMERAS DOWN.</strong> 100K and $25K. The back door opens for 20 seconds. The lanes blink for 6 seconds, then reset.</li>
+        <li><strong>Once Infiltrate is finished,</strong> CAMERAS DOWN also lights Hack or Route at the Breach.</li>
+        <li>Lit lanes reset at the start of each ball.</li>
+      </ul>
+      <h2>The back door</h2>
+      <p>A gate in the Back Alley's wall. While it's open, a Back Alley shot goes through it into the Vault. It still counts as the Back Alley shot, and the door shuts behind the ball. It stays open for the whole of vault multiball.</p>
+    </div>
+    <figure><img src="img/pops.jpg" alt="The CAM lanes, the three cameras and the pop bumpers"><figcaption>CAM 1–3, the cameras and the pops</figcaption></figure>
+  </div>
+  <div class="foot"><span>Cyber Psychosis · Game manual</span><span class="pg">6</span></div>
+</section>
+
+<!-- ============================================================ 4 FEATURES (2) -->
+<section class="sheet" id="features2">
+  <div class="runhead"><span>Section 4</span><b>Features</b></div>
+  <div class="cols">
+    <div class="stack">
+      <h2>R-A-G-E and RAGE</h2>
+      <p>The four lanes at the bottom spell R-A-G-E: <span class="k">R</span> the left outlane, <span class="k">A</span> the left inlane, <span class="k">G</span> the right inlane, <span class="k">E</span> the right outlane. Each lane pays 5K, and lighting a letter 20K more. The flipper buttons shift the lit letters.</p>
+      <p><strong>All four lit</strong> raises the bonus multiplier one step (up to 6X; it carries over between balls) and starts <strong>RAGE</strong>, or adds 10 seconds to it.</p>
+      <p><strong>Finish R-A-G-E on an outlane</strong> and that ball is saved when it drains: <span class="k">BALL SAVED · RAGE SAVED IT</span>. Finishing on an inlane doesn't save anything, because that ball isn't draining.</p>
+      <div class="panel stack">
+        <h3>RAGE</h3>
+        <p class="small">A 20-second frenzy that runs alongside anything else. Every switch pays 100K (pop bumpers 150K) and every major shot 250K. The spinner doesn't count. The clock waits while a ball is held, and at zero RAGE keeps scoring for a 2-second grace period. It ends when the ball drains. After a Blackout its values go up with the heist.</p>
+      </div>
+      <h2>Pops, slings, spinner, SAFE and VENT</h2>
+      <div class="tbl">
+        <table>
+          <thead><tr><th>Switch</th><th class="n">Score</th><th class="n">Cash</th></tr></thead>
+          <tbody>
+            <tr><td>Pop bumper</td><td class="n">5,000</td><td class="n">$2K</td></tr>
+            <tr><td>Slingshot</td><td class="n">1,010</td><td class="n">$1K</td></tr>
+            <tr><td>Spinner, a turn</td><td class="n">2,500</td><td class="n">$500</td></tr>
+            <tr><td>SAFE or VENT</td><td class="n">25,000</td><td class="n">$11K</td></tr>
+            <tr><td>CAM lane, R-A-G-E lane</td><td class="n">5K–25K</td><td class="n">$1K</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="small muted">A Skyway shot spins the spinner 8 to 15 times. The pops send the ball out of their nest to the right inlane.</p>
+    </div>
+    <div class="stack">
+      <h2>The Reactor</h2>
+      <figure><img src="img/reactor.jpg" alt="The Reactor close up"></figure>
+      <p><strong>Drop targets:</strong> 25K each. Knock all three down for 100K: the core is exposed and the lock lights at the Skyway, if a lock is possible. Drop 3 hides behind drop 2, so take drop 2 first.</p>
+      <p><strong>Once Hack or Route is finished,</strong> knocking all three down also lights Payload or Extract at the Breach.</p>
+      <p><strong>The core:</strong> with the drops down, shoot the captive ball into the core. Each hit raises the <strong>reactor heat</strong> for the rest of the game and pays 100K plus 50K for each level of heat (150K for the first hit). The drops come back up a moment later, unless a super jackpot wants them down.</p>
+      <p>The core is also where every super jackpot is collected, and where Blackout starts.</p>
+    </div>
+  </div>
+  <div class="foot"><span>Cyber Psychosis · Game manual</span><span class="pg">7</span></div>
+</section>
+
+<!-- ============================================================ 4 FEATURES (3) -->
+<section class="sheet" id="features3">
+  <div class="runhead"><span>Section 4</span><b>Features</b></div>
+  <div class="cols-wide">
+    <div class="stack">
+      <h2>The Vault</h2>
+      <p>The upper playfield at the top left, with its own pair of flippers on the main buttons and three <strong>tumbler</strong> targets. Get in up the vault lane or through the open back door (50K). Leave out the top into the CAM lanes (100K) or down the side to the right flipper.</p>
+      <ul>
+        <li><strong>The combination:</strong> the display shows the code, for example <span class="k">CODE 3-1-2</span>, and the next tumbler's light blinks. The code is random, and new after every crack.</li>
+        <li><strong>Hit the tumblers in order:</strong> the first pays 50K, the second 100K, and the third cracks the vault for 1M.</li>
+        <li><strong>A wrong tumbler</strong> pays 10K and starts the combination over. If it happens to be the code's first tumbler, it counts as the start.</li>
+        <li>Progress carries over from ball to ball.</li>
+        <li><strong>Cracked:</strong> the hatch opens and up to three balls drop out for <strong>vault multiball</strong> (section 6). Cracking it during another multiball adds a ball.</li>
+      </ul>
+    </div>
+    <figure><img src="img/vault.jpg" alt="The Vault: its tumbler targets, hatch and flippers"><figcaption>The Vault: tumblers 1–3 at the back, the hatch, the upper flippers</figcaption></figure>
+  </div>
+  <div class="cols">
+    <div class="stack">
+      <h2>The Impound</h2>
+      <p>A three-ball lock in a cage over the orbit. With the lock lit (by the Reactor's drops, or bought at the Black Market), a Skyway shot is diverted up a wire into the cage. It still scores as a Skyway shot, and if it was your only ball, a new one is served to the plunger. Lock three for <strong>Impound multiball</strong>. Locked balls stay locked from ball to ball, but Payload and Blackout use them first, which empties the lock.</p>
+      <h2>Skill shot</h2>
+      <p>Plunge, and make the Black Market ramp within 7 seconds: 500K and $50K. The Black Market's arrow strobes while it's live. Every ball served to the plunger gets one, including the ball served after a lock.</p>
+      <h2>Ball save</h2>
+      <p>12 seconds from the plunge of each new ball, shown by the blinking <span class="k">SHOOT AGAIN</span> light. Multiballs give 12 seconds (Blackout 20), and the Black Market sells 15. The ball save waits while a ball is held in the Breach or rolling into the Impound.</p>
+    </div>
+    <div class="stack">
+      <h2>Bonus</h2>
+      <p>Everything adds to the end-of-ball bonus:</p>
+      <ul class="tight">
+        <li>a twentieth of every major shot's value;</li>
+        <li>a new B-R-E-A-C-H letter 1,500, a R-A-G-E letter 1,000, a drop 2,000, a pop 200;</li>
+        <li>a twentieth of every job's total when it ends.</li>
+      </ul>
+      <p>At the end of the ball the bonus is multiplied by the bonus multiplier (1X to 6X, raised by R-A-G-E) and added to your score. The multiplier carries over between balls.</p>
+      <h2>Extra balls</h2>
+      <p>Two a game at most: one lit at the Breach by the third B-R-E-A-C-H, and one bought at the Black Market. The <span class="k">SHOOT AGAIN</span> light stays on while one is waiting. You play the same ball number again.</p>
+      <h2>Tilt</h2>
+      <p>Nudging moves the ball but fills a tilt meter, which drains over a few seconds. The third quick nudge shows <span class="k">DANGER</span>. The fifth tilts: the flippers die and the ball is lost with its bonus. A tilted ball scores nothing and starts nothing, and a job in progress ends unfinished, so its row lights again.</p>
+    </div>
+  </div>
+  <div class="foot"><span>Cyber Psychosis · Game manual</span><span class="pg">8</span></div>
+</section>
+
+<!-- ============================================================ 5 THE HEIST -->
+<section class="sheet" id="heist">
+  <div class="runhead"><span>Section 5</span><b>The heist</b></div>
+  <h1><span class="num">5</span>The heist</h1>
+  <p class="lede">The heist is the table's story: five jobs in three rows, drawn on the map in the brain at the centre of the playfield, ending in Blackout. Each row has a <strong>key</strong> that lights its jobs at the Breach. A row opens once you've finished a job in the row above.</p>
+  <div class="heist">
+    <div class="row">
+      <div class="key"><small>Key</small>Spell B-R-E-A-C-H</div>
+      <div class="jobs"><div class="job"><b>Infiltrate</b><span>Sneak past the cameras and get inside.</span></div></div>
+    </div>
+    <div class="arrowdown">FINISH IT ▼</div>
+    <div class="row">
+      <div class="key"><small>Key</small>Cameras down</div>
+      <div class="jobs">
+        <div class="job"><b>Hack</b><span>Crack three keypad codes.</span></div>
+        <div class="job"><b>Route</b><span>Plot the escape: four shots in order, twice.</span></div>
+      </div>
+    </div>
+    <div class="arrowdown">FINISH ONE ▼</div>
+    <div class="row">
+      <div class="key"><small>Key</small>All three Reactor drops down</div>
+      <div class="jobs">
+        <div class="job"><b>Payload</b><span>Two-ball multiball. Load the ramps, cash the super.</span></div>
+        <div class="job"><b>Extract</b><span>The getaway: three hurry-ups in order.</span></div>
+      </div>
+    </div>
+    <div class="arrowdown">FINISH ONE ▼</div>
+    <div class="row">
+      <div class="key"><small>Lit at</small>The Reactor core</div>
+      <div class="jobs"><div class="job wiz"><b>Blackout</b><span>The wizard mode. Every shot is a jackpot.</span></div></div>
+    </div>
+  </div>
+  <div class="cols">
+    <div class="stack">
+      <h2>How a job runs</h2>
+      <ul>
+        <li><strong>Start:</strong> shoot the Breach while a job is lit. Starting a job uses up its row's light, so the other job in that row needs the key again.</li>
+        <li><strong>Choose:</strong> if two jobs are lit, the flipper buttons choose while the ball waits in the Breach.</li>
+        <li><strong>One at a time:</strong> no job starts while another job, a multiball or Blackout is running. A key earned meanwhile lights its row for afterwards; the display says <span class="k">AFTER THIS JOB</span>.</li>
+        <li><strong>No clock:</strong> a job lasts until you finish it.</li>
+        <li><strong>Speed pays:</strong> Infiltrate's, Hack's and Route's shots and finishing bonus pay full value for the first 30 seconds of play, then drain to half over two minutes. The display shows <span class="k">SHOTS PAY 75%</span>, for example.</li>
+      </ul>
+    </div>
+    <div class="stack">
+      <h2>Losing the ball</h2>
+      <p>A job carries on with your next ball (<span class="k">HACK CONTINUES</span>, for example), but the step you were in the middle of starts over: Hack's current code, Route's current lap, Extract's current leg. Infiltrate keeps the shots you've snuck past.</p>
+      <p>Multiballs don't carry over. If Payload's multiball ends before its super jackpot, the job fails and its row lights again. A tilt ends any job the same way.</p>
+      <h2>Finishing</h2>
+      <p>A finished job shows its title and bonus, then its total, and adds a twentieth of the total to your bonus. Finishing a row-3 job lights <strong>Blackout</strong> at the Reactor. After Blackout the heist starts over, with Infiltrate lit and every job worth 0.5X more.</p>
+    </div>
+  </div>
+  <div class="foot"><span>Cyber Psychosis · Game manual</span><span class="pg">9</span></div>
+</section>
+
+<!-- ============================================================ 5 JOBS (1) -->
+<section class="sheet" id="jobs1">
+  <div class="runhead"><span>Section 5</span><b>The jobs</b></div>
+  <div class="jobcard">
+    <div><div class="name">Infiltrate</div><div class="meta">Row 1 · key: B-R-E-A-C-H<br>Speed pays</div></div>
+    <dl>
+      <dt>Lit shots</dt><dd>Back Alley, Black Market, Skyway and Reactor core (knock the drops down to reach it).</dd>
+      <dt>The camera</dt><dd>One of the four is watched: its arrow strobes red. The camera moves every 3.5 seconds, jumps when you make a shot, and never watches the last shot left.</dd>
+      <dt>Scoring</dt><dd>Sneak past with an unwatched shot: 500K, then 650K, 800K and 950K (<span class="k">SNUCK PAST</span>). Make the watched one and you're <span class="k">SPOTTED</span>: no award, and every later shot pays 100K less.</dd>
+      <dt>Finish</dt><dd>All four made: <span class="k">NO ONE SAW YOU</span>. Shoot the Breach: <span class="k">YOU ARE INSIDE</span>, 3M.</dd>
+      <dt>Drain</dt><dd>The shots you've snuck past stay made.</dd>
+    </dl>
+  </div>
+  <div class="jobcard">
+    <div><div class="name">Hack</div><div class="meta">Row 2 · key: cameras down<br>Speed pays</div></div>
+    <dl>
+      <dt>Lit shots</dt><dd>The six B-R-E-A-C-H standups become a keypad: one key flashes at a time, four keys to a code. The Breach is lit too.</dd>
+      <dt>Scoring</dt><dd>250K a key. A code pays 1.5M, then 3M, then 4.5M (<span class="k">CODE 1 CRACKED</span>). Shooting the Breach brute-forces the whole current code.</dd>
+      <dt>Finish</dt><dd>Three codes: <span class="k">SYSTEM HACKED</span>, 3M.</dd>
+      <dt>Drain</dt><dd>The code in progress starts over; cracked codes stay cracked.</dd>
+    </dl>
+  </div>
+  <div class="jobcard">
+    <div><div class="name">Route</div><div class="meta">Row 2 · key: cameras down<br>Speed pays</div></div>
+    <dl>
+      <dt>Lit shots</dt><dd>Only the next stop on the route, in order: Skyway, Back Alley, Black Market, Reactor core. Twice.</dd>
+      <dt>Scoring</dt><dd>First lap 600K, 1.2M, 1.8M, 2.4M, then <span class="k">ROUTE PLOTTED</span> +2.5M. Second lap 500K more a step: 1.1M, 1.7M, 2.3M, 2.9M. Out-of-order shots score nothing for the job.</dd>
+      <dt>Finish</dt><dd>Two laps: <span class="k">ESCAPE ROUTE SET</span>, 3M. A full-speed Route is worth 19.5M.</dd>
+      <dt>Drain</dt><dd>The lap in progress starts over.</dd>
+    </dl>
+  </div>
+  <div class="cols" style="margin-top:auto">
+    <figure class="dmd"><img src="img/spotted.png" alt="Display: SPOTTED!, SHOTS PAY 100K LESS"><figcaption>Infiltrate: the camera saw you</figcaption></figure>
+    <figure class="dmd"><img src="img/job.png" alt="Display: HACK, score, CODE 1 OF 3 KEY 1/4"><figcaption>Hack's screen</figcaption></figure>
+  </div>
+  <div class="panel stack">
+    <h3>Reading the job screen</h3>
+    <p class="small">While a job runs, the display shows its name at the top left, your score in the middle, and the job's status on the bottom line (<span class="k">CODE 2 OF 3  KEY 1/4</span>, <span class="k">NEXT SKYWAY</span>, <span class="k">SNEAK PAST 2 MORE</span>). The bottom line takes turns with RAGE, the job's pace and any other multiball every 2 seconds.</p>
+  </div>
+  <div class="foot"><span>Cyber Psychosis · Game manual</span><span class="pg">10</span></div>
+</section>
+
+<!-- ============================================================ 5 JOBS (2) -->
+<section class="sheet" id="jobs2">
+  <div class="runhead"><span>Section 5</span><b>The jobs</b></div>
+  <div class="jobcard">
+    <div><div class="name">Payload</div><div class="meta">Row 3 · key: Reactor drops<br>2-ball multiball</div></div>
+    <dl>
+      <dt>Start</dt><dd>A second ball joins (from the Impound if one is waiting), with a 12-second ball save.</dd>
+      <dt>Lit shots</dt><dd>Both ramps are jackpots: 1.5M, plus 250K for each one.</dd>
+      <dt>Super</dt><dd>Three jackpots light the super jackpot at the Reactor for 20 seconds, and the drops fall out of the way. It pays three times the jackpot's value. Miss it and two more jackpots relight it.</dd>
+      <dt>Finish</dt><dd>Collect the super jackpot. The job ends when its multiball does: finished if you collected a super, failed if not (its row lights again).</dd>
+    </dl>
+  </div>
+  <div class="jobcard">
+    <div><div class="name">Extract</div><div class="meta">Row 3 · key: Reactor drops<br>Three hurry-ups</div></div>
+    <dl>
+      <dt>Lit shots</dt><dd>One leg at a time, in order: Skyway, Black Market, Breach.</dd>
+      <dt>Scoring</dt><dd>Each leg is a hurry-up. It starts at 6M (then 7M, then 8M) and bleeds 200K a second down to 1.5M. Make the leg to bank its current value (<span class="k">KEEP MOVING</span>).</dd>
+      <dt>Finish</dt><dd>The third leg: <span class="k">EXTRACTED</span>, 4M.</dd>
+      <dt>Drain</dt><dd>Finished legs stay finished; the leg in progress starts again at full value.</dd>
+    </dl>
+  </div>
+  <div class="jobcard" style="border-top-color:var(--red)">
+    <div><div class="name red">Blackout</div><div class="meta">Wizard mode<br>3-ball multiball</div></div>
+    <dl>
+      <dt>Lit</dt><dd>By finishing Payload or Extract. The Reactor's arrow lights red and its eye pulses.</dd>
+      <dt>Start</dt><dd>Hit the core while no job or multiball is running. The lights die and it's a 3-ball multiball, with a 20-second ball save. Finish all five jobs first and it's <span class="k">TOTAL BLACKOUT</span>, with a fourth ball.</dd>
+      <dt>Jackpots</dt><dd>The Skyway, Black Market, Back Alley and Breach are each a jackpot once: 2M, plus 500K for each.</dd>
+      <dt>Super</dt><dd>All four light the super at the Reactor (the drops fall): five times the jackpot's value. Then the four light again.</dd>
+      <dt>Worth</dt><dd>Every job finished on this pass through the heist adds 0.5X to everything in Blackout.</dd>
+      <dt>End</dt><dd>With its multiball: <span class="k">LIGHTS OUT</span> and your total. The heist starts over with Infiltrate lit, and the jobs, RAGE and Blackout are worth 0.5X more. A tilt ends Blackout without the step up.</dd>
+    </dl>
+  </div>
+  <div class="cols" style="margin-top:auto">
+    <figure class="dmd"><img src="img/blackout.png" alt="Display: BLACKOUT, EVERY SHOT A JACKPOT"><figcaption>Blackout begins</figcaption></figure>
+    <figure class="dmd"><img src="img/breach-jp.png" alt="Display: BREACH JACKPOT LIT, 1,000,000"><figcaption>Later spellings of B-R-E-A-C-H</figcaption></figure>
+  </div>
+  <div class="panel dark stack">
+    <h3>Going for TOTAL BLACKOUT</h3>
+    <p class="small">Once Blackout is lit, any core hit with no job running starts it. The key to the last row is knocking the Reactor's drops down, which also exposes the core. To finish all five jobs first, knock the drops down and get to the Breach without touching the captive ball.</p>
+  </div>
+  <div class="foot"><span>Cyber Psychosis · Game manual</span><span class="pg">11</span></div>
+</section>
+
+<!-- ============================================================ 6 MULTIBALL -->
+<section class="sheet" id="multiball">
+  <div class="runhead"><span>Section 6</span><b>Multiball and Blackout</b></div>
+  <h1><span class="num">6</span>Multiball</h1>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Multiball</th><th>Started by</th><th class="n">Balls</th><th>Jackpots</th><th>Super jackpot</th></tr></thead>
+      <tbody>
+        <tr><td class="k1">Impound</td><td>Locking three balls</td><td class="n">3</td><td>Skyway, Black Market, Back Alley, Breach: 1M, +250K each</td><td>Four jackpots light it at the Reactor for 20 s: 3× the jackpot</td></tr>
+        <tr><td class="k1">Vault</td><td>Cracking the vault</td><td class="n">up to 4</td><td>Every ball out the Vault's top: 1M, +250K each</td><td>—</td></tr>
+        <tr><td class="k1">Payload</td><td>The Payload job</td><td class="n">2</td><td>Both ramps: 1.5M, +250K each</td><td>Three jackpots light it for 20 s: 3× the jackpot</td></tr>
+        <tr><td class="k1">Blackout</td><td>The core, once lit</td><td class="n">3 or 4</td><td>Skyway, Black Market, Back Alley, Breach, once each: 2M, +500K each</td><td>All four light it: 5× the jackpot</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="cols">
+    <div class="stack">
+      <h2>Impound multiball</h2>
+      <p>The cage lets the balls out one by one, down the Skyway's wire to the left flipper, with a 12-second ball save. Any of the four shots is a jackpot, as often as you make it. The jackpot's value carries on into your next Impound multiball. Four jackpots light the super at the Reactor and drop the targets out of the way. Miss the super and two more jackpots relight it. When the multiball ends, the display shows what it paid.</p>
+      <div class="cols"><figure class="dmd"><img src="img/locked.png" alt="Display: BALL 3 LOCKED, IMPOUND BREAKOUT!"><figcaption>The third lock</figcaption></figure><figure class="dmd"><img src="img/vault-cracked.png" alt="Display: VAULT CRACKED, VAULT MULTIBALL"><figcaption>The vault, cracked</figcaption></figure></div>
+      <figure style="width:1.9in"><img src="img/impound.jpg" alt="The Impound cage over the orbit"><figcaption>The Impound</figcaption></figure>
+    </div>
+    <div class="stack">
+      <h2>Vault multiball</h2>
+      <p>Crack the vault's combination and the hatch opens: up to three balls drop onto the Vault's deck, for four on the table at most. 12-second ball save. The back door stays open for the whole multiball, so every Back Alley shot feeds the Vault. Each ball you send out the Vault's top pays the vault jackpot, which starts at 1M each time.</p>
+      <h2>Ball save in multiball</h2>
+      <p>Every multiball starts with a ball save (Blackout 20 seconds, the others 12). A drained ball is fired straight back in while it runs.</p>
+      <h2>The end of a multiball</h2>
+      <p>A multiball ends when one ball is left. Payload ends its job with it, and Blackout its pass through the heist.</p>
+      <div class="note">No new job starts during any multiball, and nothing can be locked. Keys you earn wait for afterwards.</div>
+    </div>
+  </div>
+  <div class="foot"><span>Cyber Psychosis · Game manual</span><span class="pg">12</span></div>
+</section>
+
+<!-- ============================================================ 7 BLACK MARKET -->
+<section class="sheet" id="market">
+  <div class="runhead"><span>Section 7</span><b>The Black Market</b></div>
+  <h1><span class="num">7</span>The Black Market</h1>
+  <p class="lede">Everything you hit earns cash. Spend it at the Black Market: the box at the top of the centre ramp. Cash lasts the whole game; the display shows it on the bottom right when nothing else is lit.</p>
+  <div class="cols">
+    <div class="stack">
+      <h2>Earning cash</h2>
+      <div class="tbl">
+        <table>
+          <thead><tr><th>Source</th><th class="n">Cash</th></tr></thead>
+          <tbody>
+            <tr><td>Any switch</td><td class="n">$1K</td></tr>
+            <tr><td>Pop bumper</td><td class="n">$2K</td></tr>
+            <tr><td>Spinner, a turn</td><td class="n">$500</td></tr>
+            <tr><td>Major shot</td><td class="n">$5K</td></tr>
+            <tr><td>SAFE or VENT</td><td class="n">$11K</td></tr>
+            <tr><td>CAMERAS DOWN</td><td class="n">$25K</td></tr>
+            <tr><td>Skill shot</td><td class="n">$50K</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h2>Buying</h2>
+      <p>The menu under the Black Market's five lights rotates every 4 seconds through the items you can buy right now. The item on offer blinks, and blinks faster when you can afford it. Make the Black Market ramp to buy it. If you can't afford it, the display shows its price.</p>
+    </div>
+    <div class="stack">
+      <h2>The menu</h2>
+      <div class="tbl">
+        <table>
+          <thead><tr><th>Item</th><th class="n">Price</th><th>What it does</th></tr></thead>
+          <tbody>
+            <tr><td class="k1">RAGE</td><td class="n">$60K</td><td>Starts RAGE, or adds 10 seconds to it. Doesn't raise the bonus multiplier.</td></tr>
+            <tr><td class="k1">Save</td><td class="n">$50K</td><td>A 15-second ball save. Offered while no ball save is running.</td></tr>
+            <tr><td class="k1">Lock</td><td class="n">$40K</td><td>Lights the lock. Offered when a lock is possible.</td></tr>
+            <tr><td class="k1">X-Ball</td><td class="n">$200K</td><td>An extra ball. Once a game.</td></tr>
+            <tr><td class="k1">10X</td><td class="n">—</td><td>On the menu, but not sold in this version.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <figure style="width:1.75in"><img src="img/market.jpg" alt="The Black Market box at the top of the centre ramp"><figcaption>The Black Market, over the shooter lane</figcaption></figure>
+    </div>
+  </div>
+  <div class="foot"><span>Cyber Psychosis · Game manual</span><span class="pg">13</span></div>
+</section>
+
+<!-- ============================================================ 8 SCORING -->
+<section class="sheet" id="scoring">
+  <div class="runhead"><span>Section 8</span><b>Scoring</b></div>
+  <h1><span class="num">8</span>Scoring</h1>
+  <div class="cols">
+    <div class="stack">
+      <h2>Switches and targets</h2>
+      <div class="tbl"><table>
+        <tbody>
+          <tr><td>Slingshot</td><td class="n">1,010</td></tr>
+          <tr><td>Spinner, a turn</td><td class="n">2,500</td></tr>
+          <tr><td>Pop bumper</td><td class="n">5,000</td></tr>
+          <tr><td>B-R-E-A-C-H letter: new / already lit</td><td class="n">25K / 5K</td></tr>
+          <tr><td>R-A-G-E lane: lighting a letter / other</td><td class="n">25K / 5K</td></tr>
+          <tr><td>CAM lane: lighting / other</td><td class="n">25K / 5K</td></tr>
+          <tr><td>SAFE, VENT</td><td class="n">25K</td></tr>
+          <tr><td>Drop target / all three</td><td class="n">25K / +100K</td></tr>
+          <tr><td>CAMERAS DOWN</td><td class="n">100K</td></tr>
+          <tr><td>Tumbler 1st / 2nd / crack</td><td class="n">50K / 100K / 1M</td></tr>
+          <tr><td>Wrong tumbler</td><td class="n">10K</td></tr>
+        </tbody>
+      </table></div>
+      <h2>Shots</h2>
+      <div class="tbl"><table>
+        <tbody>
+          <tr><td>Breach</td><td class="n">25K</td></tr>
+          <tr><td>Skyway, Back Alley</td><td class="n">75K</td></tr>
+          <tr><td>Black Market</td><td class="n">100K</td></tr>
+          <tr><td>Reactor core</td><td class="n">100K + 50K × heat</td></tr>
+          <tr><td>Into the Vault / out the top</td><td class="n">50K / 100K</td></tr>
+          <tr><td>Combo, n-way</td><td class="n">(n − 1) × 50K</td></tr>
+          <tr><td>Skill shot</td><td class="n">500K</td></tr>
+          <tr><td>Breach jackpot</td><td class="n">1M, +250K each</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+    <div class="stack">
+      <h2>Jobs</h2>
+      <div class="tbl"><table>
+        <tbody>
+          <tr><td>Infiltrate shots / finish</td><td class="n">0.5–0.95M / 3M</td></tr>
+          <tr><td>Hack keys / codes / finish</td><td class="n">250K / 1.5–4.5M / 3M</td></tr>
+          <tr><td>Route steps / lap / finish</td><td class="n">0.6–2.9M / 2.5M / 3M</td></tr>
+          <tr><td>Payload jackpot / super</td><td class="n">1.5M +250K / 3×</td></tr>
+          <tr><td>Extract legs / finish</td><td class="n">6M, 7M, 8M draining / 4M</td></tr>
+        </tbody>
+      </table></div>
+      <h2>Multiball and RAGE</h2>
+      <div class="tbl"><table>
+        <tbody>
+          <tr><td>Impound jackpot / super</td><td class="n">1M +250K / 3×</td></tr>
+          <tr><td>Vault jackpot</td><td class="n">1M +250K</td></tr>
+          <tr><td>Blackout jackpot / super</td><td class="n">2M +500K / 5×</td></tr>
+          <tr><td>RAGE: switch / pop / shot</td><td class="n">100K / 150K / 250K</td></tr>
+        </tbody>
+      </table></div>
+      <h2>Multipliers</h2>
+      <ul class="small">
+        <li><strong>The heist level:</strong> each Blackout makes the jobs, RAGE and Blackout worth 0.5X more for the rest of the game.</li>
+        <li><strong>Blackout</strong> is also worth 0.5X more for every job finished on that pass.</li>
+        <li><strong>Speed pays:</strong> Infiltrate, Hack and Route pay full value for 30 seconds of play, then drain to half over two minutes.</li>
+        <li><strong>Bonus</strong> is multiplied by 1X to 6X at the end of each ball.</li>
+      </ul>
+      <div class="panel stack">
+        <h3>What a game is worth</h3>
+        <p class="small">A first game is worth 1 to 3 million. Play a couple of jobs and a multiball and you'll reach 10 to 20 million. A Blackout game goes past 50 million.</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Cyber Psychosis · Game manual</span><span class="pg">14</span></div>
+</section>
+
+<!-- ============================================================ 9 DISPLAY -->
+<section class="sheet" id="display">
+  <div class="runhead"><span>Section 9</span><b>The display</b></div>
+  <h1><span class="num">9</span>The display</h1>
+  <div class="cols">
+    <figure class="dmd"><img src="img/status.png" alt="Display: score, ball 1, SPELL BREACH"><figcaption>Normal play: score, ball number, and what's lit</figcaption></figure>
+    <figure class="dmd"><img src="img/job.png" alt="Display: HACK, score, CODE 1 OF 3 KEY 1/4"><figcaption>A job running: name, score, its status</figcaption></figure>
+    <figure class="dmd"><img src="img/broken-in.png" alt="Display: BROKEN IN, INFILTRATE IS LIT"><figcaption>The first B-R-E-A-C-H</figcaption></figure>
+    <figure class="dmd"><img src="img/choose.png" alt="Display: CHOOSE YOUR PATH, HACK, FLIPPERS CHANGE 4"><figcaption>Two jobs lit: the flippers choose</figcaption></figure>
+    <figure class="dmd"><img src="img/cameras-down.png" alt="Display: CAMERAS DOWN, BACK DOOR OPEN"><figcaption>All three CAM lanes lit</figcaption></figure>
+    <figure class="dmd"><img src="img/reactor.png" alt="Display: REACTOR EXPOSED, LOCK LIT AT THE SKYWAY"><figcaption>All three drops down</figcaption></figure>
+    <figure class="dmd"><img src="img/vault.png" alt="Display: THE VAULT, CODE 3-1-2"><figcaption>Entering the Vault: the code</figcaption></figure>
+    <figure class="dmd"><img src="img/shop.png" alt="Display: BLACK MARKET, RAGE COSTS $60K"><figcaption>The Black Market, short of cash</figcaption></figure>
+  </div>
+  <h2>The status line</h2>
+  <p class="small">In normal play the bottom right shows the most important thing that's lit, in this order:</p>
+  <div class="tbl"><table>
+    <tbody>
+      <tr><td class="k1">VAULT 1.25M · JP 1.5M · SUPER 12</td><td>A multiball's jackpot, or the seconds left on its super</td></tr>
+      <tr><td class="k1">BLACKOUT LIT</td><td>Hit the core</td></tr>
+      <tr><td class="k1">CODE 3-1-2</td><td>A ball is in the Vault: the combination</td></tr>
+      <tr><td class="k1">EXTRA BALL LIT</td><td>Collect it at the Breach</td></tr>
+      <tr><td class="k1">BREACH LIT</td><td>A job is ready to start</td></tr>
+      <tr><td class="k1">BREACH JP 1M</td><td>A Breach jackpot is waiting</td></tr>
+      <tr><td class="k1">LOCK LIT</td><td>Shoot the Skyway to lock a ball</td></tr>
+      <tr><td class="k1">SAVE</td><td>The ball save is running</td></tr>
+      <tr><td class="k1">SPELL BREACH</td><td>You haven't broken in yet</td></tr>
+      <tr><td class="k1">$45K</td><td>Your cash</td></tr>
+    </tbody>
+  </table></div>
+  <p class="small muted">While a ball waits in the shooter lane the bottom line blinks LAUNCH instead.</p>
+  <div class="foot"><span>Cyber Psychosis · Game manual</span><span class="pg">15</span></div>
+</section>
+<!-- ============================================================ 10 STRATEGY -->
+<section class="sheet" id="strategy">
+  <div class="runhead"><span>Section 10</span><b>Strategy</b></div>
+  <h1><span class="num">10</span>Strategy</h1>
+  <p class="lede">These odds are measured, not guessed. The game's physics was run off each flipper at every flip timing 2 ms apart, from a cradled ball and from a ball rolling straight off the inlane. Each figure is the share of those timings that makes the shot. A bigger number means a wider timing window.</p>
+  <div class="cols">
+    <div class="stack">
+      <h2>Shot odds, left flipper</h2>
+      <div class="tbl">
+        <table>
+          <thead><tr><th>Shot</th><th class="n">Cradled</th><th class="n">On the move</th></tr></thead>
+          <tbody>
+            <tr><td class="k1">Skyway</td><td class="n">19%</td><td class="n">2%</td></tr>
+            <tr><td class="k1">Black Market</td><td class="n">9%</td><td class="n">16%</td></tr>
+            <tr><td class="k1">Reactor core <span class="muted">(drops down)</span></td><td class="n">10%</td><td class="n">10%</td></tr>
+            <tr><td class="k1">Drop 1 / drop 2</td><td class="n">13% / 12%</td><td class="n">11% / 12%</td></tr>
+            <tr><td class="k1">Drop 3 <span class="muted">(once 2 is down)</span></td><td class="n" colspan="2">11%</td></tr>
+            <tr><td class="k1">VENT</td><td class="n">13%</td><td class="n">5%</td></tr>
+            <tr><td class="k1">Letters H / C / A</td><td class="n">0%</td><td class="n">5% / 10% / 10%</td></tr>
+            <tr><td class="k1">The Breach</td><td class="n">0%</td><td class="n">3%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h2>Shot odds, right flipper</h2>
+      <div class="tbl">
+        <table>
+          <thead><tr><th>Shot</th><th class="n">Cradled</th><th class="n">On the move</th></tr></thead>
+          <tbody>
+            <tr><td class="k1">Black Market</td><td class="n">12%</td><td class="n">4%</td></tr>
+            <tr><td class="k1">Back Alley</td><td class="n">10%</td><td class="n">4%</td></tr>
+            <tr><td class="k1">The Breach</td><td class="n">9%</td><td class="n">13%</td></tr>
+            <tr><td class="k1">Vault lane</td><td class="n">1%</td><td class="n">0%</td></tr>
+            <tr><td class="k1">Letters H / A</td><td class="n">15% / 9%</td><td class="n">11% / 11%</td></tr>
+            <tr><td class="k1">Letter B</td><td class="n">6%</td><td class="n">0%</td></tr>
+            <tr><td class="k1">SAFE</td><td class="n">7%</td><td class="n">2%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="small muted">The Skyway can't be made from the right flipper, and the Back Alley can't be made from the left. The Breach is a right-flipper shot; the left flipper only finds it on the move, rarely.</p>
+    </div>
+    <div class="stack-lg">
+      <div class="stack">
+        <h2>The Breach</h2>
+        <p>The Breach starts every job. It's a right-flipper shot: 9% of cradled timings make it, and 13% of balls rolling off the right inlane. The Black Market ramp returns to the right inlane, so <strong>Black Market, then the Breach on the fly</strong> is the natural way in.</p>
+      </div>
+      <div class="stack">
+        <h2>Breaking in</h2>
+        <p>From a cradle on the right flipper, <span class="k">H</span> (15%), <span class="k">A</span> (9%) and <span class="k">B</span> (6%) are the aimable letters. <span class="k">C</span> is a left-flipper shot on the move (10%): make the Skyway, then flip at C as the ball comes off the left inlane. <span class="k">R</span> and <span class="k">E</span> mostly come from rebounds. Letters you've lit stay lit for the whole game, so keep chipping away.</p>
+      </div>
+      <div class="stack">
+        <h2>Flow</h2>
+        <ul>
+          <li>The Skyway comes back to the left inlane: from a cradle on the left flipper you can shoot it again and again.</li>
+          <li>The Black Market comes back to the right inlane.</li>
+          <li>The Breach kicks out to the left flipper.</li>
+          <li>The pops and a closed Back Alley feed the right inlane.</li>
+        </ul>
+      </div>
+      <div class="panel stack">
+        <h3>Danger zone: the right outlane</h3>
+        <p class="small">In simulated play the right outlane drains about three balls for every one down the left. The worst feeders are the Reactor's drop targets: a drop hit from the left flipper rebounds into the right outlane a quarter to a third of the time. The left slingshot and SAFE send the ball that way too. Shoot the drops from a cradle, aim for the middle of the bank, and be ready to nudge.</p>
+      </div>
+      <div class="stack">
+        <h2>The Vault</h2>
+        <p>The vault lane is the hardest shot on the table. The easy way in is the back door: light all three CAM lanes, then make the Back Alley within 20 seconds. Inside, the upper <strong>left</strong> flipper reaches tumblers 1 and 3, and the upper <strong>right</strong> flipper reaches tumbler 2. The upper right flipper also sends most balls out of the Vault's side drain, so only use it when the code asks for tumbler 2.</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Cyber Psychosis · Game manual</span><span class="pg">16</span></div>
+</section>
+<!-- ============================================================ 11 APRON CARDS -->
+<section class="sheet" id="apron">
+  <div class="runhead"><span>Section 11</span><b>Apron cards</b></div>
+  <h1><span class="num">11</span>Apron cards</h1>
+  <p class="small muted">The two cards that sit either side of the flippers on a cabinet's apron: how to play on the left, scores on the right. Cut along the dashed lines.</p>
+  <div class="cards">
+    <div class="card"><div class="card-inner">
+      <h4>Cyber <span>Psychosis</span></h4>
+      <div class="rule"></div>
+      <h5>The heist</h5>
+      <ol>
+        <li>Spell <b>B-R-E-A-C-H</b> to break in. Shoot the <b>Breach</b> to start <b>Infiltrate</b>.</li>
+        <li><b>Cameras down</b> (light CAM 1-2-3) lights <b>Hack</b> or <b>Route</b>.</li>
+        <li>Knock down the <b>Reactor</b> drops to light <b>Payload</b> or <b>Extract</b>.</li>
+        <li>Finish Payload or Extract to light <b>Blackout</b>. Hit the Reactor core.</li>
+      </ol>
+      <p>Jobs have no clock, and carry on if you lose the ball.</p>
+      <div class="rule"></div>
+      <h5>Multiball</h5>
+      <ul>
+        <li><b>Impound:</b> the Reactor drops light the lock. Shoot the Skyway. Lock 3.</li>
+        <li><b>Vault:</b> cameras down opens the back door. Shoot the Back Alley, then hit the tumblers in the order on the display.</li>
+      </ul>
+      <div class="rule"></div>
+      <h5>And</h5>
+      <ul>
+        <li><b>R-A-G-E</b> raises the bonus X and starts RAGE. Finish it on an outlane to save that ball.</li>
+        <li>Flipper buttons move the lit lanes.</li>
+        <li>Cash buys the <b>Black Market</b> menu: make the centre ramp.</li>
+        <li><b>Extra ball:</b> the 3rd B-R-E-A-C-H, or the Black Market.</li>
+      </ul>
+      <p style="margin-top:auto; color: var(--steel); font-size: 7pt; letter-spacing: 0.14em; text-transform: uppercase">3 balls · ball save 12 s · Squidzombie Pinball</p>
+    </div></div>
+    <div class="card"><div class="card-inner">
+      <h4>Score <span>Card</span></h4>
+      <div class="rule"></div>
+      <h5>Jackpots</h5>
+      <table>
+        <tbody>
+          <tr><td>Breach jackpot</td><td class="n">1M +250K</td></tr>
+          <tr><td>Impound</td><td class="n">1M +250K</td></tr>
+          <tr><td>Vault</td><td class="n">1M +250K</td></tr>
+          <tr><td>Payload</td><td class="n">1.5M +250K</td></tr>
+          <tr><td>Blackout</td><td class="n">2M +500K</td></tr>
+          <tr><td>Supers</td><td class="n">3× · Blackout 5×</td></tr>
+        </tbody>
+      </table>
+      <div class="rule"></div>
+      <h5>Jobs finished</h5>
+      <table>
+        <tbody>
+          <tr><td>Infiltrate · Hack · Route</td><td class="n">3M</td></tr>
+          <tr><td>Extract</td><td class="n">4M</td></tr>
+          <tr><td>Each Blackout</td><td class="n">+0.5X</td></tr>
+        </tbody>
+      </table>
+      <div class="rule"></div>
+      <h5>High scores</h5>
+      <table>
+        <tbody>
+          <tr><td>1&nbsp;&nbsp;______________</td><td class="n">______________</td></tr>
+          <tr><td>2&nbsp;&nbsp;______________</td><td class="n">______________</td></tr>
+          <tr><td>3&nbsp;&nbsp;______________</td><td class="n">______________</td></tr>
+          <tr><td>4&nbsp;&nbsp;______________</td><td class="n">______________</td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top:auto; color: var(--steel); font-size: 7pt; letter-spacing: 0.14em; text-transform: uppercase">Sector 9 · one heist · no ghosts</p>
+    </div></div>
+  </div>
+  <div class="foot"><span>Cyber Psychosis · Game manual</span><span class="pg">17</span></div>
+</section>
+<!-- ============================================================ 12 OPERATOR (1) -->
+<section class="sheet" id="operator">
+  <div class="runhead"><span>Section 12</span><b>Operator's section</b></div>
+  <h1><span class="num">12</span>Operator's section</h1>
+  <div class="cols">
+    <div class="stack">
+      <h2>Settings</h2>
+      <div class="tbl">
+        <table>
+          <thead><tr><th>Setting</th><th>How</th><th>Kept</th></tr></thead>
+          <tbody>
+            <tr><td>Game speed: 100%, 90% or 80%</td><td>The % button</td><td>On this device</td></tr>
+            <tr><td>Flat or tilted view</td><td>V, or ?flat in the address</td><td>No</td></tr>
+            <tr><td>Sound on or off</td><td>Speaker button, or M</td><td>No</td></tr>
+            <tr><td>Pause</td><td>P</td><td>—</td></tr>
+            <tr><td>High score</td><td>Set by play</td><td>On this device</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="small muted">A slower game speed slows the whole game, ball and timers alike, which helps on a small screen.</p>
+      <h2>Fixed adjustments</h2>
+      <div class="tbl">
+        <table>
+          <tbody>
+            <tr><td>Balls per game</td><td class="n">3</td></tr>
+            <tr><td>Ball save, from the plunge of each new ball</td><td class="n">12 s</td></tr>
+            <tr><td>Tilt warning (DANGER)</td><td class="n">3rd quick nudge</td></tr>
+            <tr><td>Tilt</td><td class="n">5th quick nudge</td></tr>
+            <tr><td>Tilt meter recovery</td><td class="n">1 nudge per 2.5 s</td></tr>
+            <tr><td>Nudge repeat</td><td class="n">one per 0.6 s</td></tr>
+            <tr><td>Balls in play, most</td><td class="n">4</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h2>Specifications</h2>
+      <div class="tbl">
+        <table>
+          <tbody>
+            <tr><td>Playfield</td><td>600 × 1200 units; 1 unit is about 1 mm</td></tr>
+            <tr><td>Ball</td><td>28 units across</td></tr>
+            <tr><td>Physics</td><td>480 steps a second, fixed; ramps on their own collision layers; flippers pass their real surface speed to the ball</td></tr>
+            <tr><td>Picture</td><td>3/4 view with real height, tilted in 3D; lamps, flashers and general illumination drawn live</td></tr>
+            <tr><td>Display</td><td>128 × 32 dot matrix</td></tr>
+            <tr><td>Flashing</td><td>No large area of the screen flashes more than three times a second</td></tr>
+            <tr><td>Art and sound</td><td>All generated in code; no image or sound files</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="stack">
+      <h2>Switch list</h2>
+      <div class="tbl">
+        <table>
+          <thead><tr><th>Switch</th><th>Where</th></tr></thead>
+          <tbody>
+            <tr><td class="k1">Flipper buttons</td><td>Left and right; each works both flippers on its side</td></tr>
+            <tr><td class="k1">Plunger</td><td>Shooter lane</td></tr>
+            <tr><td class="k1">Tilt</td><td>Nudge</td></tr>
+            <tr><td class="k1">Slingshots</td><td>Left, right</td></tr>
+            <tr><td class="k1">Pop bumpers 1–3</td><td>Top right nest</td></tr>
+            <tr><td class="k1">CAM lanes 1–3</td><td>Top lanes, above the pops</td></tr>
+            <tr><td class="k1">R-A-G-E lanes</td><td>R left outlane, A left inlane, G right inlane, E right outlane</td></tr>
+            <tr><td class="k1">B-R-E-A-C-H</td><td>Six standups. The posts at the Breach's mouth also count as E and A</td></tr>
+            <tr><td class="k1">SAFE</td><td>Orbit's inner wall</td></tr>
+            <tr><td class="k1">VENT</td><td>Reactor's right flank</td></tr>
+            <tr><td class="k1">Drop targets 1–3</td><td>Across the Reactor's mouth</td></tr>
+            <tr><td class="k1">Reactor core</td><td>Captive ball hits the core</td></tr>
+            <tr><td class="k1">Breach scoop</td><td>Holds and ejects the ball</td></tr>
+            <tr><td class="k1">Skyway made</td><td>Top of the Skyway</td></tr>
+            <tr><td class="k1">Spinner</td><td>Skyway lane</td></tr>
+            <tr><td class="k1">Black Market made</td><td>Top of the centre ramp</td></tr>
+            <tr><td class="k1">Back Alley</td><td>Top of the left orbit</td></tr>
+            <tr><td class="k1">Vault entry</td><td>Top of the vault lane, and the back door</td></tr>
+            <tr><td class="k1">Tumblers 1–3</td><td>In the Vault</td></tr>
+            <tr><td class="k1">Vault exits</td><td>Out the top, or down the side drain</td></tr>
+            <tr><td class="k1">Impound lock</td><td>The cage, fed from the Skyway</td></tr>
+            <tr><td class="k1">Drain</td><td>Below the flippers</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h2>Moving parts</h2>
+      <p class="small">Breach kicker · back door · Back Alley loop diverter · Skyway lock diverter · Impound release · Vault hatch · drop target reset · auto-launcher for multiball and saved balls.</p>
+    </div>
+  </div>
+  <div class="foot"><span>Cyber Psychosis · Game manual</span><span class="pg">18</span></div>
+</section>
+
+<!-- ============================================================ 12 OPERATOR (2) -->
+<section class="sheet" id="lamps">
+  <div class="runhead"><span>Section 12</span><b>Lamps and diagnostics</b></div>
+  <div class="cols">
+    <div class="stack">
+      <h2>Lamp list (66 inserts)</h2>
+      <div class="tbl">
+        <table>
+          <thead><tr><th>Lamps</th><th class="n">Count</th><th>Meaning</th></tr></thead>
+          <tbody>
+            <tr><td class="k1">Shot arrows</td><td class="n">5</td><td>Skyway, Black Market, Back Alley, Breach, Reactor: something to collect there. Slow blink: available. Fast: a jackpot or a hurry. Strobe: a super, or the watched shot in Infiltrate</td></tr>
+            <tr><td class="k1">Shot jackpots (JP)</td><td class="n">5</td><td>A jackpot is lit at that shot</td></tr>
+            <tr><td class="k1">Shot mode lights</td><td class="n">5</td><td>The running job wants this shot, in the job's colour</td></tr>
+            <tr><td class="k1">Lock</td><td class="n">2</td><td>LOCK at the Skyway; IMPOUND on the cage</td></tr>
+            <tr><td class="k1">SAFE, VENT</td><td class="n">2</td><td>Flash when hit</td></tr>
+            <tr><td class="k1">B-R-E-A-C-H</td><td class="n">6</td><td>On: spelled. Flashing: Hack's key to hit</td></tr>
+            <tr><td class="k1">CAM 1–3</td><td class="n">3</td><td>On: camera knocked out. Blinking: CAMERAS DOWN</td></tr>
+            <tr><td class="k1">Tumblers 1–3</td><td class="n">3</td><td>Blinking: the next tumbler in the code</td></tr>
+            <tr><td class="k1">Vault jackpot, vault arrow</td><td class="n">2</td><td>JP: vault multiball's jackpot. Arrow: lit while the back door is open</td></tr>
+            <tr><td class="k1">Drop targets</td><td class="n">3</td><td>On: that drop is down</td></tr>
+            <tr><td class="k1">Black Market menu</td><td class="n">5</td><td>RAGE, SAVE, LOCK, 10X, X-BALL. Blinking: on offer. Faster: you can afford it</td></tr>
+            <tr><td class="k1">Heist map</td><td class="n">15</td><td>Six plaques with five domes: lit when a job is ready, fast while it runs, steady once done. Four junction lights: how far into the heist you are; all blink while Blackout is lit</td></tr>
+            <tr><td class="k1">Bonus 2X–6X</td><td class="n">5</td><td>The bonus multiplier</td></tr>
+            <tr><td class="k1">R-A-G-E</td><td class="n">4</td><td>Letters lit; in RAGE the unlit ones blink</td></tr>
+            <tr><td class="k1">Shoot Again</td><td class="n">1</td><td>Slow: ball save. Fast: save ending. On: extra ball</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h2>Flashers (5)</h2>
+      <p class="small">Impound cage beacon · Black Market · A-C-H bank · Reactor eye · Vault tumbler block.</p>
+    </div>
+    <div class="stack">
+      <h2>Diagnostics</h2>
+      <p class="small">The game ships with its own test suite. From the source folder:</p>
+      <div class="tbl">
+        <table>
+          <thead><tr><th>Command</th><th>What it checks</th></tr></thead>
+          <tbody>
+            <tr><td class="k1">npm test</td><td>Every rule: the heist, its keys, each job, the multiballs, the Black Market, RAGE and its clock, ball flow, flash safety</td></tr>
+            <tr><td class="k1">npm run sim</td><td>A bot plays for ten minutes; checks that no ball escapes, sticks or passes through a wall</td></tr>
+            <tr><td class="k1">npm run measure</td><td>Shot windows, ramp returns, the Back Alley, the plunge, the pops, the Breach, the Vault and every clearance. Name one section, for example <span class="k">npm run measure windows</span></td></tr>
+            <tr><td class="k1">npm run template</td><td>Redraws the art templates from the physics</td></tr>
+            <tr><td class="k1">npm run build</td><td>Builds the game for the web</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <h2>Installing</h2>
+      <ul class="small">
+        <li><strong>Phone:</strong> open the game in Safari, then Share, Add to Home Screen. It opens full screen like an app.</li>
+        <li><strong>Website:</strong> <span class="k">npm run build</span> makes a folder of static files that runs from any web folder.</li>
+        <li><strong>App store:</strong> the same build can be wrapped as a native app with Capacitor.</li>
+      </ul>
+      <h2>Clearances</h2>
+      <p class="small">Every gap the ball must pass is measured against the ball. The tightest are the pop bumper exit lane and gate (1.07 balls) and the vault lane (1.12 balls). The Breach's mouth is 2.21 balls wide, its right lip flared for the right flipper's cradled shots, and the Black Market's 1.89.</p>
+      <div class="panel dark stack" style="margin-top:6px">
+        <h3>Software version 20</h3>
+        <p class="small">This manual describes version 20 of Cyber Psychosis, October 2026: the heist map with its three keys, B-R-E-A-C-H rewards, untimed jobs that survive a drain, the Vault's random combination, the brain under the heist map, and the fixes and flared Breach from the October audit.</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Cyber Psychosis · Game manual</span><span class="pg">19</span></div>
+</section>
+
+<!-- ============================================================ BACK COVER -->
+<section class="sheet cover" id="back">
+  <div class="brand"><span>Squidzombie Pinball</span><span>squidzombie.com</span></div>
+  <div style="flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:18px; text-align:center">
+    <div class="logo" style="margin:0">
+      <span class="neon" style="font-size:34pt; margin-bottom:0.06in">Cyber</span>
+      <span class="word" style="font-size:52pt">PSYCHOSIS</span>
+    </div>
+    <p style="max-width:44ch; color:var(--steel); font-size:11pt; line-height:1.5">Break in. Hack the keypad. Plot the route. Load the payload. Make the getaway. Then overload the reactor and black out the grid.</p>
+    <div class="tagline" style="margin:0">SECTOR 9 · ONE HEIST · NO GHOSTS</div>
+  </div>
+  <div class="title" style="justify-content:center"><div class="ver" style="text-align:center">Table 1 of the Squidzombie collection · Software version 20</div></div>
+</section>
+</body></html>

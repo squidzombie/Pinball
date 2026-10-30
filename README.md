@@ -55,7 +55,9 @@ right:
   (an outlane) and RAGE saves that ball.
 
 The shot map, measurements and the rules still to build for this layout are in
-[`DESIGN.md`](DESIGN.md).
+[`DESIGN.md`](DESIGN.md). The game manual (rules, strategy, apron cards and an operator's section,
+as a web page and a printable PDF) is in [`docs/manual/`](docs/manual/), and the October 2026
+audit of every element and rule is [`AUDIT.md`](AUDIT.md).
 
 ### The heist (modes)
 
