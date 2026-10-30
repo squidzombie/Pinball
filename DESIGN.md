@@ -6,7 +6,7 @@ own pair of small flippers. The Skyway is rerouted to make room, the Impound is 
 orbit, and three security cameras pan over the CAM lanes. Hitting the vault's three tumblers in
 the order of a random code cracks it open and starts **VAULT MULTIBALL**. The geometry, its measurements and this
 document are done. **Rules beyond the cameras, the back door and the vault, and the art pass,
-haven't started.** The phone build is this layout (version 16; the fan is version 5 in its
+haven't started.** The phone build is this layout (version 17; the fan is version 5 in its
 history). Where
 the rule sheet differs from the code, the entry says **(change)**; nearly all of those come with
 Phase 4.
@@ -25,6 +25,15 @@ shot. `npm run template` regenerates the template and prints every clearance. Ba
 ---
 
 ## 0. The layout revisions (30 October 2026)
+
+### Thirteenth round: a brain instead of the skull
+
+- **The skull and the dark plate behind it are gone.** Between the flippers is plain concrete,
+  with the bonus lights (2X–6X), the BONUS label and the hazard stripes down the drain.
+- **A top-down brain** now sits under the heist map, front up the table. Every job plaque and
+  light (INFILTRATE through BLACKOUT, and the red dots on the links) is inside it; the map's
+  steel links run over it like implants. No light moved. It clears the shop row above it, the
+  bonus lights below it and the slingshots at its sides.
 
 ### Twelfth round: a little balance, and solid targets
 
@@ -876,8 +885,12 @@ One machine, with each part distinct:
 - **Pops:** three industrial canisters (ribbed, riveted, red lens caps), about three balls
   across, on a ribbed steel deck in their own walled nest. No pipes between them (you found
   them confusing).
-- **Drain and skull:** a faded, half-worn stencil skull on dark plates. Hazard stripes run down
-  the drain throat, and the apron has mesh grilles.
+- **The brain (thirteenth round; replaces the skull):** a top-down brain under the heist map,
+  front up the table: two dusty-pink hemispheres with a dark fissure, folds in pen with soft
+  grooves and lit crests, darker toward the rim, on a hatched shadow. Every job plaque and light
+  of the map sits inside it, with the map's links running over it like implants.
+- **Drain:** plain concrete between the flippers (the skull and its plate are gone), with the
+  bonus lights, hazard stripes down the drain throat, and mesh grilles on the apron.
 
 ### Typography
 
@@ -901,7 +914,7 @@ gone; the rest still applies until the art pass.)
 | Breach | Shapes are right; surfaces are gradient-filled. The red scoop glow is too big and too bright. |
 | Centre channel | Bare concrete with stray plates and a floating shop plaque. The red painted arrows look random. |
 | Reactor | The housing polygon is awkward, the funnel reads as a black gap, and the eye glows. |
-| Lower playfield | Slings are flat grey triangles. Inlane rails are clean tubes. The skull is a crisp vector graphic on a grey plate (should be faded and worn). The apron and shooter lane are plain. |
+| Lower playfield | Slings are flat grey triangles. Inlane rails are clean tubes. The skull is gone (thirteenth round); the brain under the heist map is the centrepiece. The apron and shooter lane are plain. |
 | Flippers | Close (cream with a red edge and ink outline), but too glossy. |
 | DMD | Crisp, saturated neon red. |
 
@@ -1036,8 +1049,8 @@ middle, and a job-specific bottom line:
 ### Option B: painted playfield image plus dynamic elements in code (chosen)
 
 - **Static background:** `art/playfield.png`, a clean, unannotated top-down version of the
-  sketch. All floor-level art: concrete, grime, plates, stencils, unlit inserts, the skull, the
-  apron, the bases of raised parts.
+  sketch. All floor-level art: concrete, grime, plates, stencils, unlit inserts, the brain under
+  the heist map, the apron, the bases of raised parts.
 - **Overlay layer:** `art/overlay.png`, a transparent PNG of everything the ball passes *under*:
   the Skyway deck and wire, the Black Market ramp, box and wire, the Back Alley's outer lip if
   wanted. The ball is depth-sorted between the two layers, and drawn on top when it's on a ramp.
@@ -1086,6 +1099,11 @@ exactly where every wall, lane, ramp entrance and insert is. Regenerate them wit
 ---
 
 ## 8. Decisions
+
+### 30 October 2026, thirteenth round: the brain (built)
+
+1. **Skull and plate removed;** a top-down brain sits under the heist map, with every map light
+   inside it. Lights unchanged.
 
 ### 30 October 2026, twelfth round: balance and solid targets (built)
 

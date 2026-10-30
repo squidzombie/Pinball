@@ -32,7 +32,7 @@ after any geometry change**; never edit them by hand.
 - concrete, grime, plates, grates, stencils and painted arrows
 - the bases and sides of the solid structures (grey on the template)
 - the in/outlane guides, the slings' plastic and frames
-- the mode map plates, the skull and the apron
+- the mode map plates, the brain under them, and the apron
 - **all inserts, unlit** (dull dirty red glass), exactly at their template outlines
 - shadows cast by the ramps
 

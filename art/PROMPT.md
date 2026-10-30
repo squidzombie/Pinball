@@ -61,8 +61,8 @@ template, so the painted walls must sit on them.
 > - **Centre:** a tree of five dark stencilled steel plates joined by inked pipe lines,
 >   reading INFILTRATE, HACK, ROUTE, PAYLOAD, EXTRACT, and a larger red-bordered plate below
 >   reading BLACKOUT.
-> - **Bottom centre, between the flippers:** a faded, half-worn grey stencil skull on dark
->   plates, with hazard stripes down the drain.
+> - **Bottom centre, between the flippers:** plain concrete with hazard stripes down the drain.
+>   (Out of date: the skull was replaced by a top-down brain under the mode map.)
 > - **Bottom corners:** angled steel apron plates with mesh grilles.
 > - **Lower sides:** triangular slingshot frames with red lamp lenses, and steel inlane and
 >   outlane rails.

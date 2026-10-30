@@ -368,8 +368,9 @@ export function paintStatic(ctx: CanvasRenderingContext2D, lower: LowerSection, 
   ctx.clip();
   paintFloor(ctx);
   paintFloorPlates(ctx);
+  paintBrain(ctx);
   paintMap(ctx);
-  paintSkull(ctx);
+  paintDrainStripes(ctx);
   paintFloorMarks(ctx);
   paintVault(ctx);
   drawInserts();
@@ -588,17 +589,6 @@ function paintFloorPlates(ctx: CanvasRenderingContext2D) {
     '#97948b',
     9,
   );
-  // dark plate behind the skull
-  plate(
-    [
-      [210, 960],
-      [345, 960],
-      [345, 1120],
-      [210, 1120],
-    ],
-    '#86837b',
-    10,
-  );
   // shooter lane trough
   plate(
     [
@@ -687,77 +677,8 @@ function paintMap(ctx: CanvasRenderingContext2D) {
   plaque(M.blackout, 96, 34, true);
 }
 
-/** The big grey stencil skull between the flippers, as in the sketch. */
-function paintSkull(ctx: CanvasRenderingContext2D) {
-  const x = L.CX;
-  const y = 1015;
-  ctx.save();
-  ctx.translate(x, y);
-  const s = 1.05;
-  ctx.scale(s, s);
-  ctx.beginPath();
-  ctx.moveTo(-50, -40);
-  ctx.quadraticCurveTo(-52, -78, 0, -82);
-  ctx.quadraticCurveTo(52, -78, 50, -40);
-  ctx.lineTo(46, -6);
-  ctx.lineTo(32, 6);
-  ctx.lineTo(28, 54);
-  ctx.lineTo(-28, 54);
-  ctx.lineTo(-32, 6);
-  ctx.lineTo(-46, -6);
-  ctx.closePath();
-  const outline = new Path2D();
-  outline.moveTo(-50, -40);
-  outline.quadraticCurveTo(-52, -78, 0, -82);
-  outline.quadraticCurveTo(52, -78, 50, -40);
-  outline.lineTo(46, -6);
-  outline.lineTo(32, 6);
-  outline.lineTo(28, 54);
-  outline.lineTo(-28, 54);
-  outline.lineTo(-32, 6);
-  outline.lineTo(-46, -6);
-  outline.closePath();
-  ctx.fillStyle = 'rgba(178,176,170,0.85)';
-  ctx.fill(outline);
-  ctx.save();
-  ctx.clip(outline);
-  hatch(ctx, -60, -90, 60, 60, 3.5, -0.9, 0.16);
-  ctx.restore();
-  inkLine(ctx, 1.6, 0.7);
-  ctx.stroke(outline);
-  // eye sockets: angry slants
-  ctx.fillStyle = 'rgba(42,38,34,0.85)';
-  for (const m of [-1, 1]) {
-    ctx.beginPath();
-    ctx.moveTo(m * 6, -30);
-    ctx.lineTo(m * 40, -42);
-    ctx.lineTo(m * 36, -18);
-    ctx.lineTo(m * 12, -12);
-    ctx.closePath();
-    ctx.fill();
-  }
-  // nose
-  ctx.beginPath();
-  ctx.moveTo(0, -12);
-  ctx.lineTo(7, 4);
-  ctx.lineTo(-7, 4);
-  ctx.closePath();
-  ctx.fill();
-  // long teeth
-  ctx.strokeStyle = 'rgba(42,38,34,0.8)';
-  ctx.lineWidth = 2;
-  for (let i = -3; i <= 3; i++) {
-    ctx.beginPath();
-    ctx.moveTo(i * 7, 14);
-    ctx.lineTo(i * 7.5, 52);
-    ctx.stroke();
-  }
-  ctx.beginPath();
-  ctx.moveTo(-26, 30);
-  ctx.lineTo(26, 30);
-  ctx.stroke();
-  ctx.restore();
-  // hazard stripes down to the drain
+/** Hazard stripes down the drain throat, between the flippers. */
+function paintDrainStripes(ctx: CanvasRenderingContext2D) {
   ctx.save();
   ctx.beginPath();
   ctx.rect(236, 1080, 84, 60);
@@ -766,6 +687,121 @@ function paintSkull(ctx: CanvasRenderingContext2D) {
   ctx.restore();
   inkLine(ctx, 1);
   ctx.strokeRect(236, 1080, 84, 60);
+}
+
+/** Top and bottom of the brain under the heist map (its front is up the table). */
+const BRAIN_T = 674;
+const BRAIN_B = 941;
+
+/** One hemisphere of the brain, seen from above: side -1 is the left, +1 the right. */
+function hemisphere(side: -1 | 1): Path2D {
+  const cx = L.CX;
+  const T = BRAIN_T;
+  const B = BRAIN_B;
+  const X = (dx: number) => cx + side * dx;
+  // narrow, rounded frontal lobe at the front; widest toward the back; a rounded occipital pole
+  const p = new Path2D();
+  p.moveTo(X(3), T + 10);
+  p.bezierCurveTo(X(14), T + 2, X(28), T - 1, X(44), T);
+  p.bezierCurveTo(X(78), T + 3, X(100), T + 28, X(110), T + 62);
+  p.bezierCurveTo(X(120), T + 98, X(126), T + 140, X(123), T + 180);
+  p.bezierCurveTo(X(120), T + 222, X(100), B - 17, X(70), B - 5);
+  p.bezierCurveTo(X(50), B + 2, X(20), B + 1, X(3), B - 9);
+  p.closePath();
+  return p;
+}
+
+/**
+ * A top-down brain under the heist map, so the job plaques and their lights sit in it: two
+ * dusty-pink hemispheres with a dark fissure between them, folds drawn in pen as broken wavy
+ * lines across each side, shaded toward the edges, on a hatched shadow.
+ */
+function paintBrain(ctx: CanvasRenderingContext2D) {
+  const cx = L.CX;
+  const T = BRAIN_T;
+  const B = BRAIN_B;
+  const halves = [hemisphere(-1), hemisphere(1)];
+  // pen-hatched cast shadow, like the raised blocks
+  ctx.save();
+  ctx.translate(6, 8);
+  ctx.fillStyle = hatchFill(ctx);
+  for (const h of halves) ctx.fill(h);
+  ctx.restore();
+  // the fissure between the hemispheres
+  ctx.save();
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = '#4a3632';
+  ctx.lineWidth = 6;
+  ctx.beginPath();
+  ctx.moveTo(cx, T + 8);
+  ctx.lineTo(cx, B - 6);
+  ctx.stroke();
+  ctx.restore();
+  const R = rng(31);
+  ([-1, 1] as const).forEach((side, hi) => {
+    const h = halves[hi];
+    ctx.save();
+    const g = ctx.createRadialGradient(cx + side * 50, T + 110, 10, cx + side * 55, T + 130, 150);
+    g.addColorStop(0, '#e2cbc3');
+    g.addColorStop(0.6, '#cfb0a7');
+    g.addColorStop(1, '#a8857c');
+    ctx.fillStyle = g;
+    ctx.fill(h);
+    ctx.clip(h);
+    // folds: rows of broken wavy lines across the hemisphere, with short spurs off them
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    for (let y0 = T + 10; y0 < B - 2; y0 += 11 + R() * 3) {
+      const a1 = 4 + R() * 5;
+      const f1 = 0.08 + R() * 0.07;
+      const p1 = R() * 6.3;
+      const a2 = 2 + R() * 2.5;
+      const f2 = 0.22 + R() * 0.14;
+      const p2 = R() * 6.3;
+      const yAt = (d: number) => y0 + a1 * Math.sin(f1 * d + p1) + a2 * Math.sin(f2 * d + p2) + d * 0.08 * (y0 > (T + B) / 2 ? 1 : -1);
+      let d = 6 + R() * 6;
+      while (d < 132) {
+        const len = 16 + R() * 30;
+        const pts: P[] = [];
+        for (let e = d; e <= Math.min(132, d + len); e += 2) pts.push([cx + side * e, yAt(e)]);
+        // a soft groove, the sulcus in it, and a lit crest on the fold just above
+        for (const [dx, dy, col, w] of [
+          [0, 1, 'rgba(84,46,42,0.16)', 7],
+          [0, 0, 'rgba(84,46,42,0.78)', 2.2],
+          [-0.6, -2.6, 'rgba(255,238,230,0.5)', 1.6],
+        ] as const) {
+          ctx.beginPath();
+          pts.forEach(([x, y], i) => (i ? ctx.lineTo(x + dx, y + dy) : ctx.moveTo(x + dx, y + dy)));
+          ctx.strokeStyle = col;
+          ctx.lineWidth = w;
+          ctx.stroke();
+        }
+        if (R() < 0.8 && pts.length > 4) {
+          const [sx, sy] = pts[Math.floor(R() * pts.length)];
+          const up = R() < 0.5 ? -1 : 1;
+          ctx.beginPath();
+          ctx.moveTo(sx, sy);
+          ctx.quadraticCurveTo(sx + side * (2 + R() * 3), sy + up * 4, sx + side * (R() * 4 - 2), sy + up * (6 + R() * 3));
+          ctx.strokeStyle = 'rgba(84,46,42,0.65)';
+          ctx.lineWidth = 1.9;
+          ctx.stroke();
+        }
+        d += len + 4 + R() * 7;
+      }
+    }
+    // darker toward the rim, as the surface turns away
+    ctx.strokeStyle = 'rgba(70,40,36,0.28)';
+    ctx.lineWidth = 16;
+    ctx.stroke(h);
+    ctx.strokeStyle = 'rgba(70,40,36,0.18)';
+    ctx.lineWidth = 30;
+    ctx.stroke(h);
+    ctx.restore();
+    ctx.save();
+    inkLine(ctx, 1.8);
+    ctx.stroke(h);
+    ctx.restore();
+  });
 }
 
 /** Painted arrows, chevrons and stencils on the concrete. */

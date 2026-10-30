@@ -8,7 +8,7 @@ wrapped as a native iPhone app later.
 
 An industrial cyberpunk heist, laid out and coloured after the concept sketch: pale cracked
 concrete and heavy riveted steel drawn in ink, brass pipes, glossy red lights, hazard stripes in
-muted ochre, and a grey stencil skull between the flippers. It's drawn as a tilted 3D cabinet:
+muted ochre, and a top-down brain under the heist map in the middle of the table. It's drawn as a tilted 3D cabinet:
 the playfield leans away from you under an upright dot-matrix display, and every wall, post,
 bumper, target and ramp has height.
 
