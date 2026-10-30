@@ -16,6 +16,8 @@ account.
 | Screen | Full screen with no status bar. Swipes from the screen's edges need a second swipe, so a flipper press near the bottom doesn't send you home. |
 | Icon | The table's brain in neon on steel (`art/app/`) |
 | Launch screen | Black, with the brain and the logo |
+| Start screen | Shows the touch controls only (phones and tablets in Safari too; a computer shows the keys) |
+| Game manual | The start screen's **Game manual** button opens the PDF in iOS's own viewer, with Done and a share button for saving or printing it. On the web it opens in a new tab. |
 | Shake to nudge | Works in the app with no prompt |
 | Sound | Follows the silent switch, as in Safari |
 | Saved data | The high score and speed setting stay on the phone; deleting the app deletes them |

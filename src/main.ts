@@ -1,3 +1,4 @@
+import { Capacitor, registerPlugin } from '@capacitor/core';
 import { Game } from './game/game';
 import { bindInput } from './game/input';
 import { sound } from './engine/audio';
@@ -18,6 +19,20 @@ const dmdCanvas = document.getElementById('dmd') as HTMLCanvasElement;
 const overlay = document.getElementById('overlay') as HTMLDivElement;
 const muteBtn = document.getElementById('mute') as HTMLButtonElement | null;
 const speedBtn = document.getElementById('speed') as HTMLButtonElement | null;
+// The app, and any touch-first phone or tablet, shows the touch controls on the start screen; a
+// computer shows the keys.
+const native = Capacitor.isNativePlatform();
+if (native || matchMedia('(hover: none) and (pointer: coarse)').matches) document.documentElement.classList.add('touch');
+
+// The game manual. In the app it opens in iOS's own document viewer (a link would replace the game,
+// with no way back); on the web the link opens the PDF in a new tab.
+const Manual = registerPlugin<{ show(): Promise<void> }>('Manual');
+document.getElementById('manual')?.addEventListener('click', (e) => {
+  if (!native) return;
+  e.preventDefault();
+  void Manual.show().catch(() => {});
+});
+
 const tctx = tableCanvas.getContext('2d', { alpha: false })!;
 const dctx = dmdCanvas.getContext('2d', { alpha: false })!;
 const game = new Game();

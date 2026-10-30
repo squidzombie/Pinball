@@ -35,7 +35,7 @@ export function bindInput(game: Game, toggleView: () => void) {
   // While a ball waits in the shooter lane, the right half pulls the plunger.
   const active = new Map<number, 'L' | 'R' | 'P'>();
   window.addEventListener('pointerdown', (e) => {
-    if ((e.target as Element | null)?.closest?.('button')) return;
+    if ((e.target as Element | null)?.closest?.('button, a')) return;
     e.preventDefault();
     sound.unlock();
     if (game.paused) {
