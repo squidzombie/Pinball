@@ -6,7 +6,7 @@ own pair of small flippers. The Skyway is rerouted to make room, the Impound is 
 orbit, and three security cameras pan over the CAM lanes. Hitting the vault's three tumblers in
 the order of a random code cracks it open and starts **VAULT MULTIBALL**. The geometry, its measurements and this
 document are done. **Rules beyond the cameras, the back door and the vault, and the art pass,
-haven't started.** The phone build is this layout (version 19; the fan is version 5 in its
+haven't started.** The phone build is this layout (version 20; the fan is version 5 in its
 history). Where
 the rule sheet differs from the code, the entry says **(change)**; nearly all of those come with
 Phase 4.
@@ -25,6 +25,26 @@ shot. `npm run template` regenerates the template and prints every clearance. Ba
 ---
 
 ## 0. The layout revisions (30 October 2026)
+
+### Fifteenth round: the audit
+
+Every element, rule and display message was audited; the full report, with the measurements and
+the questions left for you, is [`AUDIT.md`](AUDIT.md). Built this round:
+
+- **The Breach's right lip flares 10 units wider**, and the A-C-H bank (now 44.5 units) starts
+  there and still meets the Black Market wall. A cradled right-flipper shot makes the Breach 9% of
+  the time (was 2%), a moving one 13% (was 11%), and hits on A no longer bounce into an outlane.
+- **Tilt:** a tilted ball scores and starts nothing; a tilt during the job choice no longer holds
+  the ball forever; a tilt voids Payload like any job, and ends Blackout without the step up.
+- **The back door:** a Back Alley shot through it counts as the Back Alley.
+- **Messages** no longer overwrite each other in the same frame; `<JOB> CONTINUES` is visible; the
+  display font has `$` and `%`, and every message fits.
+- **Ball save** waits while the ball is held, and follows the speed setting.
+- **RAGE** no longer pays for spinner turns; a spinner turn earns $500.
+- **Extract:** a drain restarts the leg in progress.
+- **Lamps:** the lock lights go out in other multiballs; Payload's and Blackout's jackpot shots and
+  every super light the JP lights; RAGE no longer hides a lit Blackout or the R-A-G-E letters
+  already lit; the map's junction lights show how far into the heist you are.
 
 ### Fourteenth round: spell B-R-E-A-C-H once, then each row has a key
 
@@ -1139,6 +1159,16 @@ exactly where every wall, lane, ramp entrance and insert is. Regenerate them wit
 ---
 
 ## 8. Decisions
+
+### 30 October 2026, fifteenth round: the audit (built; questions open)
+
+1. **The Breach's right lip flared** (you cleared changes to the targets around the Breach).
+2. **Rule and display fixes** from the rules review, each with a regression test.
+3. **Open, in [`AUDIT.md`](AUDIT.md):** the flippers' aim from a cradle bunches into a few angles
+   (flipper feel, so yours to call); the drop targets feed the right outlane; and smaller
+   questions (the unused Back Alley diverter, locked balls used by other multiballs, the path to
+   TOTAL BLACKOUT, the skill shot after a lock, what the step-up after Blackout scales, SAFE and
+   VENT as Hack keys, the 10X item).
 
 ### 30 October 2026: colour schemes compared
 

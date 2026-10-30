@@ -18,13 +18,14 @@ A classic fan shot from the two flippers, plus a small upper playfield at the to
 right:
 
 - **Back Alley** (right flipper): the left orbit. It runs up the left side and over the top arch
-  into the three **CAM** lanes. A diverter can hold the loop open, so the ball comes all the way
-  round, down a chute onto the Black Market's wire, and back to the right flipper.
+  into the three **CAM** lanes. It has a diverter that could hold the loop open (round, down a chute
+  onto the Black Market's wire and back to the right flipper), but no rule uses it yet.
 - **The vault lane** (right flipper): a narrow lane up the left side into **THE VAULT**, the
   upper playfield. It's the hardest shot on the table.
 - **SAFE**: a standup on the vault lane's wall.
 - **The Breach** (right flipper): a scoop between two banks of three standups that spell
-  **B-R-E-A-C-H**, each bank angled at the opposite flipper. The posts either side of its mouth
+  **B-R-E-A-C-H**, each bank angled at the opposite flipper. Its right lip flares wider than the
+  left, to take the right flipper's cradled shots. The posts either side of its mouth
   count as the letters beside them, E and A.
 - **Black Market** (either flipper): the centre ramp. It runs under the Skyway into the market box
   over the shooter lane, then a wireform takes it down the right side to the right inlane.
@@ -61,18 +62,21 @@ The shot map, measurements and the rules still to build for this layout are in
 Modes (jobs) work like the modes on a 90s machine. Light one, start it at the Breach, and the table
 changes. Specific shots light in the job's colour, and the lit shots pay the job's own scaled values.
 **Jobs have no clock**: a job lasts until you finish it, and you can't move on until you do. Speed
-still pays: a job's shots are worth full value for its first 30 s in play, then drain to half over
-the next two minutes (the display shows SHOTS PAY 75%, for example).
+still pays in Infiltrate, Hack and Route: their shots and finishing bonus are worth full value for
+the job's first 30 s in play, then drain to half over the next two minutes (the display shows
+SHOTS PAY 75%, for example). Extract has its own hurry-up instead.
 
 1. **Light a job**: each row of the heist map has its own key (below). Nothing comes lit at the
    start of a game.
 2. **Start it**: shoot the **Breach**. If the map offers two jobs, the flippers choose while the ball is held.
 3. **Finish it**: hit the lit shots until the objective is done.
-4. **Lose the ball** and the job carries on with the next ball (JOB CONTINUES), but the step you
-   were in the middle of starts over: Route's current lap, Hack's current code. Multiballs don't
-   carry over: if **Payload**'s multiball ends before its super jackpot, the job fails, doesn't
-   count, and its row relights so you can start it again from the beginning. A tilt ends a job
-   the same way.
+4. **Lose the ball** and the job carries on with the next ball (HACK CONTINUES, for example), but
+   the step you were in the middle of starts over: Route's current lap, Hack's current code,
+   Extract's current leg (its hurry-up starts again at full value). Infiltrate keeps the shots
+   you've snuck past. Multiballs don't carry over: if **Payload**'s multiball ends before its super
+   jackpot, the job fails, doesn't count, and its row relights so you can start it again from the
+   beginning. A tilt ends any job the same way, Payload included: a tilted ball scores nothing and
+   starts nothing.
 
 The heist map runs **INFILTRATE**, then **HACK** or **ROUTE**, then **PAYLOAD** or **EXTRACT**. Each
 row opens only once you've *finished* a job in the row above, and each row has a key that lights
@@ -93,9 +97,9 @@ the Breach (one a game, so it can't be farmed).
 
 | Job | What to shoot |
 | --- | --- |
-| **Infiltrate** | Sneak past the cameras. The Back Alley, Black Market, Skyway and Reactor are lit, and the camera watches one of them (strobing red). Make the others: 500K, +150K each. Make the watched one and you're **SPOTTED** (no award, and every later shot pays 100K less). Then shoot the Breach to get **INSIDE** (+3M). |
-| **Hack** | The Breach standups become a keypad. Hit the flashing key, four to a code, 250K a key. Codes pay 1.5M, 3M and 4.5M. Shooting the Breach brute-forces a whole code. Three codes and you've **HACKED** it (+3M). |
-| **Route** | Plot the escape: Skyway, Back Alley, Black Market, Reactor, in order, twice. 600K a step, rising. **ROUTE SET** (+3M). |
+| **Infiltrate** | Sneak past the cameras. The Back Alley, Black Market, Skyway and Reactor are lit, and the camera watches one of them (strobing red). Make the others: 500K, +150K each. Make the watched one and you're **SPOTTED** (no award, and every later shot pays 100K less). Then shoot the Breach: **YOU ARE INSIDE** (+3M). |
+| **Hack** | The Breach standups become a keypad. Hit the flashing key, four to a code, 250K a key. Codes pay 1.5M, 3M and 4.5M. Shooting the Breach brute-forces a whole code. Three codes: **SYSTEM HACKED** (+3M). |
+| **Route** | Plot the escape: Skyway, Back Alley, Black Market, Reactor, in order, twice. The first lap's steps pay 600K, 1.2M, 1.8M and 2.4M, plus 2.5M for the lap; the second lap's pay 500K more each. **ESCAPE ROUTE SET** (+3M). |
 | **Payload** | 2-ball multiball. Both ramps are jackpots (1.5M, +250K each). Three jackpots light the super at the Reactor (3× the jackpot) for 20 s; collecting it finishes the job. Miss it and two more jackpots relight it. The drop targets fall by themselves to let you at it. |
 | **Extract** | The getaway: Skyway, Black Market, Breach, in order. Each leg starts at 6M (+1M a leg) and bleeds 200K a second while you aim, down to 1.5M. **EXTRACTED** (+4M). |
 
@@ -116,28 +120,33 @@ Play a final mode (Payload or Extract) to light **BLACKOUT**, then slam the Reac
 ball into the core. The lights die and it's a 3-ball multiball where the Skyway, Black Market,
 Back Alley and Breach are each a jackpot (2M, +500K each). Collect all four to light the super
 at the Reactor (5× the jackpot). Every completed mode makes Blackout worth +0.5X, and completing
-all five makes it **TOTAL BLACKOUT** with a fourth ball. Afterwards the heist starts over, and
-everything is worth 0.5X more, with Infiltrate lit.
+all five makes it **TOTAL BLACKOUT** with a fourth ball. Afterwards the heist starts over with
+Infiltrate lit, and the jobs, RAGE and Blackout are worth 0.5X more (a tilt in Blackout restarts
+the heist without the step up). To go for TOTAL BLACKOUT, stay off the core while Blackout is lit:
+any core hit with no job running starts it.
 
 ### The rest of the table
 
 - **The Reactor**: knock down the three drops to expose the core and light the lock (and, once
   Hack or Route is finished, Payload or Extract). Each time the
-  captive ball hits the core, **reactor heat** goes up (100K, +50K a level) and the drops reset.
+  captive ball hits the core, **reactor heat** goes up and the hit pays 100K + 50K a level (150K
+  for the first), and the drops reset.
 - **The Impound** (ball lock): with the lock lit, make the Skyway and its top bend diverts the
   ball up a wire into the cage. Lock three for **Impound multiball**: the balls roll back down the
   Skyway's wire to the left flipper, and the Skyway, Black Market, Back Alley and Breach are
-  jackpots (1M, +250K each).
-  Four jackpots light the super jackpot at the Reactor (3× the jackpot) for 20 s; miss it and two
-  more jackpots relight it.
-- **The Black Market**: switches earn cash ($1K, bumpers $2K) and major shots $5K. The menu under
+  jackpots (1M, +250K each; the value carries on into the next Impound multiball).
+  Four jackpots light the super jackpot at the Reactor (3× the jackpot's current value) for 20 s;
+  miss it and two more jackpots relight it. Payload and Blackout use any balls waiting in the
+  Impound first, which empties the lock.
+- **The Black Market**: switches earn cash ($1K, bumpers $2K, the spinner $500 a turn) and major
+  shots $5K. The menu under
   the Black Market's lights rotates every 4 s, and making the Black Market ramp buys whatever is on
   offer if you can afford it: **RAGE** ($60K: starts RAGE, or adds 10 s to it), **ball save** ($50K),
   **light lock** ($40K) or an **extra ball** ($200K, once a game). The **10X** item (next shot ×10)
   is on the menu but not sold until its rule is built.
-- **RAGE**: roll the **R-A-G-E** lanes to raise the bonus multiplier (up to 6X) and start a 20 s
-  frenzy where every switch pays 100K (bumpers 150K) and every shot 250K. It runs alongside a mode,
-  and relighting it adds 10 s.
+- **RAGE**: roll the **R-A-G-E** lanes to raise the bonus multiplier (up to 6X; it carries over
+  between balls) and start a 20 s frenzy where every switch except the spinner pays 100K (bumpers
+  150K) and every shot 250K. It runs alongside a mode, and relighting it adds 10 s.
 - **Skill shot**: make the Black Market within 7 seconds of the plunge for 500K and $50K. (The plunge
   now drops into the CAM lanes; a skill shot through the blinking lane replaces this when the rules
   are updated.)

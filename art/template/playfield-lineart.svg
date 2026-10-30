@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="1800" height="3600" viewBox="0 0 600 1200">
 <rect x="0" y="0" width="600" height="1200" fill="#ffffff"/>
-<polygon points="95.4,330 95.4,530.6 135.6,512.7 136.9,493.4 128.1,468.9 127,463 127.5,457.1 129.6,451.4 133,446.5 137.6,442.6 143.1,440.1 149,439 154.9,439.5 160.6,441.6 165.5,445 169.4,449.6 171.9,455.1 178.8,480.1 190.9,495.2 244.5,492.7 243.5,498 243.9,496.1 244.6,492.4 245.8,486.8 247.3,478.8 249,470.7 250.5,463 251.5,455.5 253,447.4 256,438.6 260.2,430.4 265.5,422.8 300,450.2 297.9,453.1 296.5,455.9 295.6,458.6 294.9,462.5 294.2,467.7 294.2,473.5 294.6,479.7 295.4,486.8 295.9,492.4 296.3,496.1 296.5,498 321.8,549.4 342.4,536 359.1,488.3 391.2,499.6 374.5,547.2 382.2,570.6 389.7,581.3 433.7,643.9 445,660 445,560 440,520 440,457 300,426 266,418 180,408 121,356 118,342" stroke="none" stroke-width="0" fill="#d9d9d9" stroke-linejoin="round" stroke-linecap="round" />
+<polygon points="95.4,330 95.4,530.6 135.6,512.7 136.9,493.4 128.1,468.9 127,463 127.5,457.1 129.6,451.4 133,446.5 137.6,442.6 143.1,440.1 149,439 154.9,439.5 160.6,441.6 165.5,445 169.4,449.6 171.9,455.1 178.8,480.1 200.5,492.2 245,490.9 243.5,498 243.9,496.1 244.6,492.4 245.8,486.8 247.3,478.8 249,470.7 250.5,463 251.5,455.5 253,447.4 256,438.6 260.2,430.4 265.5,422.8 300,450.2 297.9,453.1 296.5,455.9 295.6,458.6 294.9,462.5 294.2,467.7 294.2,473.5 294.6,479.7 295.4,486.8 295.9,492.4 296.3,496.1 296.5,498 321.8,549.4 342.4,536 359.1,488.3 391.2,499.6 374.5,547.2 382.2,570.6 389.7,581.3 433.7,643.9 445,660 445,560 440,520 440,457 300,426 266,418 180,408 121,356 118,342" stroke="none" stroke-width="0" fill="#d9d9d9" stroke-linejoin="round" stroke-linecap="round" />
 <polygon points="265,330 440,420 440,422 300,385 249,356 251,342" stroke="none" stroke-width="0" fill="#d9d9d9" stroke-linejoin="round" stroke-linecap="round" />
 <polygon points="535,350 490,415 490,520 475,560 475,660 490,660 490,515.7 524.9,500.3" stroke="none" stroke-width="0" fill="#d9d9d9" stroke-linejoin="round" stroke-linecap="round" />
 <polygon points="152,170 222,156 222,69.9 220.7,69.8 209.6,69.1 200.8,69.4 193.3,70.4 187.3,72 181.8,74.4 175.3,78.1 168.2,82.9 160.6,88.9 152.4,96.2 152,96.6" stroke="none" stroke-width="0" fill="#d9d9d9" stroke-linejoin="round" stroke-linecap="round" />
@@ -210,13 +210,13 @@
 <line x1="128.1" y1="468.9" x2="136.9" y2="493.4" stroke="#111111" stroke-width="1.8" stroke-linecap="round" />
 <line x1="136.9" y1="493.4" x2="135.6" y2="512.7" stroke="#111111" stroke-width="1.8" stroke-linecap="round" />
 <line x1="171.9" y1="455.1" x2="178.8" y2="480.1" stroke="#111111" stroke-width="1.8" stroke-linecap="round" />
-<line x1="178.8" y1="480.1" x2="190.9" y2="495.2" stroke="#111111" stroke-width="1.8" stroke-linecap="round" />
+<line x1="178.8" y1="480.1" x2="200.5" y2="492.2" stroke="#111111" stroke-width="1.8" stroke-linecap="round" />
 <line x1="95.4" y1="530.6" x2="108.8" y2="524.6" stroke="#d01818" stroke-width="3.2" stroke-linecap="round" />
 <line x1="108.8" y1="524.6" x2="122.2" y2="518.7" stroke="#d01818" stroke-width="3.2" stroke-linecap="round" />
 <line x1="122.2" y1="518.7" x2="135.6" y2="512.7" stroke="#d01818" stroke-width="3.2" stroke-linecap="round" />
-<line x1="190.9" y1="495.2" x2="208.8" y2="494.4" stroke="#d01818" stroke-width="3.2" stroke-linecap="round" />
-<line x1="208.8" y1="494.4" x2="226.6" y2="493.6" stroke="#d01818" stroke-width="3.2" stroke-linecap="round" />
-<line x1="226.6" y1="493.6" x2="244.5" y2="492.7" stroke="#d01818" stroke-width="3.2" stroke-linecap="round" />
+<line x1="200.5" y1="492.2" x2="215.3" y2="491.7" stroke="#d01818" stroke-width="3.2" stroke-linecap="round" />
+<line x1="215.3" y1="491.7" x2="230.1" y2="491.3" stroke="#d01818" stroke-width="3.2" stroke-linecap="round" />
+<line x1="230.1" y1="491.3" x2="245" y2="490.9" stroke="#d01818" stroke-width="3.2" stroke-linecap="round" />
 <line x1="296.5" y1="498" x2="321.8" y2="549.4" stroke="#111111" stroke-width="1.8" stroke-linecap="round" />
 <line x1="382.2" y1="570.6" x2="389.7" y2="581.3" stroke="#111111" stroke-width="1.8" stroke-linecap="round" />
 <line x1="433.7" y1="643.9" x2="445" y2="660" stroke="#111111" stroke-width="1.8" stroke-linecap="round" />
@@ -263,8 +263,7 @@
 <line x1="530.3" y1="520.2" x2="528" y2="510.1" stroke="#111111" stroke-width="1.8" stroke-linecap="round" />
 <line x1="528" y1="510.1" x2="524.9" y2="500.3" stroke="#111111" stroke-width="1.8" stroke-linecap="round" />
 <line x1="482.6" y1="515.7" x2="524.9" y2="500.3" stroke="#111111" stroke-width="1.8" stroke-linecap="round" />
-<line x1="244.6" y1="492.7" x2="244.6" y2="492.4" stroke="#111111" stroke-width="1.8" stroke-linecap="round" />
-<line x1="244.6" y1="492.4" x2="245.8" y2="486.8" stroke="#111111" stroke-width="1.8" stroke-linecap="round" />
+<line x1="244.9" y1="490.9" x2="245.8" y2="486.8" stroke="#111111" stroke-width="1.8" stroke-linecap="round" />
 <line x1="245.8" y1="486.8" x2="247.3" y2="478.8" stroke="#111111" stroke-width="1.8" stroke-linecap="round" />
 <line x1="247.3" y1="478.8" x2="249" y2="470.7" stroke="#111111" stroke-width="1.8" stroke-linecap="round" />
 <line x1="249" y1="470.7" x2="250.5" y2="463" stroke="#111111" stroke-width="1.8" stroke-linecap="round" />
@@ -309,7 +308,7 @@
 <circle cx="56" cy="758" r="4" stroke="#111111" stroke-width="1.4" fill="#ffffff" />
 <circle cx="510" cy="744" r="4" stroke="#111111" stroke-width="1.4" fill="#ffffff" />
 <circle cx="135.6" cy="512.7" r="3" stroke="#111111" stroke-width="1.4" fill="#ffffff" />
-<circle cx="190.9" cy="495.2" r="3" stroke="#111111" stroke-width="1.4" fill="#ffffff" />
+<circle cx="200.5" cy="492.2" r="3" stroke="#111111" stroke-width="1.4" fill="#ffffff" />
 <circle cx="150" cy="462" r="18" stroke="#1a9a3a" stroke-width="1.2" fill="none" stroke-dasharray="3 2"/>
 <path d="M171.5 1067.3 L250.9 1105.8 A7 7 0 0 0 257.8 1093.7 L184.5 1044.7 A13 13 0 0 0 171.5 1067.3 Z" stroke="#000" stroke-width="1.2" fill="none" />
 <path d="M370.5 1044.7 L297.2 1093.7 A7 7 0 0 0 304.1 1105.8 L383.5 1067.3 A13 13 0 0 0 370.5 1044.7 Z" stroke="#000" stroke-width="1.2" fill="none" />
@@ -318,9 +317,9 @@
 <path d="M0 -17 L13 4.08 L6.24 1.36 L6.24 17 L-6.24 17 L-6.24 1.36 L-13 4.08 Z" stroke="#c81e1e" stroke-width="0.9" fill="none" stroke-linejoin="round" transform="translate(83.7 726.2) rotate(-39)"/>
 <circle cx="0" cy="0" r="8.5" stroke="#c81e1e" stroke-width="0.9" fill="none" transform="translate(103.9 751) rotate(0)"/>
 <circle cx="0" cy="0" r="6" stroke="#c81e1e" stroke-width="0.9" fill="none" transform="translate(120.2 771.2) rotate(0)"/>
-<path d="M0 -17 L13 4.08 L6.24 1.36 L6.24 17 L-6.24 17 L-6.24 1.36 L-13 4.08 Z" stroke="#c81e1e" stroke-width="0.9" fill="none" stroke-linejoin="round" transform="translate(177.2 547.8) rotate(-17.6)"/>
-<circle cx="0" cy="0" r="8.5" stroke="#c81e1e" stroke-width="0.9" fill="none" transform="translate(186.9 578.3) rotate(0)"/>
-<circle cx="0" cy="0" r="6" stroke="#c81e1e" stroke-width="0.9" fill="none" transform="translate(194.7 603.1) rotate(0)"/>
+<path d="M0 -17 L13 4.08 L6.24 1.36 L6.24 17 L-6.24 17 L-6.24 1.36 L-13 4.08 Z" stroke="#c81e1e" stroke-width="0.9" fill="none" stroke-linejoin="round" transform="translate(182 546.3) rotate(-17.6)"/>
+<circle cx="0" cy="0" r="8.5" stroke="#c81e1e" stroke-width="0.9" fill="none" transform="translate(191.6 576.8) rotate(0)"/>
+<circle cx="0" cy="0" r="6" stroke="#c81e1e" stroke-width="0.9" fill="none" transform="translate(199.5 601.6) rotate(0)"/>
 <path d="M0 -17 L13 4.08 L6.24 1.36 L6.24 17 L-6.24 17 L-6.24 1.36 L-13 4.08 Z" stroke="#c81e1e" stroke-width="0.9" fill="none" stroke-linejoin="round" transform="translate(272 544) rotate(-0.6)"/>
 <circle cx="0" cy="0" r="8.5" stroke="#c81e1e" stroke-width="0.9" fill="none" transform="translate(272.4 576) rotate(0)"/>
 <circle cx="0" cy="0" r="6" stroke="#c81e1e" stroke-width="0.9" fill="none" transform="translate(272.7 602) rotate(0)"/>
@@ -336,9 +335,9 @@
 <path d="M0 -6.5 L7 6.5 L-7 6.5 Z" stroke="#c81e1e" stroke-width="0.9" fill="none" stroke-linejoin="round" transform="translate(110.9 544.4) rotate(-27.5)"/>
 <path d="M0 -6.5 L7 6.5 L-7 6.5 Z" stroke="#c81e1e" stroke-width="0.9" fill="none" stroke-linejoin="round" transform="translate(123.9 538.7) rotate(-26.1)"/>
 <path d="M0 -6.5 L7 6.5 L-7 6.5 Z" stroke="#c81e1e" stroke-width="0.9" fill="none" stroke-linejoin="round" transform="translate(136.9 532.9) rotate(-24.7)"/>
-<path d="M0 -6.5 L7 6.5 L-7 6.5 Z" stroke="#c81e1e" stroke-width="0.9" fill="none" stroke-linejoin="round" transform="translate(200.4 513.8) rotate(-1.7)"/>
-<path d="M0 -6.5 L7 6.5 L-7 6.5 Z" stroke="#c81e1e" stroke-width="0.9" fill="none" stroke-linejoin="round" transform="translate(217.7 513) rotate(0.1)"/>
-<path d="M0 -6.5 L7 6.5 L-7 6.5 Z" stroke="#c81e1e" stroke-width="0.9" fill="none" stroke-linejoin="round" transform="translate(234.9 512.1) rotate(1.9)"/>
+<path d="M0 -6.5 L7 6.5 L-7 6.5 Z" stroke="#c81e1e" stroke-width="0.9" fill="none" stroke-linejoin="round" transform="translate(208.2 510.9) rotate(-0.9)"/>
+<path d="M0 -6.5 L7 6.5 L-7 6.5 Z" stroke="#c81e1e" stroke-width="0.9" fill="none" stroke-linejoin="round" transform="translate(222.5 510.5) rotate(0.6)"/>
+<path d="M0 -6.5 L7 6.5 L-7 6.5 Z" stroke="#c81e1e" stroke-width="0.9" fill="none" stroke-linejoin="round" transform="translate(236.9 510.1) rotate(2)"/>
 <circle cx="0" cy="0" r="7.5" stroke="#c81e1e" stroke-width="0.9" fill="none" transform="translate(331 113) rotate(0)"/>
 <circle cx="0" cy="0" r="7.5" stroke="#c81e1e" stroke-width="0.9" fill="none" transform="translate(381 113) rotate(0)"/>
 <circle cx="0" cy="0" r="7.5" stroke="#c81e1e" stroke-width="0.9" fill="none" transform="translate(431 113) rotate(0)"/>
