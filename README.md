@@ -24,7 +24,8 @@ right:
   upper playfield. It's the hardest shot on the table.
 - **SAFE**: a standup on the vault lane's wall.
 - **The Breach** (right flipper): a scoop between two banks of three standups that spell
-  **B-R-E-A-C-H**, each bank angled at the opposite flipper.
+  **B-R-E-A-C-H**, each bank angled at the opposite flipper. The posts either side of its mouth
+  count as the letters beside them, E and A.
 - **Black Market** (either flipper): the centre ramp. It runs under the Skyway into the market box
   over the shooter lane, then a wireform takes it down the right side to the right inlane.
 - **The Reactor** (left flipper): a captive ball behind three drop targets. Knock the drops down
@@ -37,7 +38,7 @@ right:
 - **The cameras**: three security cameras pan over the CAM lanes. Rolling through a lane lights
   it and knocks out the camera above it; the flipper buttons shift the lit lanes left and right,
   as they do R-A-G-E. Light all three for **CAMERAS DOWN**, which opens the **back door** in the
-  Back Alley's wall for 20 s.
+  Back Alley's wall for 20 s (and, once Infiltrate is finished, lights Hack or Route).
 - **THE VAULT**: the upper playfield, with two small flippers on the main buttons and three
   tumbler targets. Get in up the vault lane, or through the open back door with a Back Alley
   shot. Leave out the top into the CAM lanes, or past its flippers and out the side to the right
@@ -63,18 +64,32 @@ changes. Specific shots light in the job's colour, and the lit shots pay the job
 still pays: a job's shots are worth full value for its first 30 s in play, then drain to half over
 the next two minutes (the display shows SHOTS PAY 75%, for example).
 
-1. **Light a job**: spell **B-R-E-A-C-H** on the standups. The first one of each game comes lit.
+1. **Light a job**: each row of the heist map has its own key (below). Nothing comes lit at the
+   start of a game.
 2. **Start it**: shoot the **Breach**. If the map offers two jobs, the flippers choose while the ball is held.
 3. **Finish it**: hit the lit shots until the objective is done.
 4. **Lose the ball** and the job carries on with the next ball (JOB CONTINUES), but the step you
    were in the middle of starts over: Route's current lap, Hack's current code. Multiballs don't
    carry over: if **Payload**'s multiball ends before its super jackpot, the job fails, doesn't
-   count, and the Breach relights so you can start it again from the beginning. A tilt ends a job
+   count, and its row relights so you can start it again from the beginning. A tilt ends a job
    the same way.
 
 The heist map runs **INFILTRATE**, then **HACK** or **ROUTE**, then **PAYLOAD** or **EXTRACT**. Each
-row opens only once you've *finished* a job in the row above. Finishing Payload or Extract lights
-**BLACKOUT** at the Reactor.
+row opens only once you've *finished* a job in the row above, and each row has a key that lights
+it at the Breach:
+
+| Row | Key |
+| --- | --- |
+| **Infiltrate** | Spell **B-R-E-A-C-H** to break in. |
+| **Hack** or **Route** | **CAMERAS DOWN**: light all three CAM lanes. |
+| **Payload** or **Extract** | Expose the **Reactor**: knock down all three drop targets. |
+
+Starting a job uses up its row's light, so the other job in that row needs the key again.
+Finishing Payload or Extract lights **BLACKOUT** at the Reactor.
+
+After breaking in, spelling **B-R-E-A-C-H** again lights a **Breach jackpot** (1M, +250K for each
+one collected; spell it twice and they add up). The third spelling also lights an **extra ball** at
+the Breach (one a game, so it can't be farmed).
 
 | Job | What to shoot |
 | --- | --- |
@@ -102,11 +117,12 @@ ball into the core. The lights die and it's a 3-ball multiball where the Skyway,
 Back Alley and Breach are each a jackpot (2M, +500K each). Collect all four to light the super
 at the Reactor (5× the jackpot). Every completed mode makes Blackout worth +0.5X, and completing
 all five makes it **TOTAL BLACKOUT** with a fourth ball. Afterwards the heist starts over, and
-everything is worth 0.5X more.
+everything is worth 0.5X more, with Infiltrate lit.
 
 ### The rest of the table
 
-- **The Reactor**: knock down the three drops to expose the core and light the lock. Each time the
+- **The Reactor**: knock down the three drops to expose the core and light the lock (and, once
+  Hack or Route is finished, Payload or Extract). Each time the
   captive ball hits the core, **reactor heat** goes up (100K, +50K a level) and the drops reset.
 - **The Impound** (ball lock): with the lock lit, make the Skyway and its top bend diverts the
   ball up a wire into the cage. Lock three for **Impound multiball**: the balls roll back down the

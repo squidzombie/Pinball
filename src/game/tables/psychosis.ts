@@ -55,6 +55,9 @@ const CAMERAS_DOWN_TIME = 6;
 const BACK_DOOR_TIME = 20;
 /** Balls the vault lets out when cracked (one, as an add-a-ball, during another multiball), and the most on the table. */
 const VAULT_BALLS = 3;
+/** The Breach jackpot that each B-R-E-A-C-H after the first lights, and what each one collected adds. */
+const BREACH_JP = 1_000_000;
+const BREACH_JP_STEP = 250_000;
 const MAX_BALLS = 4;
 /** Where the cracked vault lets its balls out: in front of the middle tumbler, rolling down the deck. */
 const HATCH_OUT: P = (() => {
@@ -141,7 +144,20 @@ export class Psychosis extends Table {
 
   // the heist
   letters = [false, false, false, false, false, false];
-  modesLit = 0;
+  /**
+   * The heist map's keys: which rows have a job lit at the Breach. B-R-E-A-C-H lights INFILTRATE,
+   * CAMERAS DOWN lights HACK or ROUTE, and exposing the Reactor lights PAYLOAD or EXTRACT.
+   */
+  rowLit = [false, false, false];
+  /** B-R-E-A-C-H has been spelled this game, so the next spellings pay rewards instead. */
+  brokenIn = false;
+  /** Times B-R-E-A-C-H has been spelled this game. */
+  spelled = 0;
+  /** The Breach jackpot waiting to be collected (0: not lit), and how many have been collected. */
+  breachJp = 0;
+  breachJps = 0;
+  /** An extra ball is lit at the Breach (the third spelling lights it, so once a game). */
+  xballLit = false;
   played = new Set<ModeDef['key']>();
   completed = new Set<ModeDef['key']>();
   selecting = 0;
@@ -232,7 +248,9 @@ export class Psychosis extends Table {
     poly(w, L.BREACH_CUP, { restitution: 0.25 });
     poly(w, L.BREACH_THROAT.left, { restitution: 0.3 });
     poly(w, L.BREACH_THROAT.right, { restitution: 0.3 });
-    for (const p of L.BREACH_MOUTH) w.circle(p[0], p[1], 3, { restitution: 0.4 });
+    // The mouth posts are the inner standups' outer edges. Each juts 3 units in front of the face
+    // and shadowed most of E, so a ball that clips one counts as that letter (E left, A right).
+    L.BREACH_MOUTH.forEach((p, k) => w.circle(p[0], p[1], 3, { restitution: 0.4, onHit: (h) => h.speed > 70 && this.hitStandup(k === 0 ? 2 : 3) }));
     L.STANDUPS.forEach(([a, b], idx) => {
       this.standups.push(w.seg(a[0], a[1], b[0], b[1], { restitution: 0.35, onHit: (h) => h.speed > 70 && this.hitStandup(idx) }));
     });
@@ -505,14 +523,14 @@ export class Psychosis extends Table {
       labelOff: '#f0b0a8',
       state: () => (this.wizard ? 3 : this.blackoutLit ? 2 : 0),
     });
-    // Junction lights on the map: they show how many modes are lit
+    // Junction lights on the map: they show how many jobs are lit
     const nodes: P[] = [
       [L.CX, L.MAP.infiltrate[1] - 44],
       [L.CX - 62, L.MAP.hack[1] - 42],
       [L.CX + 62, L.MAP.route[1] - 42],
       [L.CX, (L.MAP.hack[1] + L.MAP.payload[1]) / 2 - 12],
     ];
-    nodes.forEach(([x, y], i) => lamp({ id: `map:node:${i + 1}`, kind: 'circle', x, y, w: 13, color: INS.red, state: () => (i < this.modesLit ? 2 : this.blackoutLit ? 1 : 0) }));
+    nodes.forEach(([x, y], i) => lamp({ id: `map:node:${i + 1}`, kind: 'circle', x, y, w: 13, color: INS.red, state: () => (i < this.startable().length ? 2 : this.blackoutLit ? 1 : 0) }));
     // Bonus multiplier and R-A-G-E
     [2, 3, 4, 5, 6].forEach((n, i) =>
       lamp({ id: `bonus:${n}x`, kind: 'circle', x: L.CX - 64 + i * 32, y: 952, w: 17, color: INS.red, label: `${n}X`, labelSize: 7, state: () => (this.game.bonusMult >= n ? 1 : 0) }),
@@ -546,9 +564,9 @@ export class Psychosis extends Table {
 
   private mapLamp(def: ModeDef): LampState {
     if (this.modeKey === def.key) return 3;
-    if (this.selecting > 0) return this.available()[this.selected] === def ? 3 : this.available().includes(def) ? 2 : this.played.has(def.key) ? 1 : 0;
+    if (this.selecting > 0) return this.startable()[this.selected] === def ? 3 : this.startable().includes(def) ? 2 : this.played.has(def.key) ? 1 : 0;
     if (this.played.has(def.key)) return 1;
-    return this.modesLit > 0 && this.available().includes(def) ? 2 : 0;
+    return this.startable().includes(def) ? 2 : 0;
   }
 
   /** Lamps flash faster as a clock runs down. */
@@ -573,7 +591,7 @@ export class Psychosis extends Table {
     if (this.multiball === 'impound' && (this.jpLit(s) || (s === 'reactor' && this.impoundSuper))) return 3;
     if (this.rage) return 2;
     if (s === 'market' && this.skillT > 0) return 4;
-    if (s === 'breach') return this.modesLit > 0 && this.canStartMode() && this.available().length ? 2 : 0;
+    if (s === 'breach') return (this.canStartMode() && this.startable().length) || this.breachJp > 0 || this.xballLit ? 2 : 0;
     if (s === 'reactor') return this.blackoutLit && this.canStartMode() ? 3 : this.dropsDown() ? 2 : 0;
     if (s === 'skyway') return this.lockLit ? 2 : this.comboTimer > 0 ? 2 : 0;
     if (s === 'alley') return this.doorOpen > 0 ? 3 : this.comboTimer > 0 ? 2 : 0;
@@ -591,6 +609,7 @@ export class Psychosis extends Table {
   }
 
   private jpLit(s: Shot) {
+    if (s === 'breach' && (this.breachJp > 0 || this.xballLit)) return true;
     return this.multiball === 'impound' && !this.impoundSuper && s !== 'reactor';
   }
 
@@ -636,7 +655,13 @@ export class Psychosis extends Table {
     this.wizard = null;
     this.blackoutLit = false;
     this.level = 0;
-    this.modesLit = 1; // the first mode comes lit so new players see the Breach flash
+    // Nothing comes lit: B-R-E-A-C-H breaks in, and that lights the first job.
+    this.rowLit = [false, false, false];
+    this.brokenIn = false;
+    this.spelled = 0;
+    this.breachJp = 0;
+    this.breachJps = 0;
+    this.xballLit = false;
     this.lockLit = false;
     this.locked = [];
     this.multiball = null;
@@ -665,7 +690,7 @@ export class Psychosis extends Table {
 
   onFlipperPress(side: -1 | 1) {
     if (this.selecting > 0) {
-      const n = this.available().length;
+      const n = this.startable().length;
       this.selected = (this.selected + side + n) % n;
       sound.tick();
       return;
@@ -775,6 +800,9 @@ export class Psychosis extends Table {
     g.show('CAMERAS DOWN', 'BACK DOOR OPEN', 1.6, true);
     // For now the back door opens for the next Back Alley shot (the full rule comes with Phase 4).
     this.doorOpen = BACK_DOOR_TIME;
+    // It's also the key to the heist map's second row.
+    const lit = this.keyRow(1);
+    if (lit) this.later(1.6, () => g.show(lit, 'SHOOT THE BREACH', 2, true));
     this.flash(4, 0.8);
     sound.award();
   }
@@ -916,14 +944,31 @@ export class Psychosis extends Table {
     } else {
       g.addScore(5_000);
     }
-    if (this.letters.every(Boolean)) {
-      this.letters = [false, false, false, false, false, false];
-      if (this.mode?.timed) this.mode.addTime(10);
-      this.modesLit++;
-      g.show('BREACH LIT', this.mode ? (this.mode.timed ? '+10 SECONDS ON THE CLOCK' : 'FINISH THIS FIRST') : 'SHOOT THE BREACH', 2, true);
-      this.flash(2);
-      sound.award();
+    if (this.letters.every(Boolean)) this.spellBreach();
+  }
+
+  /**
+   * B-R-E-A-C-H spelled. The first time each game it breaks in and lights INFILTRATE. After that
+   * it lights a jackpot at the Breach, and the third spelling an extra ball too (once a game, so
+   * it can't be farmed).
+   */
+  private spellBreach() {
+    const g = this.game;
+    this.letters = [false, false, false, false, false, false];
+    this.spelled++;
+    this.flash(2);
+    sound.award();
+    if (!this.brokenIn) {
+      this.brokenIn = true;
+      this.rowLit[0] = true;
+      g.show('BROKEN IN', 'INFILTRATE IS LIT', 2.4, true);
+      return;
     }
+    this.breachJp += BREACH_JP + BREACH_JP_STEP * this.breachJps;
+    if (this.spelled === 3) {
+      this.xballLit = true;
+      g.show('EXTRA BALL LIT', 'SHOOT THE BREACH', 2.4, true);
+    } else g.show('BREACH JACKPOT LIT', fmt(this.breachJp), 2, true);
   }
 
   private hitBumper(c: Circle, b: Ball) {
@@ -956,6 +1001,9 @@ export class Psychosis extends Table {
       } else {
         g.show('REACTOR EXPOSED', 'HIT THE CORE', 1.6, true);
       }
+      // It's also the key to the heist map's third row.
+      const lit = this.keyRow(2);
+      if (lit) this.later(2, () => g.show(lit, 'SHOOT THE BREACH', 2, true));
       sound.siren();
     }
   }
@@ -1031,23 +1079,59 @@ export class Psychosis extends Table {
     sound.scoop();
     this.flash(2, 0.8);
 
+    const award = this.collectBreachAwards();
     if (this.modeFor('breach')) {
       this.majorShot('breach', 25_000, b);
-      return this.holdBreach(1.2);
+      // The job's own message comes first, then the award's.
+      if (award) this.later(1.2, () => this.game.show(award[0], award[1], 1.6, true));
+      return this.holdBreach(award ? 2.4 : 1.2);
     }
     this.majorShot('breach', 25_000, b);
-    if (this.modesLit > 0 && this.canStartMode() && this.available().length) {
-      if (this.available().length > 1) {
-        this.selected = 0;
-        this.selecting = 4;
-        this.holdBreach(Infinity);
-        sound.warn();
-      } else {
-        this.startMode(this.available()[0]);
-      }
+    if (award) this.game.show(award[0], award[1], 1.6, true);
+    if (this.canStartMode() && this.startable().length) {
+      // A job starts after the award has had the display to itself.
+      if (!award) return this.offerJobs();
+      this.holdBreach(Infinity);
+      this.later(1.6, () => this.breachBall === b && this.offerJobs());
       return;
     }
-    this.holdBreach(0.8);
+    this.holdBreach(award ? 1.6 : 0.8);
+  }
+
+  /** Start the lit job, or let the flippers choose if two are lit. The ball waits in the Breach. */
+  private offerJobs() {
+    const jobs = this.startable();
+    if (!this.canStartMode() || !jobs.length) return this.holdBreach(0.3);
+    if (jobs.length > 1) {
+      this.selected = 0;
+      this.selecting = 4;
+      this.holdBreach(Infinity);
+      sound.warn();
+    } else {
+      this.startMode(jobs[0]);
+    }
+  }
+
+  /** Pay the Breach jackpot and extra ball that B-R-E-A-C-H lit. Returns the message, if any. */
+  private collectBreachAwards(): [string, string] | null {
+    const g = this.game;
+    const jp = this.breachJp;
+    const xball = this.xballLit;
+    if (!jp && !xball) return null;
+    this.breachJp = 0;
+    this.xballLit = false;
+    if (jp) {
+      g.addScore(jp, L.BREACH[0], L.BREACH[1]);
+      this.breachJps++;
+      sound.jackpot();
+    }
+    if (xball) {
+      g.extraBalls++;
+      sound.award();
+    }
+    this.celebrate(INS.red);
+    if (xball) return ['EXTRA BALL', jp ? `+ JACKPOT ${fmt(jp)}` : 'SHOOT AGAIN'];
+    return ['BREACH JACKPOT', fmt(jp)];
   }
 
   private holdBreach(t: number) {
@@ -1087,10 +1171,28 @@ export class Psychosis extends Table {
     return MODES.filter((m) => !this.played.has(m.key) && open(m.tier));
   }
 
+  /** Jobs the Breach will start now: open on the map, and their row's key earned. */
+  startable(): ModeDef[] {
+    return this.available().filter((m) => this.rowLit[m.tier] && m.key !== this.modeKey);
+  }
+
+  /**
+   * A row's key was earned (CAMERAS DOWN for row 1, the Reactor exposed for row 2). It lights the
+   * row once a job in the row above is finished, if the row still has a job to play. Returns the
+   * message to show, or null.
+   */
+  private keyRow(tier: 1 | 2): string | null {
+    const above = MODES.some((m) => m.tier === tier - 1 && this.completed.has(m.key));
+    const left = MODES.filter((m) => m.tier === tier && !this.completed.has(m.key) && m.key !== this.modeKey);
+    if (!above || this.rowLit[tier] || !left.length) return null;
+    this.rowLit[tier] = true;
+    return `${left.map((m) => m.name).join(' OR ')} LIT`;
+  }
+
   private startMode(def: ModeDef) {
     const g = this.game;
     this.selecting = 0;
-    this.modesLit = Math.max(0, this.modesLit - 1);
+    this.rowLit[def.tier] = false;
     this.modeKey = def.key;
     this.mode = def.make(this, this.modeMult);
     this.mode.start();
@@ -1115,12 +1217,12 @@ export class Psychosis extends Table {
     const g = this.game;
     const def = MODES.find((d) => d.key === this.modeKey)!;
     // Only a finished job counts: it opens the next row of the map. A job that ends unfinished
-    // (the ball drained, or a multiball job lost its balls) doesn't, and the Breach relights so
-    // you can try it again.
+    // (a tilt, or a multiball job lost its balls) doesn't, and its row relights so you can try it
+    // again.
     if (m.completed) {
       this.played.add(def.key);
       this.completed.add(def.key);
-    } else this.modesLit++;
+    } else this.rowLit[def.tier] = true;
     this.mode = null;
     this.modeKey = null;
     g.addBonus(Math.round(m.total / 20));
@@ -1294,7 +1396,8 @@ export class Psychosis extends Table {
       this.played.clear();
       this.completed.clear();
       this.level++;
-      this.modesLit = Math.max(this.modesLit, 1);
+      // You're still inside, so INFILTRATE comes lit; the other rows need their keys again.
+      this.rowLit = [true, false, false];
     } else if (kind === 'vault') {
       this.doorOpen = 0;
       g.show('VAULT CLOSED', `JACKPOT ${fmt(this.vaultJp)}`, 1.8);
@@ -1498,7 +1601,7 @@ export class Psychosis extends Table {
     // Choosing a mode while the ball waits in the Breach.
     if (this.selecting > 0) {
       this.selecting -= dt;
-      if (this.selecting <= 0) this.startMode(this.available()[this.selected]);
+      if (this.selecting <= 0) this.startMode(this.startable()[this.selected]);
     }
 
     if (this.clockRunning()) {
@@ -1619,7 +1722,7 @@ export class Psychosis extends Table {
     const g = this.game;
     const t = this.time;
     if (this.selecting > 0) {
-      const av = this.available();
+      const av = this.startable();
       d.text('CHOOSE YOUR PATH', 64, 0, { align: 'center', level: 2 });
       d.fitText(av[this.selected].name, 64, 9, 108, 2, { align: 'center' });
       const blink = Math.floor(t * 4) % 2 ? 3 : 1;
@@ -1655,15 +1758,22 @@ export class Psychosis extends Table {
         ? 'BLACKOUT LIT'
         : this.world.balls.some((b) => b.layer === FLOOR && insidePoly([b.x, b.y], L.UPPER_AREA))
         ? `CODE ${this.codeText()}`
-        : this.modesLit > 0 && this.available().length
-          ? 'BREACH LIT'
-          : this.lockLit
-            ? 'LOCK LIT'
-            : g.ballSave > 0 && !g.ballInShooter()
-              ? 'SAVE'
-              : `$${short(this.cash)}`;
-    d.text(status, 127, 24, { align: 'right', level: 2 });
+        : this.xballLit
+          ? 'EXTRA BALL LIT'
+          : this.startable().length
+            ? 'BREACH LIT'
+            : this.breachJp
+              ? `BREACH JP ${short(this.breachJp)}`
+              : this.lockLit
+                ? 'LOCK LIT'
+                : g.ballSave > 0 && !g.ballInShooter()
+                  ? 'SAVE'
+                  : !this.brokenIn
+                    ? 'SPELL BREACH'
+                    : `$${short(this.cash)}`;
+    // LAUNCH takes the status's place while a ball waits in the shooter lane (the two overlap).
     if (g.ballInShooter()) d.text('LAUNCH', 64, 24, { align: 'center', level: Math.floor(t * 3) % 2 ? 3 : 1 });
+    else d.text(status, 127, 24, { align: 'right', level: 2 });
   }
 
   // ---------------------------------------------------------------- drawing

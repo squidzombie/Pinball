@@ -148,6 +148,30 @@ body {
   }
 }
 
+/* Short phones: the corner buttons sit at the bottom, so the start screen tightens up to clear them. */
+@media (max-height: 700px) {
+  #overlay .sub {
+    margin-top: 6px;
+  }
+  #overlay .start {
+    margin: 12px 0;
+  }
+  #overlay dl {
+    font-size: 11px;
+    line-height: 1.35;
+  }
+  #overlay dt {
+    margin-top: 3px;
+  }
+  #overlay .rules {
+    margin-top: 8px;
+    line-height: 1.32;
+  }
+  #overlay .rules li + li {
+    margin-top: 3px;
+  }
+}
+
 #overlay .rules b {
   color: #ffd23f;
 }

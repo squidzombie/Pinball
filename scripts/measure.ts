@@ -356,7 +356,7 @@ if (want('breach')) {
   const res: string[] = [];
   for (let i = 0; i < 12; i++) {
     reset();
-    m.modesLit = 0;
+    m.rowLit = [false, false, false];
     const b = m.addBall(L.BREACH[0], L.BREACH[1]);
     m.enterBreach(b);
     m.ejectBreach();

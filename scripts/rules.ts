@@ -69,14 +69,30 @@ const PREREQ: Record<string, string[]> = {
   extract: ['infiltrate', 'route'],
 };
 
-/** A new game with the heist map open far enough, then start mode `key` at the Breach. */
+const TIER: Record<string, number> = { infiltrate: 0, hack: 1, route: 1, payload: 2, extract: 2 };
+
+/** Finish jobs without playing them. */
+function finish(f: any, ...keys: string[]) {
+  for (const k of keys) {
+    f.played.add(k);
+    f.completed.add(k);
+  }
+}
+
+/** Spell B-R-E-A-C-H on the standups. */
+function spell(f: any) {
+  for (let i = 0; i < 6; i++) f.hitStandup(i);
+}
+
+/** A new game with the heist map open far enough and the job's row lit, then start mode `key` at the Breach. */
 function startMode(key: string) {
   const { g, f } = newGame();
-  for (const k of PREREQ[key]) f.played.add(k);
-  f.modesLit = 1;
+  finish(f, ...PREREQ[key]);
+  f.brokenIn = true;
+  f.rowLit[TIER[key]] = true;
   park(f);
   breach(g, f, (ff) => {
-    for (let i = 0; i < 5 && ff.selecting > 0 && ff.available()[ff.selected].key !== key; i++) ff.onFlipperPress(1);
+    for (let i = 0; i < 5 && ff.selecting > 0 && ff.startable()[ff.selected].key !== key; i++) ff.onFlipperPress(1);
   });
   return { g, f };
 }
@@ -187,13 +203,18 @@ const litShots = (f: any) => SHOTS.filter((s) => lit(f, s));
 console.log('The Breach starts the heist');
 {
   const { g, f } = newGame();
-  check('first mode comes lit', f.modesLit === 1);
-  check('Breach arrow flashes', f.shotLamp('breach') === 2);
-  check('only INFILTRATE is open', f.available().map((m: any) => m.key).join() === 'infiltrate');
+  check('nothing comes lit: the Breach is dark', f.startable().length === 0 && f.shotLamp('breach') === 0);
   park(f);
+  shootBreach(f);
+  check('...and shooting it starts nothing', !f.mode && f.selecting <= 0);
+  waitEject(g, f);
+  spell(f);
+  check('B-R-E-A-C-H breaks in: INFILTRATE is lit', f.brokenIn && f.startable().map((m: any) => m.key).join() === 'infiltrate');
+  check('Breach arrow flashes', f.shotLamp('breach') === 2);
+  run(g, 3);
   const b = shootBreach(f);
   check('one choice: no selection, straight in', f.selecting <= 0 && f.mode?.name === 'INFILTRATE', f.mode?.name);
-  check('mode consumes the lit start', f.modesLit === 0);
+  check('starting it puts its light out', !f.rowLit[0] && f.startable().length === 0);
   check('ball held for the intro', f.breachBall === b);
   for (let t = 0; t < 3 && f.breachBall; t += 1 / 60) g.update(1 / 60);
   check('ball kicked out after the intro', f.breachBall === null);
@@ -211,7 +232,6 @@ console.log('The Breach starts the heist');
 console.log('B-R-E-A-C-H standups');
 {
   const { g, f } = newGame();
-  f.modesLit = 0;
   f.hitStandup(0);
   f.hitStandup(1);
   check('two letters lit', f.letters.filter(Boolean).length === 2);
@@ -219,18 +239,39 @@ console.log('B-R-E-A-C-H standups');
   f.hitStandup(1);
   check('a lit letter pays only 5K', g.score - s0 === 5_000, `${g.score - s0}`);
   for (let i = 2; i < 6; i++) f.hitStandup(i);
-  check('B-R-E-A-C-H lights a mode', f.modesLit === 1);
+  check('the first B-R-E-A-C-H lights INFILTRATE', f.rowLit[0] && f.startable()[0]?.key === 'infiltrate');
   check('letters reset', f.letters.every((x: boolean) => !x));
+}
+{
+  // The posts at the scoop's mouth jut out in front of E and A, so they count as those letters.
+  const { f } = newGame();
+  f.world.balls = [];
+  for (const [k, letter] of [[0, 2], [1, 3]]) {
+    const post = L.BREACH_MOUTH[k];
+    // aimed 4 units to the scoop side of the post, slow enough to touch one thing per step
+    const b = f.addBall(post[0] + (k ? -4 : 4), post[1] + 30, 0, 0);
+    b.vx = 0;
+    b.vy = -600;
+    // stop at the first contact, so a bounce off the post onto the target's face doesn't count
+    for (let i = 0; i < 120; i++) {
+      const v = b.vy;
+      f.world.step(1 / 480);
+      if (Math.abs(b.vy - v) > 300) break;
+    }
+    f.removeBall(b);
+    check(`a ball that clips the ${k ? 'right' : 'left'} mouth post counts ${'BREACH'[letter]}`, f.letters[letter], f.letters.join());
+  }
 }
 
 console.log('Mode selection');
 {
   const { g, f } = newGame();
-  f.played.add('infiltrate');
-  f.modesLit = 1;
+  finish(f, 'infiltrate');
+  f.brokenIn = true;
+  f.rowLit[1] = true;
   park(f);
   const b = shootBreach(f);
-  check('two choices open the selection', f.selecting > 0 && f.available().length === 2);
+  check('two choices open the selection', f.selecting > 0 && f.startable().length === 2);
   check('ball held while choosing', f.breachBall === b);
   f.onFlipperPress(1);
   check('right flipper moves the selection', f.selected === 1);
@@ -366,7 +407,7 @@ console.log('PAYLOAD (multiball)');
   const { f } = startMode('payload');
   f.endMultiball();
   check("PAYLOAD lost before its super doesn't count", f.mode === null && !f.played.has('payload') && !f.completed.has('payload'));
-  check("...doesn't light BLACKOUT, and the Breach relights for another go", !f.blackoutLit && f.modesLit === 1);
+  check("...doesn't light BLACKOUT, and the Breach relights for another go", !f.blackoutLit && f.startable().some((m: any) => m.key === 'payload'));
 }
 
 console.log('EXTRACT');
@@ -412,7 +453,7 @@ console.log('BLACKOUT (wizard)');
   check('all four light the super at the Reactor', w.lit('reactor') === 4 && f.dropsDown());
   f.endMultiball();
   check('BLACKOUT ends with the multiball', f.wizard === null);
-  check('the heist starts over a level up', f.played.size === 0 && f.level === 1 && f.modesLit >= 1);
+  check('the heist starts over a level up, INFILTRATE lit', f.played.size === 0 && f.level === 1 && f.rowLit.join() === 'true,false,false');
   check('values scale up', f.modeMult === 1.5);
 }
 {
@@ -599,14 +640,83 @@ console.log('Clock rules (RAGE is the only timed mode)');
   const { g, f } = startMode('route');
   f.sw('sling');
   run(g, 1);
-  for (let i = 0; i < 6; i++) f.hitStandup(i);
-  check('B-R-E-A-C-H during a job banks the next one', f.modesLit === 1 && f.mode?.name === 'ROUTE');
+  spell(f);
+  check('B-R-E-A-C-H during a job lights the Breach jackpot', f.breachJp === 1_000_000 && f.mode?.name === 'ROUTE');
+}
+
+console.log("The heist map's keys");
+{
+  const { g, f } = newGame();
+  spell(f);
+  f.camerasDownAward();
+  check("CAMERAS DOWN before INFILTRATE is finished doesn't light row 2", !f.rowLit[1]);
+  finish(f, 'infiltrate');
+  f.rowLit[0] = false;
+  f.camerasDown = 0;
+  park(f);
+  for (const i of [0, 1, 2]) f.camLane(i);
+  check('CAMERAS DOWN after it lights HACK and ROUTE', f.rowLit[1] && f.startable().map((m: any) => m.key).join() === 'hack,route');
+  for (const i of [0, 1, 2]) f.hitDrop(i, 200);
+  check("exposing the Reactor before a row 2 job is finished doesn't light row 3", !f.rowLit[2]);
+  run(g, 3);
+  breach(g, f, (ff) => ff.onFlipperPress(-1) || ff.onFlipperPress(-1));
+  check('the Breach starts one of them', f.mode?.name === 'HACK', f.mode?.name);
+  check('...which puts out the row: ROUTE needs CAMERAS DOWN again', !f.rowLit[1] && f.startable().length === 0);
+  f.camerasDown = 0;
+  f.camLit = [false, false, false];
+  f.camerasDownAward();
+  check('a key earned during a job lights the rest of its row, for afterwards', f.rowLit[1] && f.startable().map((m: any) => m.key).join() === 'route' && !f.canStartMode());
+  f.mode.completed = true;
+  f.endMode(true);
+  f.rowLit[1] = false;
+  f.resetDrops();
+  for (const i of [0, 1, 2]) f.hitDrop(i, 200);
+  check('exposing the Reactor after HACK lights PAYLOAD and EXTRACT', f.rowLit[2] && f.startable().map((m: any) => m.key).join() === 'payload,extract');
+  finish(f, 'payload', 'extract', 'route');
+  f.rowLit = [false, false, false];
+  f.resetDrops();
+  for (const i of [0, 1, 2]) f.hitDrop(i, 200);
+  check("a row with nothing left to play doesn't light", !f.rowLit[2]);
+}
+{
+  // Tilting out of a job relights its row.
+  const { f } = startMode('route');
+  f.endModes(true);
+  check('a job that ends unfinished relights its row', f.mode === null && f.rowLit[1] && f.startable().some((m: any) => m.key === 'route'));
+}
+
+console.log('B-R-E-A-C-H rewards');
+{
+  const { g, f } = newGame();
+  park(f);
+  spell(f);
+  check('the first spelling breaks in, no jackpot', f.brokenIn && f.breachJp === 0);
+  spell(f);
+  check('the second lights a 1M jackpot at the Breach', f.breachJp === 1_000_000 && f.jpLit('breach'));
+  check('...the status says so once the job is played', ((f.rowLit[0] = false), f.shotLamp('breach') === 2));
+  f.rowLit[0] = true;
+  const s0 = g.score;
+  shootBreach(f);
+  check('shooting the Breach collects it', g.score - s0 >= 1_000_000 && f.breachJp === 0 && !f.jpLit('breach'), `${g.score - s0}`);
+  check('...and holds the job start until the award has been shown', !f.mode && f.breachBall);
+  run(g, 1.8);
+  check('...then the lit job starts', f.mode?.name === 'INFILTRATE', f.mode?.name);
+  waitEject(g, f);
+  const x0 = g.extraBalls;
+  spell(f);
+  check('the third spelling lights an extra ball, and a bigger jackpot', f.xballLit && f.breachJp === 1_250_000);
+  shootBreach(f);
+  check('...collected at the Breach', g.extraBalls === x0 + 1 && !f.xballLit && f.breachJp === 0);
+  waitEject(g, f);
+  for (let n = 0; n < 3; n++) spell(f);
+  check('the sixth lights only a jackpot: one extra ball a game', !f.xballLit && f.breachJp > 0, `xball ${f.xballLit} jp ${f.breachJp}`);
+  check('jackpots lit before collecting add up', f.breachJp === 3 * 1_500_000, `${f.breachJp}`);
 }
 
 console.log('Priorities');
 {
   const { g, f } = startMode('hack');
-  f.modesLit = 1;
+  f.rowLit = [true, true, true];
   shootBreach(f);
   check('no second mode while one runs', f.mode?.name === 'HACK' && f.selecting <= 0);
   waitEject(g, f);

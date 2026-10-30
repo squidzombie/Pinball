@@ -6,7 +6,7 @@ own pair of small flippers. The Skyway is rerouted to make room, the Impound is 
 orbit, and three security cameras pan over the CAM lanes. Hitting the vault's three tumblers in
 the order of a random code cracks it open and starts **VAULT MULTIBALL**. The geometry, its measurements and this
 document are done. **Rules beyond the cameras, the back door and the vault, and the art pass,
-haven't started.** The phone build is this layout (version 18; the fan is version 5 in its
+haven't started.** The phone build is this layout (version 19; the fan is version 5 in its
 history). Where
 the rule sheet differs from the code, the entry says **(change)**; nearly all of those come with
 Phase 4.
@@ -25,6 +25,33 @@ shot. `npm run template` regenerates the template and prints every clearance. Ba
 ---
 
 ## 0. The layout revisions (30 October 2026)
+
+### Fourteenth round: spell B-R-E-A-C-H once, then each row has a key
+
+You didn't want to spell B-R-E-A-C-H before every job. Now each row of the heist map has its own
+key:
+
+- **Row 1, Infiltrate:** spell B-R-E-A-C-H to break in (BROKEN IN), then shoot the Breach.
+  Nothing comes lit at the start of a game any more. Until you break in, the display's bottom
+  right says SPELL BREACH.
+- **Row 2, Hack or Route:** **CAMERAS DOWN** (all three CAM lanes), once Infiltrate is finished.
+- **Row 3, Payload or Extract:** expose the **Reactor** (all three drop targets down), once Hack
+  or Route is finished. It still lights the lock as well.
+- **Blackout:** unchanged, lit by finishing Payload or Extract. Afterwards the heist starts over
+  with Infiltrate lit (you're still inside), and the other rows need their keys again.
+- **Starting a job uses up its row's light,** so the second job in a row needs the key again. A
+  key earned while a job runs lights the rest of its row for afterwards. A job that ends
+  unfinished (a tilt, or Payload losing its multiball) relights its row.
+- **Spelling B-R-E-A-C-H again** lights a **Breach jackpot**: 1M, plus 250K for each one already
+  collected. Spell it twice before collecting and the two add up. The third spelling (the second
+  after breaking in) also lights an **extra ball** at the Breach, one a game. The Breach's JP light
+  blinks while either is lit, and the display says BREACH JP or EXTRA BALL LIT. Any Breach shot
+  collects them; if a job then starts, it waits until the award has been on the display.
+- **E can be hit now.** The scoop's left post juts 3 units in front of E's face, and a ball
+  centred within about 10 units of it touched the post first. That left only a third of E: 2% of
+  aimed right-flipper shots, against 11–12% for R and B. With spelling now the way into the heist,
+  the two mouth posts count as the letters beside them (E and A). Nothing moved and the physics
+  is unchanged (the Breach still takes the same 16% of those shots); E is now 11%.
 
 ### Thirteenth round: a brain instead of the skull
 
@@ -482,9 +509,11 @@ with its own flippers, a way out the side and maybe one out the top. As built:
 
 ### Core loop
 
-Spell **B-R-E-A-C-H** on the six standups to light the Breach, then shoot the Breach to start
-the next job of the heist. The heist map runs **Infiltrate**, then **Hack** or **Route**, then
-**Payload** or **Extract**. Each job asks for a different way of shooting: stealth, target
+Spell **B-R-E-A-C-H** on the six standups to break in, then shoot the Breach to start the first
+job of the heist, **Infiltrate**. After that each row of the map has its own key (built,
+fourteenth round): **CAMERAS DOWN** lights **Hack** or **Route**, and exposing the **Reactor**
+(all three drops down) lights **Payload** or **Extract**. Later spellings of B-R-E-A-C-H light a
+Breach jackpot, and the third spelling an extra ball. Each job asks for a different way of shooting: stealth, target
 precision, a flowing sequence, build-and-cash multiball, a hurry-up race. Finishing a final job
 lights **Blackout**, the wizard multiball, at the Reactor. Between jobs:
 
@@ -519,8 +548,11 @@ against one fixed loop. Payload and Extract, the two tier-2 jobs, now share only
   CONTINUES on the display), but the step in progress starts over: Route's current lap, Hack's
   current code. Infiltrate keeps the shots you've snuck past, and Extract its finished legs.
 - **Multiballs don't carry over.** If Payload's multiball ends before its super jackpot, the job
-  fails: it doesn't count, and the Breach relights so you can start it again from scratch. A
+  fails: it doesn't count, and its row relights so you can start it again from scratch. A
   tilt ends any job the same way.
+- **Keys (built, fourteenth round):** starting a job uses up its row's light, so the second job
+  in a row needs the row's key again. A key earned while a job runs lights the rest of its row
+  for afterwards.
 - **Speed pays (built, eleventh round):** Infiltrate's, Hack's and Route's values hold for their
   first 30 s in play (clock rules: not while the ball is held or stuck), then drain to half over
   the next 120 s. The display alternates SHOTS PAY n%. Extract has its own drain (below).
@@ -529,7 +561,7 @@ against one fixed loop. Payload and Extract, the two tier-2 jobs, now share only
 - If two jobs are available, the flippers choose while the ball sits in the Breach (4 s).
 - RAGE is the only timed mode; its clock conventions are in the README.
 
-### Infiltrate (first job; comes lit at the start of each game)
+### Infiltrate (first job; lit by spelling B-R-E-A-C-H)
 
 - **Starts:** Breach.
 - **Lights:** four entry points: Skyway, Black Market, Back Alley and Reactor.
@@ -544,7 +576,7 @@ against one fixed loop. Payload and Extract, the two tier-2 jobs, now share only
   - Once all four are made, the camera gives up and the **Breach** lights **GET INSIDE**.
 - **Timer:** none.
 - **Ends:** success at the Breach (3M). A drain pauses it; the shots you've snuck past stay.
-- **Reward:** the Infiltrate node lights, and Hack and Route open.
+- **Reward:** the Infiltrate node lights, and CAMERAS DOWN now lights Hack or Route.
 - **Shooting style:** read the camera and choose the shot, not the fastest one.
 
 ### Hack
@@ -562,7 +594,7 @@ against one fixed loop. Payload and Extract, the two tier-2 jobs, now share only
   - Shooting the Breach scoop itself cracks the current firewall at half value.
 - **Timer:** none.
 - **Ends:** three firewalls means **SYSTEM HACKED** (3M). A drain pauses it; the code in progress starts over.
-- **Reward:** the Hack node lights, and Payload and Extract open.
+- **Reward:** the Hack node lights, and exposing the Reactor now lights Payload or Extract.
 - **Shooting style:** precise target work inside the Breach channel, broken up by one remote
   shot per code, with the Reactor as an optional shortcut.
 
@@ -579,7 +611,7 @@ against one fixed loop. Payload and Extract, the two tier-2 jobs, now share only
   a **CLEAN RUN** and pays double. Out-of-order shots score nothing for the mode.
 - **Timer:** none.
 - **Ends:** two laps means **ROUTE SET** (3M). A drain pauses it; the lap in progress starts over.
-- **Reward:** the Route node lights, and Payload and Extract open.
+- **Reward:** the Route node lights, and exposing the Reactor now lights Payload or Extract.
 - **Shooting style:** flow, a learnable combo path.
 
 ### Payload (2-ball multiball)
@@ -595,7 +627,7 @@ against one fixed loop. Payload and Extract, the two tier-2 jobs, now share only
 - **Timer:** none. It ends when the multiball does.
 - **Reward:** cashing three or more crates at once completes it (built today: collecting the super
   jackpot at the Reactor, lit for 20 s after three jackpots; missed, two more jackpots relight
-  it). Only finishing it lights Blackout; losing the multiball first fails it, and the Breach
+  it). Only finishing it lights Blackout; losing the multiball first fails it, and its row
   relights.
 - **Shooting style:** risk and greed: how long do you keep loading?
 
@@ -682,8 +714,11 @@ against one fixed loop. Payload and Extract, the two tier-2 jobs, now share only
 
 - **B-R-E-A-C-H standups:**
   - A first hit lights its letter (25K); a repeat hit pays 10K.
-  - All six light a job (+200K) and reset the letters.
-  - During a job, completing them banks the next job.
+  - All six reset the letters (+200K proposed; nothing today). **Built, fourteenth round:** the
+    first time each game they **break in** and light Infiltrate. After that each spelling lights
+    a **Breach jackpot** (1M, +250K for each collected; they add up), and the third spelling
+    also lights an **extra ball** at the Breach (one a game).
+  - The two posts at the scoop's mouth count as E and A (they were shadowing E).
 - **CAM 1–3 top lanes and the security cameras (built):** three cameras pan over the three
   lanes.
   - **Fed by:** the plunge, the Back Alley, the vault's top exit, and balls the pops kick back
@@ -694,7 +729,8 @@ against one fixed loop. Payload and Extract, the two tier-2 jobs, now share only
     (round the end), together with R-A-G-E, and the dark cameras move with them. The pop bumpers
     don't affect the lanes.
   - **All three lit: CAMERAS DOWN**, worth 100K and $25K. The cameras stay dark and the lanes
-    blink for 6 s, then the lanes reset. The back door opens for 20 s.
+    blink for 6 s, then the lanes reset. The back door opens for 20 s. Once Infiltrate is
+    finished, it also lights Hack or Route (built, fourteenth round).
   - Lit lanes don't time out. They reset at each new ball.
   - In Infiltrate, the middle camera tracks the watched shot.
   - **(change, Phase 4):** CAMERAS DOWN also advances the bonus X (2× up to 6×) and raises the
@@ -740,14 +776,16 @@ against one fixed loop. Payload and Extract, the two tier-2 jobs, now share only
   each is a plain switch (25K and $10K cash, a little more than most switches).
 - **Reactor:**
   - Each drop is 25K, and the full bank 150K. Clearing the bank lights the lock (when it can be
-    lit) and exposes the captive ball.
+    lit) and exposes the captive ball. Once Hack or Route is finished, it also lights Payload or
+    Extract (built, fourteenth round).
   - A core hit raises **heat** (250K + 50K per heat level) and resets the drops after 1.2 s,
     unless a multiball wants them down. The eye glows hotter with heat.
   - **(change)** Heat 6 lights an extra ball at the Breach.
 - **Bonus:** every major shot adds 1/20 of its value, every job adds 1/20 of its total, and
   BREACH and RAGE letters add a little. The total is multiplied by the bonus X at drain and lost
   on tilt.
-- **Extra ball:** from the Black Market (once), Reactor heat 6 (once), or completing Blackout.
+- **Extra ball:** from the Black Market (once), the third B-R-E-A-C-H (built), Reactor
+  heat 6 (once), or completing Blackout.
   Only one can be lit at a time.
 - **Combos:** major shots within 3.5 s: 2-way 100K, 3-way 250K, 4-way 500K, 5+ 1M.
   **(change)** Named combos each add 500K:
@@ -770,6 +808,7 @@ bumper-bashing ball (about 100 pops) is worth about 100K. One job is 7–20M.
 | Spinner, per turn | 2,500 | 1,500 |
 | RAGE lane: unlit / lighting a letter / completing | 5K / 25K / – | 5K / 25K / 250K |
 | BREACH standup: repeat / lighting a letter / completing | 5K / 25K / – | 10K / 25K / 200K |
+| Breach jackpot (each B-R-E-A-C-H after the first) | 1M + 250K each collected | same |
 | Drop target / full bank | 25K / 100K | 25K / 150K |
 | CAM lane: unlit / lighting / cameras down | – | 5K / 25K / 100K |
 | Skyway | 75K | 100K |
@@ -1007,8 +1046,8 @@ room. When it's used, a one-second card shows **10X** and the multiplied value; 
 **Normal play.**
 - Score, large.
 - BALL *n*, bottom left.
-- Bottom right rotates through what's lit: BREACH LIT, LOCK LIT, BLACKOUT LIT, the
-  B-R-E-A-C-H progress (B R E _ _ _), R-A-G-E progress, cash.
+- Bottom right rotates through what's lit: BREACH LIT, EXTRA BALL LIT, BREACH JP, LOCK LIT,
+  BLACKOUT LIT, SPELL BREACH (until you break in), the B-R-E-A-C-H progress (B R E _ _ _), R-A-G-E progress, cash.
 - LAUNCH blinks while a ball waits in the shooter lane.
 
 **In a job.** Name top left, seconds top right (blinking in the last 6 and in grace), score in the
@@ -1101,10 +1140,10 @@ exactly where every wall, lane, ramp entrance and insert is. Regenerate them wit
 
 ## 8. Decisions
 
-### For later (your idea, not built): don't spell B-R-E-A-C-H for every job
+### 30 October 2026, fourteenth round: the keys (built)
 
 You'd rather not have to spell B-R-E-A-C-H before every job: spell it once to break in, and let
-other triggers light the later jobs. Proposal, to settle before building:
+other triggers light the later jobs. Built as proposed (the details are in section 0):
 
 - **Row 1, INFILTRATE:** spell B-R-E-A-C-H, then shoot the Breach: breaking in. The only time you
   have to spell it (Infiltrate would no longer come lit at the start).
@@ -1114,10 +1153,13 @@ other triggers light the later jobs. Proposal, to settle before building:
   as a second reward for the shot that lights the lock. (Cracking the vault was considered, but
   its random code makes it too hard a gate.)
 - **BLACKOUT:** as now, lit by finishing Payload or Extract.
-- **Spelling B-R-E-A-C-H after that** becomes a reward, not a gate: for example, a Breach
-  jackpot, or every third spelling lights an extra ball.
-- **Simpler alternative:** a chain, where finishing a job lights the Breach for the next. Easier
-  to learn, but the rest of the table then matters less for progress.
+- **Spelling B-R-E-A-C-H after that** becomes a reward, not a gate: a Breach jackpot (1M, +250K
+  each collected), and the third spelling also lights an extra ball. One a game, so it can't be
+  farmed (the proposal said every third spelling; with the cap that is the same thing).
+- **E fixed:** the scoop's mouth posts count as E and A. The left post had been taking most shots
+  at E (2% of aimed shots, now 11%).
+- **Not built:** the simpler alternative, a chain where finishing a job lights the Breach for the
+  next. Easier to learn, but the rest of the table would matter less for progress.
 
 ### 30 October 2026, thirteenth round: the brain (built)
 
