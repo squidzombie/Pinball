@@ -2,8 +2,8 @@
 
 Status: **layout revision built for your review (30 October 2026).** The table is now a classic
 fan with only the two lower flippers. The geometry, its measurements and this document are done;
-**no rules or art work has started.** The live phone build is still the hotfix build (version 4)
-until you approve this layout. Where the rule sheet differs from the code, the entry says
+**no rules or art work has started.** The phone build is now this layout for testing
+(version 5; the hotfix build is version 4 in its history). Where the rule sheet differs from the code, the entry says
 **(change)**; nearly all of those come with Phase 4.
 
 The art target is the concept sketch, saved as [`reference/sketch.png`](reference/sketch.png).
@@ -200,6 +200,47 @@ than the ball. The new ones are 72 across at the ring (2.6 balls), and the drawn
     - The old skill shot (Black Market within 7 s of the plunge) still works.
     - The CAM lanes are plain switches.
     - The diverter can be held open from code, but no rule opens it yet.
+
+### Proposal: a mini-playfield in the upper left (your idea, 30 October; not built)
+
+The sealed yard between the orbit, the Breach and the pops is the biggest dead area on the
+table: about 200 × 400 units, 11.5% of the playfield. You suggested turning it into its own
+small pinball game.
+
+**Your sketch:**
+- A lane goes up the left side where SAFE is, into the yard.
+- The yard becomes a mini-playfield with its own flippers.
+- A ball that falls past those flippers goes out the side, to the right along under the pops.
+- Maybe a second way out at the top.
+
+**How it would fit:**
+- **Size:** about the size of Twilight Zone's Powerfield, enough for two small flippers (about
+  45 units, half the main ones) and a few targets. They'd flip on the same buttons as the main
+  flippers, as on real tables.
+- **Out the side:** a lane under the Black Market's turn joins the pop exit lane, then the right
+  inlane and the right flipper. The same chute is already measured at 12/12.
+- **Out the top:** a lane from its flippers up to the top arch, into the CAM lanes and the pops.
+- Both exits return the ball to a flipper.
+- **Sealed area:** it would drop from 18% to about 7%.
+
+**What it would change:**
+- **The Skyway** climbs through that space to reach the Impound. It would cross to the left
+  side at mid-height under the pops and go straight down its wire.
+- **The Impound** would become the mini-playfield's backdrop. The lock is animated, so it can
+  sit anywhere.
+- **SAFE** gives up its spot to the entrance and moves.
+- **The way in is hard to hit.** The right flipper rarely launches at that angle: SAFE gets 2%
+  of flips. On its own, the lane would be one of the hardest shots. It could also be fed from
+  the Back Alley: a second diverter at the top of the orbit drops the ball in when the
+  mini-playfield is lit.
+- **Phone view:** the top left is the smallest part of the tilted view, so its art needs to be
+  bold.
+- **Its job:** it needs one obvious job. One idea that fits the heist is **THE VAULT**: a short
+  timed round with tumbler targets to crack, where shooting out the top pays the vault jackpot,
+  and draining out the side ends it.
+
+**Plan:** you test the fan layout first. Then we settle the questions above, and it gets built
+as the next layout step, before the art prompt is rebuilt.
 
 ---
 
@@ -781,6 +822,8 @@ point landed:
    the new skill shot, R-A-G-E, the diverter, combos, the 10X item and the inserts.
 8. **Measurements:** section 1. All thresholds met.
 9. **Art:** not started. The template is regenerated; the prompt waits for your approval.
+10. **Next (proposed by you):** a mini-playfield in the upper-left dead area, with its own
+    flippers. Written up at the end of section 1, to build after you've tested the fan layout.
 
 Decision 2 below (the duct to the top flipper) is superseded by this layout.
 
