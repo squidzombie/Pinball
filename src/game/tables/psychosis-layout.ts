@@ -171,7 +171,7 @@ export const ARCH_INNER_R: P[] = (() => {
   return [p, ...arch.right.slice(i + 1), [535.5, 262]];
 })();
 /** Post at the foot of the orbit's inner wall; the wall flares out to it, widening the mouth. */
-export const ORBIT_POST: P = [80, 692];
+export const ORBIT_POST: P = [92, 692];
 export const ORBIT_FLARE: P[] = [arch.right[0], ORBIT_POST];
 
 /**
@@ -590,9 +590,11 @@ export const MARKET = makeRamp(
     [462, 836],
     [461, 906],
   ],
+  // The left flare meets the A-C-H bank; the right flares less, so the mouth (53) is a little
+  // narrower than it was (56) and the Black Market less of a default shot.
   (s) => {
-    const w = 22 + 6 * Math.max(0, 1 - s / 30);
-    return [w, w];
+    const f = Math.max(0, 1 - s / 30);
+    return [22 + 6 * f, 22 + 3 * f];
   },
   [
     [0, 0],

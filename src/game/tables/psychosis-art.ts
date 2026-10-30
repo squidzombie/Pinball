@@ -1630,31 +1630,49 @@ export function drawTank(ctx: CanvasRenderingContext2D, x: number, y: number, r0
 }
 
 /** A thin standing target from a to b: front face, lit top, ink edges. */
+/**
+ * A target as a solid block: its front face on the line a→b (where the ball hits it), `thick`
+ * deep behind it and `z` tall. Heights here only shift things up the screen, so a box's ends would
+ * collapse into lines; the top is bevelled in a little instead, which shows the front and both
+ * ends as shaded faces.
+ */
 function slab(ctx: CanvasRenderingContext2D, a: P, b: P, thick: number, z: number, top: string, side: string) {
   const lz = lift(z);
-  const dx = b[0] - a[0];
-  const dy = b[1] - a[1];
-  const l = Math.hypot(dx, dy) || 1;
-  const nx = (-dy / l) * (thick / 2);
-  const ny = (dx / l) * (thick / 2);
-  const q: P[] = [
-    [a[0] + nx, a[1] + ny],
-    [b[0] + nx, b[1] + ny],
-    [b[0] - nx, b[1] - ny],
-    [a[0] - nx, a[1] - ny],
-  ];
-  ctx.fillStyle = side;
+  const d = L.unit(L.sub(b, a));
+  // the back is the side away from the player: up the screen (or left, for an upright target)
+  let back: P = [d[1], -d[0]];
+  if (back[1] > 1e-6 || (Math.abs(back[1]) <= 1e-6 && back[0] > 0)) back = [-back[0], -back[1]];
+  const bev = Math.min(2, thick * 0.3);
+  const up = (p: P): P => [p[0], p[1] - lz];
+  const A = a;
+  const B = b;
+  const A2 = L.add(a, back, thick);
+  const B2 = L.add(b, back, thick);
+  const aT = up(L.add(L.add(a, d, bev), back, bev * 0.6));
+  const bT = up(L.add(L.add(b, d, -bev), back, bev * 0.6));
+  const aT2 = up(L.add(A2, d, bev));
+  const bT2 = up(L.add(B2, d, -bev));
+  const face = (pts: P[], fill: string, w = 1) => {
+    ctx.beginPath();
+    for (const [x, y] of pts) ctx.lineTo(x, y);
+    ctx.closePath();
+    ctx.fillStyle = fill;
+    ctx.fill();
+    inkLine(ctx, w);
+    ctx.stroke();
+  };
+  // light from the upper left: an end turned left is lighter, one turned right darker
+  const endShade = (nx: number) => shade(side, -nx * 0.35);
+  face([A, aT, aT2, A2], endShade(-d[0]));
+  face([B, B2, bT2, bT], endShade(d[0]));
+  face([A, B, bT, aT], side);
+  face([aT, bT, bT2, aT2], top, 1.2);
+  // a bright lip along the top's front edge
   ctx.beginPath();
-  for (const [x, y] of q) ctx.lineTo(x, y);
-  for (const [x, y] of [...q].reverse()) ctx.lineTo(x, y - lz);
-  ctx.fill();
-  inkLine(ctx, 1);
-  ctx.stroke();
-  ctx.fillStyle = top;
-  ctx.beginPath();
-  q.forEach(([x, y]) => ctx.lineTo(x, y - lz));
-  ctx.closePath();
-  ctx.fill();
+  ctx.moveTo(aT[0], aT[1] + 0.7);
+  ctx.lineTo(bT[0], bT[1] + 0.7);
+  ctx.strokeStyle = 'rgba(255,255,255,0.45)';
+  ctx.lineWidth = 1;
   ctx.stroke();
 }
 
@@ -1662,7 +1680,7 @@ function slab(ctx: CanvasRenderingContext2D, a: P, b: P, thick: number, z: numbe
 export function drawDrop(ctx: CanvasRenderingContext2D, a: P, b: P, anim: number) {
   const z = 26 * (1 - anim);
   if (z < 1) return;
-  slab(ctx, a, b, 7, z, '#e2443a', '#8e1a14');
+  slab(ctx, a, b, 9, z, '#e2443a', '#8e1a14');
   const mx = (a[0] + b[0]) / 2;
   const my = (a[1] + b[1]) / 2;
   const lz = lift(z);
@@ -1677,7 +1695,7 @@ export function drawDrop(ctx: CanvasRenderingContext2D, a: P, b: P, anim: number
 
 /** Red standup on a Breach bank. */
 export function drawStandup(ctx: CanvasRenderingContext2D, a: P, b: P, lit: boolean) {
-  slab(ctx, a, b, 6, 24, lit ? '#ff7262' : '#c8281e', lit ? '#b0281e' : '#6a120e');
+  slab(ctx, a, b, 8, 24, lit ? '#ff7262' : '#c8281e', lit ? '#b0281e' : '#6a120e');
   if (lit) drawGlow(ctx, (a[0] + b[0]) / 2, (a[1] + b[1]) / 2 - lift(24), 16, RED, 0.5);
 }
 

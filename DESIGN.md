@@ -6,7 +6,7 @@ own pair of small flippers. The Skyway is rerouted to make room, the Impound is 
 orbit, and three security cameras pan over the CAM lanes. Hitting the vault's three tumblers in
 the order of a random code cracks it open and starts **VAULT MULTIBALL**. The geometry, its measurements and this
 document are done. **Rules beyond the cameras, the back door and the vault, and the art pass,
-haven't started.** The phone build is this layout (version 15; the fan is version 5 in its
+haven't started.** The phone build is this layout (version 16; the fan is version 5 in its
 history). Where
 the rule sheet differs from the code, the entry says **(change)**; nearly all of those come with
 Phase 4.
@@ -25,6 +25,32 @@ shot. `npm run template` regenerates the template and prints every clearance. Ba
 ---
 
 ## 0. The layout revisions (30 October 2026)
+
+### Twelfth round: a little balance, and solid targets
+
+You found the Black Market noticeably easier than the far-side shots, and asked for "both a
+little": the Black Market a bit harder, the sides a bit easier.
+
+- **What the numbers show.** On a held ball, the side shots aren't hard at all: the Skyway is the
+  easiest shot on the table (19%), because a late flip off a cradle launches at 54–57°, right at
+  its window. On a **moving** ball, almost every flip goes up the middle (72–93° off the left
+  flipper, 87–105° off the right). Only about 4 in 100 reach either far side. That's real
+  pinball: a cross-table shot off a moving ball needs a late, well-timed flip; the easy way is
+  to catch the ball first. So widening the side shots' openings can only help a little. A
+  wider Skyway funnel was measured and changed nothing, so the Skyway is left as it was.
+- **Black Market a little harder:** its mouth is 53 units, down from 56 (narrowed on the side
+  away from H). Left flipper 9% / 16% (was 14% / 18%), right 12% / 5% (was 11% / 12%).
+- **Back Alley a little easier:** the post at the foot of the orbit's inner wall moved 12 units
+  right, widening the orbit's mouth. Moving-ball shots doubled: 4% (was 2%); held 10% as before.
+- **Returns unchanged:** both ramps 12/12 to a flipper; the Back Alley 12/12 to the top lanes,
+  12/12 into the vault with the back door open, 12/12 round the loop. Of 13 flips that go up
+  the orbit but fall back, all reach a flipper.
+- **Cost:** the vault lane, already the hardest shot, loses its one moving-ball hit in 100 (now
+  0%; held 1% as before).
+- **Solid targets:** the B-R-E-A-C-H standups, the tumblers, SAFE and VENT, and the drop targets
+  are drawn as solid blocks: shaded front, ends and top, with a bevel so the ends show. The
+  block sits behind the target's face, so the ball still touches the front where the physics
+  has it. Drawing only.
 
 ### Eleventh round: jobs survive a drain, speed pays, timed supers, RAGE in the shop
 
@@ -247,13 +273,13 @@ Skyway 7.5%, Breach 2.7%, Reactor drops 4.9%.
 
 | Shot | Flipper | Angles | Share | Returns to | Role |
 |---|---|---|---|---|---|
-| **Back Alley** (left orbit, over the top) | Right | 122.8–124.8° | 10% / 2% | **Loop closed:** into the CAM lanes 12/12, then through the pops to the right flipper. **Loop held open:** round the top and down the right leg into the chute, onto the Black Market wire, to the right inlane. 12/12 back to the right flipper (2 loop all the way; 10 slower ones drop into the lanes and come out of the pops). **Back door open:** 12/12 into the upper playfield. | Mode shot, Impound jackpot, feeds the CAM lanes and the vault. |
-| **Vault lane** (up the left into the upper playfield) | Right | 116.1–117.7° | 1% / 1% | Through the upper playfield and out (below). | The way into THE VAULT. |
+| **Back Alley** (left orbit, over the top) | Right | 119.7–124.8° | 10% / 4% | **Loop closed:** into the CAM lanes 12/12, then through the pops to the right flipper. **Loop held open:** round the top and down the right leg into the chute, onto the Black Market wire, to the right inlane. 12/12 back to the right flipper (2 loop all the way; 10 slower ones drop into the lanes and come out of the pops). **Back door open:** 12/12 into the upper playfield. | Mode shot, Impound jackpot, feeds the CAM lanes and the vault. |
+| **Vault lane** (up the left into the upper playfield) | Right | about 116° | 1% / 0% | Through the upper playfield and out (below). | The way into THE VAULT. |
 | **SAFE** (standup on the vault lane's wall) | Right | 109.2–112.7° | 7% / 2% | Bounces back. | Hack remote key. |
 | **B-R-E** standups (face the right flipper) | Right | B 109.4–109.7°, R 106°, E rarely | B 6% / 0%, R about 1% | Rebound: 0 down the middle; 2 of 9 to an outlane. | Letters. |
 | **Breach** scoop | Right | 101.6–102.7° | 2% / 11% | Kickout: left flipper 12/12. | Starts and selects jobs; mode shot. |
 | **A-C-H** standups (face the left flipper; the bank runs right up to the Black Market's wall) | Right; left (live) | Right: H 95.5–98.6°, C 98.6–99.4°, A 98.5–102°. Left: 87.8–90.9° | Right: H 16% / 10%, C 0% / 5%, A 5% / 7%. Left: about 22% live (H 8%, C 9%, A 5%) | Rebound: 0 down the middle; 3 of 73 to an outlane (all off A from the right flipper). H sends every hit back to a flipper. | Letters. |
-| **Black Market** (centre ramp) | **Both** | Left 83.5–87.5°, right 92.5–96.4° | Left 14% / 18%, right 11% / 12% | Right inlane → right flipper: 12/12 from each flipper. | Shop, mode shot, jackpot. |
+| **Black Market** (centre ramp; mouth 53, was 56) | **Both** | Left 83.5–87.5°, right 92.6–96.5° | Left 9% / 16%, right 12% / 5% | Right inlane → right flipper: 12/12 from each flipper. | Shop, mode shot, jackpot. |
 | **Reactor**: 3 drops, then the captive ball | Left (right, live only) | Drops 77.2–81.5°; captive ball (drops down) from 77.4° | Drops 25% / 24%; captive ball 10% / 10% | Rebounds to either flipper. | Lights the lock; heat; starts Blackout; super jackpots. |
 | **VENT** (the Reactor's right flank) | Left | 67.3–74.7° | 13% / 8% | Bounces back. | Hack remote key. |
 | Pop exit gate | Left | 62.3–63.9° | 1% / 1% | Bounces back (one-way, exit only). | — |
@@ -336,7 +362,7 @@ than the ball. The new ones are 72 across at the ring (2.6 balls), and the drawn
 | Pop exit chute and gate | **30.0** | **1.07** (on purpose: a tight chute drops the ball straight into the right inlane, clear of the slingshot's top corner, which kicks balls into the outlane) |
 | Breach throat / mouth | 44.0 / 52.0 | 1.57 / 1.86 |
 | Back Alley orbit lane | 44.0 | 1.57 |
-| Black Market mouth | 56.0 | 2.00 |
+| Black Market mouth | 53.0 | 1.89 (narrowed from 56 on its right side, twelfth round) |
 | H to the Black Market's wall | 0.1 | 0 (flush on purpose: no corner beside H) |
 | Skyway mouth | 45.0 | 1.61 |
 | Vault lane / its gate | 31.4 / 31.8 | 1.12 / 1.14 (narrow, but it's a straight lane) |
@@ -1060,6 +1086,15 @@ exactly where every wall, lane, ramp entrance and insert is. Regenerate them wit
 ---
 
 ## 8. Decisions
+
+### 30 October 2026, twelfth round: balance and solid targets (built)
+
+1. **Black Market a little harder** (mouth 56 → 53), **Back Alley a little easier** (orbit post
+   moved 12 right; moving-ball shots 2% → 4%). The Skyway is unchanged: widening it didn't help,
+   because moving balls rarely launch that far across.
+2. **Targets drawn as solid blocks.**
+3. **Open:** if the far sides should be easier still on a moving ball, the remaining levers
+   change the flippers' feel (for example a longer stroke), so they're yours to call.
 
 ### 30 October 2026, ninth to eleventh rounds (built)
 

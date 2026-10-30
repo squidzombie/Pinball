@@ -2,43 +2,43 @@
  {
   "id": "arrow:alley",
   "kind": "arrow",
-  "x": 78.1,
-  "y": 725.9,
+  "x": 83.7,
+  "y": 726.2,
   "w": 26,
   "h": 34,
-  "angleDeg": -39.6,
+  "angleDeg": -39,
   "label": null,
   "px": {
-   "x": 234,
-   "y": 2178
+   "x": 251,
+   "y": 2179
   }
  },
  {
   "id": "jackpot:alley",
   "kind": "circle",
-  "x": 98.5,
-  "y": 750.5,
+  "x": 103.9,
+  "y": 751,
   "w": 17,
   "h": 17,
   "angleDeg": 0,
   "label": "JP",
   "px": {
-   "x": 295,
-   "y": 2252
+   "x": 312,
+   "y": 2253
   }
  },
  {
   "id": "mode:alley",
   "kind": "circle",
-  "x": 115.1,
-  "y": 770.5,
+  "x": 120.2,
+  "y": 771.2,
   "w": 12,
   "h": 12,
   "angleDeg": 0,
   "label": null,
   "px": {
-   "x": 345,
-   "y": 2312
+   "x": 361,
+   "y": 2314
   }
  },
  {
