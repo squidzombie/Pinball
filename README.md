@@ -43,9 +43,9 @@ right:
   flipper.
 - **Cracking the vault**: hit the three tumblers in the order of the code. The code is random
   and changes after every crack; the display shows it (as CODE 3-1-2, say) and the next tumbler's
-  light blinks. A wrong one starts the combination over. The vault's hatch opens and two balls drop out for **VAULT MULTIBALL**:
-  every ball shot out the vault's top is a jackpot, and the back door stays open so the Back
-  Alley feeds the vault.
+  light blinks. A wrong one starts the combination over. The vault's hatch opens and three balls
+  drop out for **VAULT MULTIBALL** (four in play): every ball shot out the vault's top is a
+  jackpot, and the back door stays open so the Back Alley feeds the vault.
 - **The Impound**: a three-ball lock, a cage over the orbit on the left. The Skyway feeds it when
   the lock is lit, and at multiball the balls roll back down the Skyway's wire.
 - **R-A-G-E**: the in/outlanes. The flippers move the lit lanes.

@@ -676,14 +676,14 @@ console.log('Ball flow');
   f.hitTumbler(c);
   check('the whole code in order cracks the vault: VAULT MULTIBALL', f.multiball === 'vault');
   check('...and the vault picks a new code', f.code.join() !== [a, b, c].join() && [...f.code].sort().join() === '0,1,2', f.code.join());
-  check('...with two balls on their way out of its hatch', g.ballsInPlay === 3, `${g.ballsInPlay}`);
+  check('...with three balls on their way out of its hatch', g.ballsInPlay === 4, `${g.ballsInPlay}`);
   const deck = (b: Ball) => b.x > L.UPPER_LANE_X[1] && b.x < 265 && b.y < L.UPPER_FLIPPER.y;
   let seen = 0;
-  for (let t = 0; t < 3; t += 1 / 60) {
+  for (let t = 0; t < 4; t += 1 / 60) {
     g.update(1 / 60);
     seen = Math.max(seen, f.world.balls.filter((b: Ball) => !b.captured && deck(b)).length);
   }
-  check('...that drop out onto the vault deck', f.world.balls.filter((b: Ball) => !b.captured).length === 2 && seen >= 1, `${seen}`);
+  check('...that drop out onto the vault deck', f.world.balls.filter((b: Ball) => !b.captured).length === 3 && seen >= 1, `${seen}`);
   check('the back door stays open in vault multiball', f.doorOpen > 0);
   const jp = f.vaultJp;
   const s0 = g.score;
@@ -698,12 +698,12 @@ console.log('Ball flow');
   const o = f.rollover.bind(f);
   f.rollover = (k: number) => (lanes.push(['L-OUT', 'L-IN', 'R-IN', 'R-OUT'][k]), o(k));
   for (const k of [...f.code]) f.hitTumbler(k);
-  for (let t = 0; t < 12 && lanes.length < 2; t += 1 / 480) {
+  for (let t = 0; t < 15 && lanes.length < 3; t += 1 / 480) {
     f.world.step(1 / 480);
     f.substep(1 / 480);
     f.update(1 / 480);
   }
-  check('both balls out of the vault come down the right inlane', lanes.length === 2 && lanes.every((l) => l === 'R-IN'), lanes.join());
+  check('all three balls out of the vault come down the right inlane', lanes.length === 3 && lanes.every((l) => l === 'R-IN'), lanes.join());
   // In another multiball, cracking the vault adds one ball.
   const h = newGame();
   park(h.f);

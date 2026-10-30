@@ -57,7 +57,7 @@ const BACK_DOOR_TIME = 20;
 /** Which camera each pop bumper sits under (bumpers are listed left, right, bottom). */
 const BUMPER_CAMERA = [0, 2, 1];
 /** Balls the vault lets out when cracked (one, as an add-a-ball, during another multiball), and the most on the table. */
-const VAULT_BALLS = 2;
+const VAULT_BALLS = 3;
 const MAX_BALLS = 4;
 /** Where the cracked vault lets its balls out: in front of the middle tumbler, rolling down the deck. */
 const HATCH_OUT: P = (() => {

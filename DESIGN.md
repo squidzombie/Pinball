@@ -6,7 +6,7 @@ own pair of small flippers. The Skyway is rerouted to make room, the Impound is 
 orbit, and three security cameras pan over the CAM lanes. Hitting the vault's three tumblers in
 the order of a random code cracks it open and starts **VAULT MULTIBALL**. The geometry, its measurements and this
 document are done. **Rules beyond the cameras, the back door and the vault, and the art pass,
-haven't started.** The phone build is this layout (version 8; the fan is version 5 in its
+haven't started.** The phone build is this layout (version 9; the fan is version 5 in its
 history). Where
 the rule sheet differs from the code, the entry says **(change)**; nearly all of those come with
 Phase 4.
@@ -59,8 +59,9 @@ then 2 then 3, and the vault opens and extra balls drop out as a multiball. As b
   COMBINATION** and starts it over (tumbler 1 out of order counts as a fresh start). (Fourth
   round: the order is now random, a new code after every crack.)
 - **Cracked:** the vault's hatch, on top of the tumbler block, swings open with gold light
-  inside, and two balls drop out onto the vault's deck one after the other: **VAULT
-  MULTIBALL**. Rules are in section 2.
+  inside, and three balls drop out onto the vault's deck one after the other: **VAULT
+  MULTIBALL**, with four balls in play. (Two in the third round; three since the fifth.) Rules
+  are in section 2.
 - **Renamed:** the door in the Back Alley's wall is now the **back door**, so "the vault opens"
   only ever means the hatch. (The tumbler block isn't called a safe, because SAFE is already the
   standup on the vault lane's wall.)
@@ -307,7 +308,7 @@ than the ball. The new ones are 72 across at the ring (2.6 balls), and the drawn
     mostly a left-flipper shot (17 of 150 timings), tumbler 2 a right-flipper shot (20 of 150)
     and tumbler 3 a left-flipper shot again (9 of 150). The test bot, flipping at random, never
     cracked it in 30 minutes. It did hit WRONG COMBINATION a few times. A stress run that cracked
-    the vault every 30 s (about 20 multiballs in 10 minutes, up to 4 balls at once) had no stuck
+    the vault every 30 s (about 20 four-ball multiballs in 10 minutes) had no stuck
     balls and no leaks.
 ### The upper playfield: THE VAULT (built)
 
@@ -339,7 +340,7 @@ with its own flippers, a way out the side and maybe one out the top. As built:
   lane's wall.
 - **Phone view:** the vault is in the smallest part of the tilted view. Its art is bold: a dark
   tread-plate deck, a big safe dial, a hazard-striped door.
-- **Cracking the vault (third round):** the tumblers in the code's order crack it, and two balls drop
+- **Cracking the vault (third round):** the tumblers in the code's order crack it, and three balls drop
   out of its hatch onto the deck for VAULT MULTIBALL (section 2). With nobody flipping, both drain out the
   side to the right inlane (a rules test checks this).
 
@@ -519,9 +520,9 @@ against one fixed loop. Payload and Extract, the two tier-2 jobs, now share only
   - A tumbler out of order pays 10K, shows **WRONG COMBINATION** and starts the combination
     over. If it was the code's first tumbler, that counts as the new start.
   - Progress carries over from ball to ball. It resets at a new game.
-- **Balls:** two drop out of the vault's hatch onto its deck, 0.9 s apart, with 12 s of
-  ball save. The player can play them with the vault's flippers, or let them drain out the side
-  to the right flipper.
+- **Balls:** three drop out of the vault's hatch onto its deck, 0.9 s apart, for four in play,
+  with 12 s of ball save. The player can play them with the vault's flippers, or let them drain
+  out the side to the right flipper.
 - **Jackpot:** each ball shot out of the vault's top pays the **VAULT JACKPOT**: 1M, +250K each
   time. A JP light by the top exit strobes.
 - **The back door stays open** for the whole multiball. A Back Alley shot goes straight back into
@@ -952,20 +953,24 @@ exactly where every wall, lane, ramp entrance and insert is. Regenerate them wit
 2. **Whole-table strobing removed:** Rage's lighting flicker, the 6-a-second lamp strobe show and
    back-to-back screen flashes. Large-area flashing now stays under 3 a second (section 5).
 3. **Physics unchanged.**
-4. **Open:** is two extra balls the right size, and should CAMERAS DOWN do more than open the
-   back door?
+4. **Open:** should CAMERAS DOWN do more than open the back door?
+
+Fifth round (same day): **the vault gives three balls**, not two, so VAULT MULTIBALL is a
+4-ball multiball, the biggest on the table (Impound and Blackout are 3-ball). A stress run that
+cracked the vault every 30 s had no stuck balls and no leaks.
 
 ### 30 October 2026, third round: the vault's combination (built)
 
 1. **The tumblers are the vault's combination:** 1, then 2, then 3. A wrong one starts it over.
-2. **Cracking it starts VAULT MULTIBALL:** two balls drop out of the vault's hatch onto its deck.
+2. **Cracking it starts VAULT MULTIBALL:** two balls (three since the fifth round) drop out of the
+   vault's hatch onto its deck.
    Out the vault's top is the jackpot, and the back door stays open so the Back Alley feeds the
    vault. During another multiball it's an add-a-ball. The rules are in section 2.
 3. **The door off the Back Alley is renamed the back door.**
 4. **Physics unchanged.**
 5. **Open:**
    - Should the combination stay 1-2-3, or change each time? (Answered: random, fourth round.)
-   - Is two extra balls the right size?
+   - Is two extra balls the right size? (Answered: three, fifth round.)
    - Should CAMERAS DOWN do more than open the back door?
 
 ### 30 October 2026, second round: the upper playfield (built, waiting for your review)
