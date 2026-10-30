@@ -187,7 +187,8 @@ class Infiltrate extends Mode {
   name = 'INFILTRATE';
   color = '#7fd8ff';
   brief = 'AVOID THE CAMERAS';
-  time = 45;
+  // No clock: a job lasts until you finish it (or drain), and only a finished job opens the next.
+  time = Infinity;
   private sneak = new Set<Shot>(['alley', 'market', 'skyway', 'reactor']);
   /** The shot the cameras are watching right now. */
   watched: Shot | null = null;
@@ -229,8 +230,7 @@ class Infiltrate extends Mode {
     if (!this.sneak.has(s)) return;
     if (s === this.watched) {
       this.spotted++;
-      this.timer = Math.max(0.5, this.timer - 5);
-      g.show('SPOTTED!', '-5 SECONDS', 1.4, true);
+      g.show('SPOTTED!', 'SHOTS PAY 100K LESS', 1.4, true);
       g.doFlash('#ff2020', 0.4);
       sound.alarm();
       this.sweep();
@@ -262,7 +262,7 @@ class Hack extends Mode {
   name = 'HACK';
   color = '#3dff8a';
   brief = 'HIT THE FLASHING KEYS';
-  time = 40;
+  time = Infinity;
   private code: number[] = [];
   private pos = 0;
   private cracked = 0;
@@ -325,7 +325,7 @@ class Route extends Mode {
   name = 'ROUTE';
   color = '#ffd23f';
   brief = 'SHOTS IN ORDER, TWICE';
-  time = 45;
+  time = Infinity;
   private seq: Shot[] = ['skyway', 'alley', 'market', 'reactor'];
   private step = 0;
   private laps = 0;
@@ -405,7 +405,7 @@ class Extract extends Mode {
   name = 'EXTRACT';
   color = '#f4efe6';
   brief = 'SKYWAY  MARKET  BREACH';
-  time = 35;
+  time = Infinity;
   private legs: Shot[] = ['skyway', 'market', 'breach'];
   private leg = 0;
   private legT = 0;

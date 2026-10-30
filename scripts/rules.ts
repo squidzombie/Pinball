@@ -195,23 +195,16 @@ console.log('The Breach starts the heist');
   check('one choice: no selection, straight in', f.selecting <= 0 && f.mode?.name === 'INFILTRATE', f.mode?.name);
   check('mode consumes the lit start', f.modesLit === 0);
   check('ball held for the intro', f.breachBall === b);
-  const t0 = f.mode.timer;
-  run(g, 1);
-  check('clock frozen during the intro hold', f.mode.timer === t0);
   for (let t = 0; t < 3 && f.breachBall; t += 1 / 60) g.update(1 / 60);
   check('ball kicked out after the intro', f.breachBall === null);
   park(f);
-  run(g, 1);
-  check('clock waits for the ball to reach the playfield', f.mode.timer === t0);
-  run(g, 1.5);
-  check('...but no more than 2 s', f.mode.timer < t0);
-  const t1 = f.mode.timer;
-  run(g, 11);
-  check('pinball seconds run slow (11 real s ≈ 10 on the clock)', t1 - f.mode.timer < 10.5 && t1 - f.mode.timer > 9.5, `${(t1 - f.mode.timer).toFixed(2)}`);
-  run(g, 60);
-  check('mode ends when the clock runs out', f.mode === null);
-  check('played but not completed', f.played.has('infiltrate') && !f.completed.has('infiltrate'));
-  check('HACK and ROUTE open up', f.available().map((m: any) => m.key).join() === 'hack,route');
+  check('jobs have no clock', !f.mode.timed);
+  run(g, 120);
+  check('so a job never runs out: still running after 2 minutes', f.mode?.name === 'INFILTRATE');
+  (g as any).endBall();
+  check("draining ends it unfinished, and it doesn't count", f.mode === null && !f.played.has('infiltrate') && !f.completed.has('infiltrate'));
+  check('...the Breach relights to try it again', f.modesLit === 1 && f.available().map((m: any) => m.key).join() === 'infiltrate');
+  check('...and HACK and ROUTE stay shut until INFILTRATE is finished', !f.available().some((m: any) => m.tier === 1));
 }
 
 console.log('B-R-E-A-C-H standups');
@@ -254,10 +247,9 @@ console.log('INFILTRATE');
   const m = f.mode;
   check('four sneak shots lit, Breach dark', litShots(f).length === 4 && !lit(f, 'breach'), litShots(f).join());
   check('the camera watches one of them (strobing)', !!m.watched && lit(f, m.watched) === 4);
-  const t0 = m.timer;
   const a0 = m.total;
   f.event(m.watched);
-  check('making the watched shot gets you SPOTTED: -5 s, no award', m.timer < t0 - 4.9 && m.total === a0, `${t0.toFixed(1)} -> ${m.timer.toFixed(1)}`);
+  check('making the watched shot gets you SPOTTED: no award', m.spotted === 1 && m.total === a0);
   let first = true;
   while (litShots(f).length && litShots(f).some((s) => s !== 'breach')) {
     const s = litShots(f).find((x) => lit(f, x) === 2);
@@ -269,12 +261,12 @@ console.log('INFILTRATE');
   }
   check('all four lights the Breach', lit(f, 'breach') === 3 && litShots(f).length === 1);
   run(g, 1);
-  const secs = Math.ceil(m.timer);
   const before = m.total;
   shootBreach(f);
-  check('the Breach completes it: 3M + 100K a second left', m.total - before === 3_000_000 + secs * 100_000, `${m.total - before} with ${secs}s`);
+  check('the Breach completes it: 3M', m.total - before === 3_000_000, `${m.total - before}`);
   waitEject(g, f);
   check('completed', f.mode === null && f.completed.has('infiltrate'));
+  check('...which opens HACK and ROUTE', f.available().map((x: any) => x.key).join() === 'hack,route');
 }
 
 console.log('HACK');
@@ -337,6 +329,13 @@ console.log('PAYLOAD (multiball)');
   f.endMultiball();
   check('mode ends with the multiball', f.mode === null && f.played.has('payload') && f.completed.has('payload'));
   check('finishing a tier 2 mode lights BLACKOUT', f.blackoutLit);
+}
+{
+  // A multiball job that loses its balls before the super is a failed job.
+  const { f } = startMode('payload');
+  f.endMultiball();
+  check("PAYLOAD lost before its super doesn't count", f.mode === null && !f.played.has('payload') && !f.completed.has('payload'));
+  check("...doesn't light BLACKOUT, and the Breach relights for another go", !f.blackoutLit && f.modesLit === 1);
 }
 
 console.log('EXTRACT');
@@ -510,10 +509,12 @@ console.log('RAGE');
   check('a gutter that lights any other letter loses the ball', !notLast.f.rage && notLast.f.rageLit[0] && notLast.g.state !== 'play', notLast.g.state);
 }
 
-console.log('Clock rules');
+console.log('Clock rules (RAGE is the only timed mode)');
 {
-  const { g, f } = startMode('route');
-  const m = f.mode;
+  const { g, f } = newGame();
+  park(f);
+  for (let i = 0; i < 4; i++) f.rollover(i);
+  const m = f.rage;
   f.sw('sling'); // any playfield switch validates
   const t0 = m.timer;
   run(g, 0.5);
@@ -545,24 +546,19 @@ console.log('Clock rules');
   check('a stuck ball stops the clock', m.timer === ts);
   f.world.gravity = 2000;
   park(f);
-  // Grace and refresh.
+  // Grace.
   m.timer = 0.5;
   run(g, 1);
-  check('clock reaches zero but the mode is still running (grace)', f.mode?.inGrace === true);
-  f.event(litShots(f)[0]);
-  check('a lit shot in grace counts and tops the clock up to 10', f.mode && !m.inGrace && m.timer >= 9.9, `${m.timer}`);
-  m.timer = 0.2;
+  check('clock reaches zero but RAGE is still running (grace)', f.rage?.inGrace === true);
   run(g, 3);
-  check('grace runs out after ~2 s', f.mode === null);
+  check('grace runs out after ~2 s', f.rage === null);
 }
 {
   const { g, f } = startMode('route');
   f.sw('sling');
   run(g, 1);
-  const before = f.mode.timer;
   for (let i = 0; i < 6; i++) f.hitStandup(i);
-  check('B-R-E-A-C-H during a mode adds 10 s', f.mode.timer > before + 9.9, `${before.toFixed(1)} -> ${f.mode.timer.toFixed(1)}`);
-  check('...and banks the next mode', f.modesLit === 1);
+  check('B-R-E-A-C-H during a job banks the next one', f.modesLit === 1 && f.mode?.name === 'ROUTE');
 }
 
 console.log('Priorities');
@@ -573,7 +569,7 @@ console.log('Priorities');
   check('no second mode while one runs', f.mode?.name === 'HACK' && f.selecting <= 0);
   waitEject(g, f);
   (g as any).endBall();
-  check('draining ends the mode quietly', f.mode === null && f.played.has('hack'));
+  check("draining ends the job quietly; it doesn't count and the Breach stays lit", f.mode === null && !f.played.has('hack') && f.modesLit >= 1);
 }
 
 console.log('Ball count');

@@ -1236,9 +1236,9 @@ function paintAlleyChute(ctx: CanvasRenderingContext2D) {
 const zAt = (r: L.RampDef, i: number) => lift(r.z[Math.min(r.z.length - 1, i)]);
 
 /** Fill the ramp bed between its walls from index a to b. */
-function bed(ctx: CanvasRenderingContext2D, r: L.RampDef, a: number, b: number, color: string) {
+function bed(ctx: CanvasRenderingContext2D, r: L.RampDef, a: number, b: number, color: string, left = r.walls.left) {
   ctx.beginPath();
-  for (let i = a; i <= b; i++) ctx.lineTo(r.walls.left[i][0], r.walls.left[i][1] - zAt(r, i));
+  for (let i = a; i <= b; i++) ctx.lineTo(left[i][0], left[i][1] - zAt(r, i));
   for (let i = b; i >= a; i--) ctx.lineTo(r.walls.right[i][0], r.walls.right[i][1] - zAt(r, i));
   ctx.closePath();
   ctx.fillStyle = color;
@@ -1376,14 +1376,22 @@ function paintSkyway(ctx: CanvasRenderingContext2D) {
   wireform(ctx, r, end - 1);
 }
 
+/** The Black Market's left wall as drawn: its foot starts where the A-C-H bank meets it, like the wall the ball hits. */
+function marketLeftArt(): P[] {
+  const w = L.MARKET.walls.left;
+  const j = w.indexOf(L.MARKET_LEFT_BASE[1]);
+  return w.map((p, i) => (i < j ? L.MARKET_LEFT_BASE[0] : p));
+}
+
 function paintMarket(ctx: CanvasRenderingContext2D) {
   const r = L.MARKET;
   const end = r.wireFrom;
   // a short steel entry ramp, then wire over the pops so the bumpers show through
   const lip = r.baseTo + 4;
+  const left = marketLeftArt();
   legs(ctx, r, lip, end, 6);
-  bed(ctx, r, 0, lip, '#ada9a1');
-  sideWall(ctx, r, r.walls.left, 0, lip, 10);
+  bed(ctx, r, 0, lip, '#ada9a1', left);
+  sideWall(ctx, r, left, 0, lip, 10);
   sideWall(ctx, r, r.walls.right, 0, lip, 10);
   wireform(ctx, r, lip, end + 1);
   // the market box: a raised steel platform where the ramp turns down the right side

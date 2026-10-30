@@ -6,7 +6,7 @@ own pair of small flippers. The Skyway is rerouted to make room, the Impound is 
 orbit, and three security cameras pan over the CAM lanes. Hitting the vault's three tumblers in
 the order of a random code cracks it open and starts **VAULT MULTIBALL**. The geometry, its measurements and this
 document are done. **Rules beyond the cameras, the back door and the vault, and the art pass,
-haven't started.** The phone build is this layout (version 13; the fan is version 5 in its
+haven't started.** The phone build is this layout (version 14; the fan is version 5 in its
 history). Where
 the rule sheet differs from the code, the entry says **(change)**; nearly all of those come with
 Phase 4.
@@ -25,6 +25,21 @@ shot. `npm run template` regenerates the template and prints every clearance. Ba
 ---
 
 ## 0. The layout revisions (30 October 2026)
+
+### Tenth round: jobs have no clock, and you must finish each one
+
+- **Jobs have no clock.** A job lasts until you finish it. Only a finished job counts: it lights
+  its node on the map and opens the next row. Lose the ball first (or, for Payload, the
+  multiball before its super jackpot) and the job fails: it doesn't count, and the Breach
+  relights so you can start it again from the beginning. Blackout lights only when Payload or
+  Extract is *finished*.
+- Infiltrate's SPOTTED no longer costs 5 s. It pays nothing, and every later shot pays 100K less.
+- No time bonus on completion. The shop's TIME item (+15 s) is never offered now, so its light
+  stays dark.
+- **RAGE keeps its 20 s clock**, the one timed mode left.
+- **The Black Market's drawing now matches its wall.** The ninth round trimmed the wall's corner
+  beside H for the ball, but the ramp's drawing still started 5 units in front of H, so the
+  picture still showed a lip. Both now start flush with H.
 
 ### Ninth round: H can be hit
 
@@ -420,7 +435,7 @@ with its own flippers, a way out the side and maybe one out the top. As built:
 Spell **B-R-E-A-C-H** on the six standups to light the Breach, then shoot the Breach to start
 the next job of the heist. The heist map runs **Infiltrate**, then **Hack** or **Route**, then
 **Payload** or **Extract**. Each job asks for a different way of shooting: stealth, target
-precision, a flowing sequence, build-and-cash multiball, a hurry-up race. Playing a final job
+precision, a flowing sequence, build-and-cash multiball, a hurry-up race. Finishing a final job
 lights **Blackout**, the wizard multiball, at the Reactor. Between jobs:
 
 - knock down the Reactor drops to light the lock and feed the Impound through the Skyway for
@@ -446,17 +461,16 @@ against one fixed loop. Payload and Extract, the two tier-2 jobs, now share only
 
 ### Shared mode rules (already built; keep)
 
-- One job at a time. The ball is held in the Breach during the intro, and the clock starts when
-  it's ejected.
-- Clock conventions (see README): pinball seconds of 1.1 s, a 2 s grace period at zero, progress
-  tops the clock up to 10 s, and the clock pauses while the ball is held, stuck or not yet back
-  on the playfield. Cradling does not pause it.
-- **(change)** The 12-light clock bar is gone. The time shows on the DMD, and the lit shots'
-  arrows blink faster as it runs out (section 5).
-- Completion pays the mode's bonus plus 100K per second left. A job that times out still counts
-  as **played** and opens the next tier. Only completed jobs count toward Total Blackout.
+- One job at a time. The ball is held in the Breach during the intro.
+- **No clock (built, tenth round):** a job lasts until you finish it. Only a **finished** job
+  counts: it lights its node and opens the next row of the map. A job that ends unfinished (the
+  ball drained, or a multiball job lost its balls) fails quietly: it doesn't count, and the
+  Breach relights so you can start it again from scratch. So you can't move on until you've
+  finished it.
+- Completion pays the job's bonus (no time bonus any more). Completed jobs also count toward
+  Total Blackout.
 - If two jobs are available, the flippers choose while the ball sits in the Breach (4 s).
-- Draining ends a timed job quietly. Multiball jobs end when the multiball does.
+- RAGE is the only timed mode; its clock conventions are in the README.
 
 ### Infiltrate (first job; comes lit at the start of each game)
 
@@ -468,12 +482,12 @@ against one fixed loop. Payload and Extract, the two tier-2 jobs, now share only
   points at it. The camera moves every 3.5 s, and jumps when you make a shot.
 - **Scoring:**
   - An unwatched lit shot pays 500K, then 650K, 800K, 950K.
-  - Making the watched shot means **SPOTTED**: −5 s, the camera sweeps faster, and every later
-    shot pays 100K less.
+  - Making the watched shot means **SPOTTED**: no award, the camera sweeps faster, and every
+    later shot pays 100K less.
   - Once all four are made, the camera gives up and the **Breach** lights **GET INSIDE**.
-- **Timer:** 45 s.
-- **Ends:** success at the Breach (3M + time bonus); failure when the clock runs out.
-- **Reward:** the Infiltrate node lights, and Hack and Route open either way.
+- **Timer:** none.
+- **Ends:** success at the Breach (3M); a drain fails it.
+- **Reward:** the Infiltrate node lights, and Hack and Route open.
 - **Shooting style:** read the camera and choose the shot, not the fastest one.
 
 ### Hack
@@ -489,8 +503,8 @@ against one fixed loop. Payload and Extract, the two tier-2 jobs, now share only
   - After each cracked firewall, the Reactor captive ball lights **BRUTE FORCE** for 10 s. Hit it
     for +2M, and the next firewall needs only two keys **(change)**.
   - Shooting the Breach scoop itself cracks the current firewall at half value.
-- **Timer:** 40 s.
-- **Ends:** three firewalls means **SYSTEM HACKED** (3M + time); the clock runs out otherwise.
+- **Timer:** none.
+- **Ends:** three firewalls means **SYSTEM HACKED** (3M); a drain fails it.
 - **Reward:** the Hack node lights, and Payload and Extract open.
 - **Shooting style:** precise target work inside the Breach channel, broken up by one remote
   shot per code, with the Reactor as an optional shortcut.
@@ -506,8 +520,8 @@ against one fixed loop. Payload and Extract, the two tier-2 jobs, now share only
   4. **Breach** (right flipper, ejects left back to the Skyway).
 - **Scoring:** steps pay 600K, 900K, 1.2M, 1.5M. A lap finished within 15 s of its first shot is
   a **CLEAN RUN** and pays double. Out-of-order shots score nothing for the mode.
-- **Timer:** 45 s.
-- **Ends:** two laps means **ROUTE SET** (3M + time); the clock runs out otherwise.
+- **Timer:** none.
+- **Ends:** two laps means **ROUTE SET** (3M); a drain fails it.
 - **Reward:** the Route node lights, and Payload and Extract open.
 - **Shooting style:** flow, a learnable combo path.
 
@@ -522,7 +536,9 @@ against one fixed loop. Payload and Extract, the two tier-2 jobs, now share only
     the more it pays.
   - Losing a ball before cashing forfeits the uncashed crates.
 - **Timer:** none. It ends when the multiball does.
-- **Reward:** cashing three or more crates at once completes it. Playing it at all lights Blackout.
+- **Reward:** cashing three or more crates at once completes it (built today: collecting the super
+  jackpot at the Reactor). Only finishing it lights Blackout; losing the multiball first fails it,
+  and the Breach relights.
 - **Shooting style:** risk and greed: how long do you keep loading?
 
 ### Extract (hurry-up race)
@@ -533,14 +549,14 @@ against one fixed loop. Payload and Extract, the two tier-2 jobs, now share only
   drop for this leg, and the captive ball is the shot), and escapes over the Skyway.
 - **Scoring:** each leg is a hurry-up that starts at 6M, then 7M, then 8M and drains 200K a second
   down to 1.5M. Hitting it pays the current value and starts the next leg at full value.
-- **Timer:** 35 s overall. The hurry-up value is the pressure, the clock is the hard limit.
-- **Ends:** all three legs means **EXTRACTED** (4M + time); the clock runs out otherwise.
-- **Reward:** the Extract node lights. Playing it lights Blackout.
+- **Timer:** none. The bleeding hurry-up value is the pressure.
+- **Ends:** all three legs means **EXTRACTED** (4M); a drain fails it.
+- **Reward:** the Extract node lights. Finishing it lights Blackout.
 - **Shooting style:** speed over precision.
 
 ### Blackout (wizard mode)
 
-- **Lit when:** Payload or Extract has been played.
+- **Lit when:** Payload or Extract has been finished.
 - **Starts:** slam the Reactor's captive ball into the core.
 - **Setup:**
   - The table dims to a hard-edged work-light look: the inserts stay bright and the floor goes
@@ -607,7 +623,7 @@ against one fixed loop. Payload and Extract, the two tier-2 jobs, now share only
 - **B-R-E-A-C-H standups:**
   - A first hit lights its letter (25K); a repeat hit pays 10K.
   - All six light a job (+200K) and reset the letters.
-  - During a timed job, completing them adds 10 s and banks the next job.
+  - During a job, completing them banks the next job.
 - **CAM 1–3 top lanes and the security cameras (built):** three cameras pan over the three
   lanes.
   - **Fed by:** the plunge, the Back Alley, the vault's top exit, and balls the pops kick back
@@ -646,7 +662,8 @@ against one fixed loop. Payload and Extract, the two tier-2 jobs, now share only
   - The menu (five inserts) rotates every 4 s. Making the Black Market ramp buys the lit item if
     you can afford it; otherwise the DMD shows the price.
   - Items:
-    - **TIME:** +15 s, during a timed job only; $30K.
+    - **TIME:** +15 s on a timed job; $30K. Never offered now that jobs have no clock: its light
+      stays dark (open question: replace it).
     - **SAVE:** 15 s ball save; $50K.
     - **LOCK:** lights the lock, not during multiball; $40K.
     - **10X:** $75K, replacing today's +1X bonus item. Your next major shot scores ten

@@ -1104,16 +1104,21 @@ export class Psychosis extends Table {
     if (!m || !this.modeKey) return;
     const g = this.game;
     const def = MODES.find((d) => d.key === this.modeKey)!;
-    this.played.add(def.key);
-    if (m.completed) this.completed.add(def.key);
+    // Only a finished job counts: it opens the next row of the map. A job that ends unfinished
+    // (the ball drained, or a multiball job lost its balls) doesn't, and the Breach relights so
+    // you can try it again.
+    if (m.completed) {
+      this.played.add(def.key);
+      this.completed.add(def.key);
+    } else this.modesLit++;
     this.mode = null;
     this.modeKey = null;
     g.addBonus(Math.round(m.total / 20));
     if (!quiet) {
-      g.show(m.completed ? `${m.name} DONE` : `${m.name} OVER`, `TOTAL ${fmt(m.total)}`, 2.4, true);
+      g.show(m.completed ? `${m.name} DONE` : `${m.name} FAILED`, m.completed ? `TOTAL ${fmt(m.total)}` : 'TRY AGAIN AT THE BREACH', 2.4, true);
       sound.modeEnd(m.completed);
     }
-    if (def.tier === 2 && !this.wizard && !this.blackoutLit) {
+    if (def.tier === 2 && m.completed && !this.wizard && !this.blackoutLit) {
       this.blackoutLit = true;
       if (!quiet) this.later(2.4, () => g.show('BLACKOUT IS LIT', 'OVERLOAD THE REACTOR', 2.8, true));
     }
