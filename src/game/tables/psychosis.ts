@@ -1860,7 +1860,7 @@ export class Psychosis extends Table {
   // ---------------------------------------------------------------- drawing
 
   protected override drawStatic(ctx: CanvasRenderingContext2D) {
-    paintStatic(ctx, this.lower, () => this.drawInserts(ctx), () => this.drawFlasherDomes(ctx));
+    paintStatic(ctx, this.lower, () => this.drawInserts(ctx), () => this.drawFlasherDomes(ctx), this.floorArt);
   }
 
   protected override drawRamps(ctx: CanvasRenderingContext2D) {

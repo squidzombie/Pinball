@@ -195,8 +195,10 @@ with an oblique 3/4 projection (`lift()` in `draw.ts`), and the CSS 3D tilt in `
 perspective. Raised objects are depth-sorted against the ball, and the lighting is layered:
 general illumination (which modes can dim or slowly pulse), insert lamps with lamp shows, and flashers.
 Nothing that lights or darkens a large part of the screen flashes more than 3 times a second.
-All art and sound is generated in code. There are no asset files yet, so swapping in real artwork
-later is straightforward.
+All art and sound is generated in code. The playfield's printed art can be replaced by a painted
+picture: put it at `public/art/playfield.png` and the game draws the rails, toys and lights on top.
+The drawing kit (a layered PSD with guides rendered from the game) and how to use it are in
+[`art/README.md`](art/README.md).
 
 ## Putting it on squidzombie.com
 

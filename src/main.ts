@@ -38,6 +38,28 @@ const dctx = dmdCanvas.getContext('2d', { alpha: false })!;
 const game = new Game();
 
 const params = new URLSearchParams(location.search);
+
+// Painted playfield art (art/README.md): public/art/playfield.png (or .jpg) replaces the code's own
+// floor art when the build has one. On a computer, drop a picture on the game to try it without
+// rebuilding; ?noart shows the code's own art for comparison.
+if (!params.has('noart')) {
+  const painted = new Image();
+  painted.onload = () => game.main.setFloorArt(painted);
+  painted.onerror = () => {
+    if (painted.src.endsWith('.png')) painted.src = 'art/playfield.jpg';
+  };
+  painted.src = 'art/playfield.png';
+}
+window.addEventListener('dragover', (e) => e.preventDefault());
+window.addEventListener('drop', (e) => {
+  e.preventDefault();
+  const file = e.dataTransfer?.files[0];
+  if (!file || !file.type.startsWith('image/')) return;
+  createImageBitmap(file)
+    .then((img) => game.main.setFloorArt(img))
+    .catch(() => {});
+});
+
 let tilted = !params.has('flat');
 Table.debug = params.has('debug');
 let dpr = 1;

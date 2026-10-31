@@ -1,64 +1,87 @@
 # Art for Cyber Psychosis
 
-The painted playfield replaces the procedural static art (DESIGN.md, section 7, option B). This
-folder holds the templates the art must line up with, and the prompt for generating it.
+## Painting the playfield
 
-## Files
+The game draws its playfield art in code. Paint your own and the game uses it instead. Your picture
+becomes the printed playfield, and the game draws the rails, ramps, toys and lights on top of it,
+the way they're mounted on a real machine.
+
+### The kit (`kit/`)
 
 | File | What it is |
 |---|---|
-| `template/playfield-template.png` / `.svg` | **The master template.** Every collision shape, lane, gate, ramp entrance, target, switch, flipper and insert, labelled, on a 25-unit grid. |
-| `template/playfield-lineart.png` / `.svg` | Floor-level structure only, no labels or grid. Use it as the structure guide (ControlNet lineart or canny, or an image reference) for the base layer. |
-| `template/overlay-template.png` / `.svg` | The ramps, wires and Black Market box at the positions the game draws them, over their floor footprints. |
-| `template/overlay-lineart.png` / `.svg` | The same, outlines only, on a transparent background. The structure guide for the overlay layer. |
-| `template/inserts.json` | Every insert (lamp): id, shape, centre, size and rotation in table units, plus the centre in pixels. |
-| `template/gaps.json` | Every place the ball has to fit through, with the clearance (the template draws a ball to scale at each). |
-| `palettes/` | Colour-scheme previews: six schemes on the current table, with swatches. The current scheme stays; two are set aside for future tables. Not used by the game. |
-| `PROMPT.md` | Image-generator prompts for both layers, negative prompt, settings and a checklist. **Out of date:** it describes the layout before the fan and upper-playfield revisions, and will be rebuilt from the final template. |
+| `kit/Cyber-Psychosis-Playfield.psd` | The canvas, with guide layers. Opens in Procreate, Photoshop, Affinity Photo, Krita, Pixelmator and most other painting apps. |
+| `kit/layers/*.png` | The same layers as separate pictures, for apps that don't open PSD files. |
+| `kit/guide-preview.png` | The guides over grey, half size, just to look at. |
 
-All of these come from the live physics world. **Regenerate them with `npm run template`
-after any geometry change**; never edit them by hand.
+The layers, top to bottom:
+
+| Layer | What it's for |
+|---|---|
+| **Guide: labels** | The name of every shot and feature, and the playfield's edge (dashed). |
+| **Guide: the game draws this on top** | Everything the game draws over your art: walls, rails, ramps, bumpers, targets, flippers, the apron and every light. It's rendered from the game itself, so it matches exactly. |
+| **PAINT THE PLAYFIELD HERE** | An empty layer for your painting. Add as many layers as you like, as long as they're below the two guides. |
+| Reference: the current look | Hidden. The table as the code draws it now, for comparison or to trace. |
+| Background (grey) | Hide it, or paint over it. |
+
+### Painting
+
+- **Keep the canvas 1800 × 3600** (3 pixels per table unit). Any size works as long as it's
+  exactly twice as tall as it is wide, such as 3600 × 7200, but there's no benefit on a phone.
+- **Paint the whole canvas, edge to edge.** Outside the dashed playfield edge is the cabinet's
+  steel, so it never shows.
+- **Your art replaces** the concrete, the steel floor plates, the brain, the heist map's links,
+  the hazard stripes, the words painted on the floor (BREACH, SKILL SHOT…) and the vault's floor
+  with its safe dial. Paint your own versions of any of those you want.
+- **The game keeps drawing everything in the "on top" guide.** The solid ramps hide what's under
+  them; the wire ramps show it. Paint under them anyway, because the edges show.
+- **Don't paint the lights.** The game draws every light's glass and lights it up. Framing them
+  (a ring, a panel, an arrow pointing in) looks great.
+- **The table is tilted on the phone,** so the top looks smaller and further away. Bold shapes and
+  strong contrast read better than fine detail, especially near the top.
+
+### Seeing it in the game
+
+1. **Export** a PNG of the whole canvas with the guides (and the grey background, if you didn't
+   paint over it) hidden. A JPEG works too and makes the app smaller.
+2. **Try it on the computer, without saving anything:** double-click **`Preview in Browser.command`**
+   in the project folder. The game opens in your browser. Drag your picture onto it and it becomes
+   the playfield straight away. Drop a new version whenever you like. Add `?noart` to the address to
+   compare with the old look, or `?debug` to see the physics outlines over your art.
+3. **Make it the game's art:** save it in the project as **`public/art/playfield.png`** (or
+   `playfield.jpg`). Every version of the game uses it from then on: the browser preview, the
+   phone link, and the app. For the app, double-click `Open in Xcode.command` to rebuild it, then
+   run it on your phone or archive it for TestFlight.
+
+To go back to the code's own art, delete or rename `public/art/playfield.png`.
+
+The phone on the same Wi-Fi can play the preview too. The Terminal window shows a **Network**
+address, such as `http://192.168.1.20:5173`; open that in Safari.
 
 ## Coordinates
 
-- The table is 600 × 1200 units. The art is delivered at **3 px per unit: 1800 × 3600**.
+- The table is 600 × 1200 units. The art is 3 pixels per unit: 1800 × 3600.
 - One unit is about a millimetre on a real machine; the ball is 28 units across.
-- The x axis runs left to right; y runs top (back of the cabinet) to bottom (the flippers).
-- The image frame is exactly the template's frame: nothing extra outside it.
+- x runs left to right; y runs from the top (the back of the cabinet) to the flippers.
 
-## What goes where
+## Rebuilding the kit
 
-**`art/playfield.png`, the base layer.** Opaque, 1800 × 3600. Everything at floor level:
+If the layout changes, rebuild the guides so they match. You need the dev server running
+(`npm run dev`), Playwright with Chromium, and Python with Pillow, NumPy and psd-tools:
 
-- concrete, grime, plates, grates, stencils and painted arrows
-- the bases and sides of the solid structures (grey on the template)
-- the in/outlane guides, the slings' plastic and frames
-- the mode map plates, the brain under them, and the apron
-- **all inserts, unlit** (dull dirty red glass), exactly at their template outlines
-- shadows cast by the ramps
+```bash
+OUT=/tmp/kit node art/kit/tools/render-guides.cjs
+python3 art/kit/tools/build-kit.py /tmp/kit art/kit
+```
 
-It must **not** contain the ball, the flippers, the drop targets, the standup faces, the
-captive ball, the pop bumper caps, the spinner flag, the cameras' beams or any lit light. The
-code draws those so they can move and light up.
+The labels' positions are listed in `build-kit.py`; move any that the new layout puts in the
+wrong place.
 
-**`art/overlay.png`, the overlay layer.** Transparent, 1800 × 3600. Only what the ball passes
-under:
+## Other folders
 
-- the Skyway deck, its lane walls and the wireform down the left (it crosses over the Black
-  Market's climb, so the Skyway is on top there)
-- the Black Market ramp, its box and the wireform down the right
-- the Back Alley's loop chute into the box
-
-Draw these at their **overlay template** positions, not the floor footprint. The game draws
-anything raised half a unit up the screen per unit of height, and the overlay template has
-already applied that.
-
-## Checking the art
-
-1. Put the template over the art at 50% opacity, at the same size. Walls, lane edges, the
-   flipper bases and every insert outline should sit on the painted features.
-2. Look for the small things first: the CAM lane posts and the two one-way gates at either end
-   of them, the Back Alley's mouth, the Breach throat, the pop exit chute and its gate, the
-   Reactor funnel, the inlane/outlane guides, and the Skyway lane by the shooter lane.
-3. Small misses get fixed in code in Phase 3: press **D** in the game to show the collision
-   geometry over the art and move the collision to fit. Big misses mean regenerate.
+| Folder | What it is |
+|---|---|
+| `template/` | Technical templates from the physics: every collision shape, lane, gate, switch and insert outline, on a grid, plus `inserts.json` (every light's shape and position) and `gaps.json` (every clearance). Regenerate with `npm run template` after any geometry change. |
+| `palettes/` | Colour-scheme previews of the current table. |
+| `app/` | The app icon and launch screen. |
+| `PROMPT.md` | An image-generator prompt from an earlier plan to generate the whole table, walls included. Out of date, and replaced by painting the playfield as above. |

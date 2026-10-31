@@ -72,6 +72,11 @@ export abstract class Table {
   private staticCanvas: HTMLCanvasElement | null = null;
   private rampCanvas: HTMLCanvasElement | null = null;
   private cacheK = 0;
+  /**
+   * Painted playfield art (art/README.md): the table's whole 600 x 1200 frame, drawn in place of the
+   * code's own floor art, under the rails, toys and lights. Null: the code draws the floor.
+   */
+  floorArt: CanvasImageSource | null = null;
 
   constructor(public readonly game: Game) {}
 
@@ -164,6 +169,12 @@ export abstract class Table {
   invalidate() {
     this.staticCanvas = null;
     this.rampCanvas = null;
+  }
+
+  /** Use a painted playfield, or null for the code's own floor art. */
+  setFloorArt(img: CanvasImageSource | null) {
+    this.floorArt = img;
+    this.invalidate();
   }
 
   protected drawInserts(ctx: CanvasRenderingContext2D) {

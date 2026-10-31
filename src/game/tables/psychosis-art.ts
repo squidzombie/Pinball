@@ -360,19 +360,34 @@ function paintedArrow(ctx: CanvasRenderingContext2D, x: number, y: number, len: 
 
 // ------------------------------------------------------------------ static playfield
 
-export function paintStatic(ctx: CanvasRenderingContext2D, lower: LowerSection, drawInserts: () => void, drawDomes: () => void) {
+/**
+ * The static table. `floorArt`, a painted playfield covering the table's whole frame, replaces
+ * everything printed on the floor (concrete, plates, the brain, the map's links, stripes, markings,
+ * the vault's floor). The rails, toys and lights are drawn over it as usual.
+ */
+export function paintStatic(
+  ctx: CanvasRenderingContext2D,
+  lower: LowerSection,
+  drawInserts: () => void,
+  drawDomes: () => void,
+  floorArt?: CanvasImageSource | null,
+) {
   paintCabinet(ctx);
   ctx.save();
   ctx.beginPath();
   ctx.rect(20, 18, 560, TABLE_H);
   ctx.clip();
-  paintFloor(ctx);
-  paintFloorPlates(ctx);
-  paintBrain(ctx);
-  paintMap(ctx);
-  paintDrainStripes(ctx);
-  paintFloorMarks(ctx);
-  paintVault(ctx);
+  if (floorArt) {
+    ctx.drawImage(floorArt, 0, 0, TABLE_W, TABLE_H);
+  } else {
+    paintFloor(ctx);
+    paintFloorPlates(ctx);
+    paintBrain(ctx);
+    paintMap(ctx);
+    paintDrainStripes(ctx);
+    paintFloorMarks(ctx);
+  }
+  paintVault(ctx, !floorArt);
   drawInserts();
   paintRampShadows(ctx);
   ctx.restore();
@@ -385,7 +400,8 @@ export function paintStatic(ctx: CanvasRenderingContext2D, lower: LowerSection, 
   drawDomes();
   paintApron(ctx);
   paintCameraBody(ctx);
-  paintGrain(ctx);
+  // the pencil grain belongs to the code's own drawing, not to painted art
+  if (!floorArt) paintGrain(ctx);
 }
 
 /** Fine pencil grain over everything, so steel and concrete read as one drawing. */
@@ -832,9 +848,57 @@ function paintFloorMarks(ctx: CanvasRenderingContext2D) {
  * The upper playfield: a dark tread-plate deck with a safe dial painted on it, and the raised
  * block the three tumbler targets sit on.
  */
-function paintVault(ctx: CanvasRenderingContext2D) {
+/** The vault: its floor (with `floor` false, painted art supplies it), outline, tumbler block and hatch. */
+function paintVault(ctx: CanvasRenderingContext2D, floor = true) {
   const area = L.UPPER_AREA;
   const b = bounds(area);
+  if (floor) paintVaultFloor(ctx, area, b);
+  strokePath(ctx, area, true);
+  inkLine(ctx, 1.6);
+  ctx.stroke();
+  // the tumbler block: its name along the front, the vault's hatch on top
+  block(ctx, L.TUMBLER_BLOCK, 24, '#8f8d86', STEEL_D);
+  const [a, c] = [L.TUMBLERS[0][0], L.TUMBLERS[2][1]];
+  label(ctx, 'TUMBLERS 1 · 2 · 3', (a[0] + c[0]) / 2, (a[1] + c[1]) / 2 - 9 - lift(24), 6.5, Math.atan2(c[1] - a[1], c[0] - a[0]), INK, 900);
+  const [hx, hy, hw, hh] = VAULT_HATCH;
+  const y = hy - lift(24);
+  ctx.beginPath();
+  ctx.roundRect(hx - hw / 2, y - hh / 2, hw, hh, 3);
+  ctx.fillStyle = steelGrad(ctx, hx - hw / 2, y - hh / 2, hx + hw / 2, y + hh / 2, '#b9b7b0');
+  ctx.fill();
+  inkLine(ctx, 1.6);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.roundRect(hx - hw / 2 + 3, y - hh / 2 + 3, hw - 6, hh - 6, 2);
+  inkLine(ctx, 0.7, 0.5);
+  ctx.stroke();
+  for (const dy of [-hh / 4, hh / 4]) {
+    ctx.beginPath();
+    ctx.roundRect(hx - hw / 2 - 2, y + dy - 3, 4, 6, 1);
+    ctx.fillStyle = STEEL_D;
+    ctx.fill();
+    inkLine(ctx, 0.8);
+    ctx.stroke();
+  }
+  ctx.beginPath();
+  ctx.arc(hx + 3, y, 6, 0, Math.PI * 2);
+  ctx.fillStyle = '#3a3835';
+  ctx.fill();
+  inkLine(ctx, 1);
+  ctx.stroke();
+  for (let k = 0; k < 8; k++) {
+    const an = (k / 8) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.moveTo(hx + 3 + Math.cos(an) * 4, y + Math.sin(an) * 4);
+    ctx.lineTo(hx + 3 + Math.cos(an) * 6, y + Math.sin(an) * 6);
+    ctx.strokeStyle = '#d6d3cb';
+    ctx.lineWidth = 0.7;
+    ctx.stroke();
+  }
+}
+
+/** The vault's printed floor: a steel deck with the safe's dial and its name. */
+function paintVaultFloor(ctx: CanvasRenderingContext2D, area: P[], b: ReturnType<typeof bounds>) {
   ctx.save();
   strokePath(ctx, area, true);
   ctx.fillStyle = '#8b8982';
@@ -886,49 +950,7 @@ function paintVault(ctx: CanvasRenderingContext2D) {
   ctx.fillStyle = RED;
   ctx.fill();
   ctx.restore();
-  strokePath(ctx, area, true);
-  inkLine(ctx, 1.6);
-  ctx.stroke();
   label(ctx, 'THE VAULT', cx + 2, 336, 9, 0, withAlpha(INK, 0.8), 900);
-  // the tumbler block: its name along the front, the vault's hatch on top
-  block(ctx, L.TUMBLER_BLOCK, 24, '#8f8d86', STEEL_D);
-  const [a, c] = [L.TUMBLERS[0][0], L.TUMBLERS[2][1]];
-  label(ctx, 'TUMBLERS 1 · 2 · 3', (a[0] + c[0]) / 2, (a[1] + c[1]) / 2 - 9 - lift(24), 6.5, Math.atan2(c[1] - a[1], c[0] - a[0]), INK, 900);
-  const [hx, hy, hw, hh] = VAULT_HATCH;
-  const y = hy - lift(24);
-  ctx.beginPath();
-  ctx.roundRect(hx - hw / 2, y - hh / 2, hw, hh, 3);
-  ctx.fillStyle = steelGrad(ctx, hx - hw / 2, y - hh / 2, hx + hw / 2, y + hh / 2, '#b9b7b0');
-  ctx.fill();
-  inkLine(ctx, 1.6);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.roundRect(hx - hw / 2 + 3, y - hh / 2 + 3, hw - 6, hh - 6, 2);
-  inkLine(ctx, 0.7, 0.5);
-  ctx.stroke();
-  for (const dy of [-hh / 4, hh / 4]) {
-    ctx.beginPath();
-    ctx.roundRect(hx - hw / 2 - 2, y + dy - 3, 4, 6, 1);
-    ctx.fillStyle = STEEL_D;
-    ctx.fill();
-    inkLine(ctx, 0.8);
-    ctx.stroke();
-  }
-  ctx.beginPath();
-  ctx.arc(hx + 3, y, 6, 0, Math.PI * 2);
-  ctx.fillStyle = '#3a3835';
-  ctx.fill();
-  inkLine(ctx, 1);
-  ctx.stroke();
-  for (let k = 0; k < 8; k++) {
-    const an = (k / 8) * Math.PI * 2;
-    ctx.beginPath();
-    ctx.moveTo(hx + 3 + Math.cos(an) * 4, y + Math.sin(an) * 4);
-    ctx.lineTo(hx + 3 + Math.cos(an) * 6, y + Math.sin(an) * 6);
-    ctx.strokeStyle = '#d6d3cb';
-    ctx.lineWidth = 0.7;
-    ctx.stroke();
-  }
 }
 
 /** The vault's hatch on top of the tumbler block: centre x, y (on the floor) and its size. */
