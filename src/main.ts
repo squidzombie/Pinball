@@ -2,6 +2,7 @@ import { Capacitor, registerPlugin } from '@capacitor/core';
 import { Game } from './game/game';
 import { bindInput } from './game/input';
 import { sound } from './engine/audio';
+import { SLOPE, gravityAt } from './engine/physics';
 import { TABLE_H, TABLE_W, Table } from './game/tables/table';
 import './style.css';
 
@@ -19,6 +20,7 @@ const dmdCanvas = document.getElementById('dmd') as HTMLCanvasElement;
 const overlay = document.getElementById('overlay') as HTMLDivElement;
 const muteBtn = document.getElementById('mute') as HTMLButtonElement | null;
 const speedBtn = document.getElementById('speed') as HTMLButtonElement | null;
+const slopeBtn = document.getElementById('slope') as HTMLButtonElement | null;
 // The app, and any touch-first phone or tablet, shows the touch controls on the start screen; a
 // computer shows the keys.
 const native = Capacitor.isNativePlatform();
@@ -115,6 +117,7 @@ function layout() {
   // Mute sits in the gap above the backbox if there is one, else in the corner.
   if (muteBtn) muteBtn.style.top = top - safe.top >= 46 ? `${safe.top + 6}px` : '';
   if (speedBtn) speedBtn.style.top = muteBtn?.style.top ?? '';
+  if (slopeBtn) slopeBtn.style.top = muteBtn?.style.top ?? '';
 
   // The overlay covers the visible (projected) playfield.
   Object.assign(overlay.style, { left: `${left}px`, top: `${top + W * (dmdRel + gap)}px`, width: `${W}px`, height: `${W * projH}px` });
@@ -150,6 +153,33 @@ speedBtn?.addEventListener('click', () => {
   setSpeed(next);
   try {
     localStorage.setItem('speed', String(next));
+  } catch {
+    // not remembered, but still applied
+  }
+});
+
+// Table slope: 6.5 degrees as built, or gentler so the ball floats more, remembered on this device.
+// A build can start gentler (VITE_SLOPE=5.5) for trying it out.
+const SLOPES = [SLOPE, 5.5, 4.5];
+let slope = SLOPE;
+function setSlope(deg: number) {
+  slope = deg;
+  game.main.world.gravity = gravityAt(deg);
+  if (slopeBtn) slopeBtn.textContent = `${deg}°`;
+}
+let startSlope = Number(import.meta.env.VITE_SLOPE) || SLOPE;
+try {
+  const saved = Number(localStorage.getItem('slope'));
+  if (SLOPES.includes(saved)) startSlope = saved;
+} catch {
+  // no storage (private window): the build's slope
+}
+setSlope(SLOPES.includes(startSlope) ? startSlope : SLOPE);
+slopeBtn?.addEventListener('click', () => {
+  const next = SLOPES[(SLOPES.indexOf(slope) + 1) % SLOPES.length];
+  setSlope(next);
+  try {
+    localStorage.setItem('slope', String(next));
   } catch {
     // not remembered, but still applied
   }

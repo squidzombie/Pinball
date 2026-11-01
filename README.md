@@ -166,6 +166,7 @@ any core hit with no job running starts it.
 | Mute / Pause | `M` / `P` | 🔊 button |
 | Flat / tilted view | `V` (or add `?flat` to the URL) | |
 | Game speed (100% / 90% / 80%) | | the % button next to 🔊 |
+| Table slope (6.5° / 5.5° / 4.5°): gentler lets the ball float | | the ° button next to the % button |
 
 ## Development
 

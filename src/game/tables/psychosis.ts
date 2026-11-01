@@ -1,4 +1,4 @@
-import { FLOOR, RAMP, RAMP2, Flipper, LineSensor, ZoneSensor, type Ball, type Circle, type Segment } from '../../engine/physics';
+import { FLOOR, GRAVITY, RAMP, RAMP2, Flipper, LineSensor, ZoneSensor, type Ball, type Circle, type Segment } from '../../engine/physics';
 import { sound } from '../../engine/audio';
 import { drawGlow } from '../../engine/fx';
 import type { DMD } from '../../engine/dmd';
@@ -1555,7 +1555,9 @@ export class Psychosis extends Table {
     const ty = path[j][1] - path[k][1];
     const len = Math.hypot(tx, ty) || 1;
     const slope = (r.z[j] - r.z[k]) / len;
-    const G = 7000;
+    // The Back Alley chute climbs to the wire while running down the table, carried by the table's
+    // slope: on a gentler table its climb eases to match, so the ball still runs down it.
+    const G = r === L.ALLEY_EXIT && slope > 0 ? (7000 * this.world.gravity) / GRAVITY : 7000;
     b.vx -= (tx / len) * slope * G * dt;
     b.vy -= (ty / len) * slope * G * dt;
     if (!b.tags.made && i >= r.madeAt) {
@@ -1607,7 +1609,7 @@ export class Psychosis extends Table {
     const cap = this.captive;
     const R = L.REACTOR;
     if (cap.v !== 0 || cap.s > R.restS) {
-      cap.v -= 1800 * dt;
+      cap.v -= ((1800 * this.world.gravity) / GRAVITY) * dt;
       cap.s += cap.v * dt;
       if (cap.s >= R.topS) {
         if (cap.v > 300) this.reactorHit();

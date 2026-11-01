@@ -186,7 +186,7 @@ html:not(.touch) .touch {
   margin: 12px 0 0;
 }
 
-/* On short screens the sound and speed buttons sit at the bottom left; keep clear of them. */
+/* On short screens the sound, speed and slope buttons sit at the bottom left; keep clear of them. */
 body:has(#mute:not([style*='top'])) #overlay .manual-row {
   text-align: right;
 }
@@ -239,10 +239,12 @@ body:has(#mute:not([style*='top'])) #overlay .manual-row {
   bottom: auto;
 }
 
-#speed {
+#speed,
+#slope {
   position: fixed;
   bottom: max(8px, env(safe-area-inset-bottom));
   left: calc(max(8px, env(safe-area-inset-left)) + 40px);
+  min-width: 48px;
   height: 32px;
   padding: 0 7px;
   opacity: 0.5;
@@ -255,6 +257,11 @@ body:has(#mute:not([style*='top'])) #overlay .manual-row {
   z-index: 2;
 }
 
-#speed[style*='top'] {
+#slope {
+  left: calc(max(8px, env(safe-area-inset-left)) + 96px);
+}
+
+#speed[style*='top'],
+#slope[style*='top'] {
   bottom: auto;
 }

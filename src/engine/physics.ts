@@ -6,6 +6,12 @@ export const RAMP = 2;
 /** A second ramp level, for a ramp whose walls must not touch balls on the first. */
 export const RAMP2 = 4;
 
+/** The pull down the table, units/s², at the usual slope (SLOPE degrees). */
+export const GRAVITY = 2000;
+export const SLOPE = 6.5;
+/** The pull down a table pitched `deg` degrees: a gentler table lets the ball float. */
+export const gravityAt = (deg: number) => (GRAVITY * Math.sin((deg * Math.PI) / 180)) / Math.sin((SLOPE * Math.PI) / 180);
+
 export const STEP = 1 / 480;
 const MAX_SPEED = 4600;
 const BOUNCE_MIN = 60; // impacts slower than this don't bounce (kills jitter)
@@ -251,7 +257,7 @@ export class World {
   lineSensors: LineSensor[] = [];
   zones: ZoneSensor[] = [];
   balls: Ball[] = [];
-  gravity = 2000;
+  gravity = GRAVITY;
   /** Extra per-ball forces (ramp slopes, magnets...). */
   force?: (b: Ball, dt: number) => void;
 

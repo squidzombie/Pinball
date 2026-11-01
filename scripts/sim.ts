@@ -1,8 +1,8 @@
 // Headless soak test: a bot plays the table and we watch for physics leaks
 // (balls escaping or ending up inside solid structures) and stuck balls.
-// Usage: npm run sim [-- seconds]
+// Usage: npm run sim [-- seconds]; SLOPE=5.5 npm run sim plays on a gentler table.
 import { Game } from '../src/game/game';
-import { FLOOR } from '../src/engine/physics';
+import { FLOOR, gravityAt } from '../src/engine/physics';
 import type { Table } from '../src/game/tables/table';
 import * as L from '../src/game/tables/psychosis-layout';
 import type { P } from '../src/game/tables/geom';
@@ -11,6 +11,7 @@ const SECONDS = Number(process.argv[2] ?? 600);
 const DT = 1 / 60;
 
 const g = new Game();
+if (process.env.SLOPE) g.main.world.gravity = gravityAt(Number(process.env.SLOPE));
 const anyG = g as unknown as Record<string, (...a: unknown[]) => void>;
 const stats: Record<string, number> = {};
 const bump = (k: string) => (stats[k] = (stats[k] ?? 0) + 1);
