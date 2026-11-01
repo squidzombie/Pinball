@@ -1,6 +1,6 @@
 // Headless soak test: a bot plays the table and we watch for physics leaks
 // (balls escaping or ending up inside solid structures) and stuck balls.
-// Usage: npm run sim [-- seconds]; SLOPE=5.5 npm run sim plays on a gentler table.
+// Usage: npm run sim [-- seconds]; SLOPE=9 npm run sim plays on a gentler table.
 import { Game } from '../src/game/game';
 import { FLOOR, gravityAt } from '../src/engine/physics';
 import type { Table } from '../src/game/tables/table';

@@ -257,6 +257,10 @@ body:has(#mute:not([style*='top'])) #overlay .manual-row {
   z-index: 2;
 }
 
+html:not(.slope) .slope-only {
+  display: none;
+}
+
 #slope {
   left: calc(max(8px, env(safe-area-inset-left)) + 96px);
 }

@@ -6,9 +6,12 @@ export const RAMP = 2;
 /** A second ramp level, for a ramp whose walls must not touch balls on the first. */
 export const RAMP2 = 4;
 
-/** The pull down the table, units/s², at the usual slope (SLOPE degrees). */
+/**
+ * The pull down the table, units/s², as the game was tuned. A real ball rolling down a real table
+ * (units about 0.95 mm) feels this at about SLOPE degrees, steep: real tables sit at 6 to 7.
+ */
 export const GRAVITY = 2000;
-export const SLOPE = 6.5;
+export const SLOPE = 16;
 /** The pull down a table pitched `deg` degrees: a gentler table lets the ball float. */
 export const gravityAt = (deg: number) => (GRAVITY * Math.sin((deg * Math.PI) / 180)) / Math.sin((SLOPE * Math.PI) / 180);
 

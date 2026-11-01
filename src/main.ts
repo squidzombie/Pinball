@@ -158,32 +158,37 @@ speedBtn?.addEventListener('click', () => {
   }
 });
 
-// Table slope: 6.5 degrees as built, or gentler so the ball floats more, remembered on this device.
-// A build can start gentler (VITE_SLOPE=5.5) for trying it out.
-const SLOPES = [SLOPE, 5.5, 4.5];
+// Table slope, for feeling a gentler table: a build made with VITE_SLOPE=9 starts there and shows a
+// button for 16 degrees (as tuned), 12, 9 or a real table's 6.5, remembered on this device. The
+// shots are aimed for 16: gentler, they fly straighter and some miss. Other builds play at 16.
+const SLOPES = [SLOPE, 12, 9, 6.5];
+const trialSlope = Number(import.meta.env.VITE_SLOPE);
 let slope = SLOPE;
 function setSlope(deg: number) {
   slope = deg;
   game.main.world.gravity = gravityAt(deg);
   if (slopeBtn) slopeBtn.textContent = `${deg}°`;
 }
-let startSlope = Number(import.meta.env.VITE_SLOPE) || SLOPE;
-try {
-  const saved = Number(localStorage.getItem('slope'));
-  if (SLOPES.includes(saved)) startSlope = saved;
-} catch {
-  // no storage (private window): the build's slope
-}
-setSlope(SLOPES.includes(startSlope) ? startSlope : SLOPE);
-slopeBtn?.addEventListener('click', () => {
-  const next = SLOPES[(SLOPES.indexOf(slope) + 1) % SLOPES.length];
-  setSlope(next);
+if (SLOPES.includes(trialSlope)) {
+  document.documentElement.classList.add('slope');
+  let start = trialSlope;
   try {
-    localStorage.setItem('slope', String(next));
+    const saved = Number(localStorage.getItem('pitch'));
+    if (SLOPES.includes(saved)) start = saved;
   } catch {
-    // not remembered, but still applied
+    // no storage (private window): the build's slope
   }
-});
+  setSlope(start);
+  slopeBtn?.addEventListener('click', () => {
+    const next = SLOPES[(SLOPES.indexOf(slope) + 1) % SLOPES.length];
+    setSlope(next);
+    try {
+      localStorage.setItem('pitch', String(next));
+    } catch {
+      // not remembered, but still applied
+    }
+  });
+} else slopeBtn?.remove();
 
 let overlayMode = '';
 function updateOverlay() {
