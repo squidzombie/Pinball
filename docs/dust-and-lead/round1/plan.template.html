@@ -1,0 +1,436 @@
+<title>Dust &amp; Lead</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:ital,wght@0,400;0,600;1,400&display=swap">
+<style>
+/* Layout: a surveyor's plat of the table on the left (sticky on wide screens), the field notes beside it. */
+:root {
+  --bg: #e9e1d4;
+  --panel: #f3ede4;
+  --ink: #2a1c15;
+  --muted: #6c5649;
+  --rule: #cdbdab;
+  --accent: #0b7b72;
+  --rust: #9a4f2c;
+  --chip: #ddd2c2;
+  --display: "Alfa Slab One", "Rockwell", "Roboto Slab", Georgia, serif;
+  --body: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  /* the plan's own print colours: fixed in both themes, like a printed sheet */
+  --pf-cab: #3a2418;
+  --pf-floor: #bb8c63;
+  --pf-floor2: #a9784f;
+  --pf-ink: #251812;
+  --pf-steel: #6d4a35;
+  --pf-turq: #18a99b;
+  --pf-glow: #3fffe5;
+  --pf-gold: #e2b23c;
+  --pf-red: #c3422a;
+  --pf-wood: #5c3520;
+  --pf-paper: #f1e3c8;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #17100c; --panel: #21170f; --ink: #efe3d3; --muted: #b59d89; --rule: #3b2b21;
+    --accent: #3fd9c6; --rust: #d9824f; --chip: #2e2118; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #17100c; --panel: #21170f; --ink: #efe3d3; --muted: #b59d89; --rule: #3b2b21;
+  --accent: #3fd9c6; --rust: #d9824f; --chip: #2e2118; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-block: 28px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+header { display: grid; gap: 10px; margin-bottom: 28px; max-width: 70ch; }
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--rust); }
+h1 { font-family: var(--display); font-weight: 400; font-size: clamp(44px, 9vw, 76px); line-height: .95; margin: 0; letter-spacing: .01em; text-wrap: balance; }
+h1 .amp { color: var(--accent); }
+.lede { font-size: 18px; margin: 0; color: var(--ink); }
+.decided { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; padding: 0; list-style: none; }
+.decided li { background: var(--chip); border-radius: 3px; padding: 4px 10px; font-size: 14px; }
+.decided li b { font-weight: 600; }
+.decided li.sugg { background: transparent; border: 1px dashed var(--rule); color: var(--muted); }
+
+.grid { display: grid; grid-template-columns: minmax(0, 470px) minmax(0, 1fr); gap: 40px; align-items: start; }
+@media (max-width: 860px) { .grid { grid-template-columns: minmax(0, 1fr); gap: 28px; } }
+.plan { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); display: grid; gap: 10px; }
+@media (max-width: 860px) { .plan { position: static; } }
+.plan figure { margin: 0; }
+.plan svg { width: 100%; height: auto; display: block; max-width: 100%; }
+.toggle { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.toggle span { font-size: 13px; color: var(--muted); margin-right: 4px; }
+.toggle button { font: inherit; font-size: 13px; padding: 5px 10px; border: 1px solid var(--rule); background: var(--panel); color: var(--ink); border-radius: 3px; cursor: pointer; }
+.toggle button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.toggle button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+figcaption { font-size: 13px; color: var(--muted); line-height: 1.45; }
+#shotLegend { font-family: var(--mono); font-size: 12px; color: var(--muted); min-height: 1.4em; }
+
+.notes { display: grid; gap: 40px; min-width: 0; }
+section h2 { font-family: var(--display); font-weight: 400; font-size: 26px; line-height: 1.1; margin: 0 0 14px; text-wrap: balance; }
+section p { margin: 0 0 12px; max-width: 68ch; }
+.key { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.key li { display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 10px; align-items: start; }
+.key .n { width: 26px; height: 26px; border-radius: 50%; background: var(--ink); color: var(--bg); font-family: var(--mono); font-size: 12px; font-weight: 600; display: grid; place-items: center; margin-top: 1px; }
+.key b { font-weight: 600; }
+.key .ph { color: var(--muted); }
+.tbl { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 15px; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 8px 10px 8px 0; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+td.num { font-family: var(--mono); text-align: right; padding-right: 14px; white-space: nowrap; }
+th.num { text-align: right; padding-right: 14px; }
+td .bar { display: inline-block; height: 6px; background: var(--accent); vertical-align: middle; margin-left: 6px; border-radius: 1px; }
+td.none { color: var(--muted); }
+.small { font-size: 14px; color: var(--muted); }
+ul.plain { margin: 0; padding-left: 20px; display: grid; gap: 8px; max-width: 68ch; }
+ol.qs { margin: 0; padding-left: 0; list-style: none; counter-reset: q; display: grid; gap: 18px; }
+ol.qs > li { counter-increment: q; display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 8px; max-width: 72ch; }
+ol.qs > li::before { content: "Q" counter(q); font-family: var(--mono); font-weight: 600; color: var(--rust); font-size: 14px; padding-top: 2px; }
+ol.qs p { margin: 0 0 6px; }
+ol.qs ul { margin: 4px 0 0; padding-left: 18px; display: grid; gap: 4px; }
+.next { border-top: 2px solid var(--ink); padding-top: 16px; }
+@media (prefers-reduced-motion: no-preference) { #shots polyline { transition: opacity .2s; } }
+
+/* plan drawing */
+.pf-label { font-family: var(--mono); font-size: 11px; font-weight: 600; letter-spacing: .06em; fill: var(--pf-ink); text-anchor: middle; }
+.pf-label.light { fill: var(--pf-paper); }
+.pf-label.small { font-size: 9px; }
+.pf-mk circle { fill: var(--pf-ink); stroke: var(--pf-paper); stroke-width: 2; }
+.pf-mk text { font-family: var(--mono); font-size: 13px; font-weight: 600; fill: var(--pf-paper); text-anchor: middle; dominant-baseline: central; }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Squidzombie Pinball · Table 2 · Layout round 1</div>
+    <h1>Dust <span class="amp">&amp;</span> Lead</h1>
+    <p class="lede">Your sketch drawn to true size, with every shot checked against how the flippers actually fire on a 6.5° table. Nothing is built yet. This round is for you to mark up.</p>
+    <ul class="decided" aria-label="Decided so far">
+      <li><b>6.5° slope</b>, like a real machine</li>
+      <li><b>One app</b> with a table picker</li>
+      <li><b>All new</b>, flipper area included</li>
+      <li class="sugg">Suggested: Oxide colours (rust and turquoise)</li>
+    </ul>
+  </header>
+
+  <div class="grid">
+    <div class="plan">
+      <div class="toggle" role="group" aria-label="Show measured shots">
+        <span>Measured shots:</span>
+        <button type="button" id="sh-none" data-side="none" aria-pressed="true">None</button>
+        <button type="button" id="sh-left" data-side="left" aria-pressed="false">Left flipper</button>
+        <button type="button" id="sh-right" data-side="right" aria-pressed="false">Right flipper</button>
+        <button type="button" id="sh-upper" data-side="upper" aria-pressed="false">Saloon flipper</button>
+      </div>
+      <figure>
+        <svg id="pf" viewBox="0 0 600 1240" role="img" aria-label="Plan of the Dust and Lead playfield, drawn to scale"></svg>
+      </figure>
+      <div id="shotLegend" aria-live="polite"></div>
+      <figcaption>To scale: one unit is about a millimetre and the ball is 28 across. The lines show where each flip goes first. Coloured lines make a shot; grey lines hit something on the way.</figcaption>
+    </div>
+
+    <div class="notes">
+      <section>
+        <h2>What's on the table</h2>
+        <ol class="key" id="key">
+          <li><span class="n">1</span><div><b>Gold Mine and elevator.</b> The left ramp ends in the mine. A minecart lifts the ball and tips it onto a wire track that runs across the back into the saloon.</div></li>
+          <li><span class="n">2</span><div><b>Gold Pan.</b> When the mine's diverter is lit, the ramp drops the ball into the pan instead. It rattles down through brass pins into one of three cups: Riches, Nuggets or Extra Ball.</div></li>
+          <li><span class="n">3</span><div><b>Jailhouse.</b> A scoop with a three-ball lock. Locked balls sit in the cell where you can see them.</div></li>
+          <li><span class="n">4</span><div><b>Railroad lane.</b> The left orbit: up the left side and across the top into the saloon, with three drop targets across its mouth.</div></li>
+          <li><span class="n">5</span><div><b>High Noon.</b> Three windows, with the outlaw walking between them on a timer. Hit the window he's standing in.</div></li>
+          <li><span class="n">6</span><div><b>Main Street.</b> The open centre shot, straight up to High Noon.</div></li>
+          <li><span class="n">7</span><div><b>Sheriff and Hardware.</b> One building with two targets, right of Main Street.</div></li>
+          <li><span class="n">8</span><div><b>Barrel pops.</b> Two pop bumpers under the saloon, which catch balls the saloon flipper misses.</div></li>
+          <li><span class="n">9</span><div><b>Saloon and the saloon flipper.</b> The hub. The plunge, both orbits and the mine's wire track all drop in through swinging doors onto a third flipper.</div></li>
+          <li><span class="n">10</span><div><b>Saloon lane.</b> The right orbit, up the right side into the saloon.</div></li>
+          <li><span class="n">11</span><div><b>Stagecoach ramp.</b> Up the right side, across the back and down the left side to the left inlane, as in your sketch.</div></li>
+          <li><span class="n">12</span><div><b>Wanted posters.</b> Six mode lights, three on each side.</div></li>
+          <li><span class="n">13</span><div><b>Shooter lane.</b> The plunge runs round the top into the saloon.</div></li>
+          <li><span class="n">14</span><div><b>Flippers, slings and lanes.</b> <span class="ph">A stand-in: the standard set, drawn only so the shot lines are real. Round 2 redesigns it.</span></div></li>
+        </ol>
+      </section>
+
+      <section>
+        <h2>What each flipper can make</h2>
+        <div class="tbl">
+          <table>
+            <thead><tr><th>Shot</th><th class="num">Left</th><th class="num">Right</th></tr></thead>
+            <tbody id="reach"></tbody>
+          </table>
+        </div>
+        <p class="small" style="margin-top:12px">Out of 150 flips per flipper, from a ball resting on the flipper, at every flip timing 4 ms apart, on an empty table with only these walls. It's an early guide. Once the walls are built I'll measure each shot properly against your bar of 11 makes out of 12. The flippers favour a few aim angles (the open question from Cyber Psychosis), which is why some shots pile up.</p>
+        <p class="small" id="upperNote"></p>
+      </section>
+
+      <section>
+        <h2>What I changed from the sketch</h2>
+        <ul class="plain">
+          <li><b>Gold Pan moved left and made smaller,</b> about 13 cm, or 4½ balls, across. Where the sketch has it, the right flipper's shot to the Gold Mine ramp goes straight through the pan.</li>
+          <li><b>Railroad lane entrance moved up</b> to about halfway up the table. Down at the bottom left, neither flipper can reach it.</li>
+          <li><b>Jailhouse and Stagecoach entrances turned</b> to face the flipper that shoots them. Facing straight down, their side walls stopped most shots.</li>
+          <li><b>Saloon lane entrance moved down and the Stagecoach moved toward the middle.</b> The left flipper's sharpest shots to the right run along the right wall, and the Stagecoach was sitting in their path.</li>
+          <li><b>The Bank and General Store are artwork, not targets.</b> The Gold Mine shot runs right where they'd stand. The Bank could frame the mine ramp's entrance.</li>
+          <li><b>The plunge and both orbits go to the saloon.</b> That gives the saloon flipper plenty to do, as your sketch asks ("accessible, repeatable shot").</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>What moves, so it isn't plain</h2>
+        <p>Cyber Psychosis is mostly flat targets. This one is built around toys that move, and the code draws all of them:</p>
+        <ul class="plain">
+          <li>The minecart rides up the elevator with the ball in it.</li>
+          <li>The outlaw walks from window to window, and the clock runs down to high noon.</li>
+          <li>The saloon doors swing every time a ball comes through.</li>
+          <li>The stagecoach rolls along its ramp alongside the ball.</li>
+          <li>Locked balls wait in the jail cell, and the bars blow out for the jailbreak.</li>
+          <li>The ball clatters through the Gold Pan's pins, and its cup lights up.</li>
+          <li>A train runs up the Railroad lane during Train Robbery.</li>
+          <li>The barrels rock and kick up dust when hit.</li>
+          <li>Lit windows and lanterns in every building.</li>
+          <li>Three levels: the orbits on the floor, the Stagecoach ramp above them, and the mine's wire track above that. That's more depth than Cyber Psychosis has anywhere.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Questions for you</h2>
+        <ol class="qs">
+          <li><div><p><b>What should the saloon flipper shoot?</b> As drawn, it can't reach the Gold Mine, because High Noon and the Sheriff's building are in the way (none of 133 flips got there). Options:</p>
+            <ul>
+              <li>The outlaw: give High Noon a side window facing the saloon. Its side wall already takes about 1 in 4 of those flips.</li>
+              <li>The Gold Mine: move High Noon higher and make it smaller, to open a lane across.</li>
+              <li>Something else you have in mind.</li>
+            </ul></div></li>
+          <li><div><p><b>The Stagecoach's long way home.</b> As in your sketch, it runs up the right, across the back and down the left to the left inlane. That puts three tracks at the back (the orbit, the Stagecoach and the mine's wire track) and crowds the Gold Mine corner. Keep it, or bring the Stagecoach back to the right inlane?</p></div></li>
+          <li><div><p><b>What sends a ball into the Gold Pan</b> instead of up the elevator? My suggestion: knock down all three Railroad drop targets to light it.</p></div></li>
+          <li><div><p><b>Railroad drop targets:</b> should they block the lane until they're knocked down, so it opens for Train Robbery, or sit beside the lane?</p></div></li>
+          <li><div><p><b>The six Wanted posters.</b> Your sketch names Bounty, Gold Rush, Train Robbery, Jailbreak, Stampede and High Noon. Are those the six modes, with High Noon as the finale?</p></div></li>
+          <li><div><p><b>The name:</b> "Dust &amp; Lead", as on the sketch?</p></div></li>
+          <li><div><p><b>Colours:</b> start from Oxide, the rust-and-turquoise scheme set aside for a western?</p></div></li>
+        </ol>
+      </section>
+
+      <section class="next">
+        <p><b>Next:</b> mark up anything and answer what you can. Round 2 covers the flipper area and whatever this round changes. I won't write any game code until you approve a layout.</p>
+      </section>
+    </div>
+  </div>
+</div>
+
+<script>
+/*DATA*/
+(function () {
+  const NS = 'http://www.w3.org/2000/svg';
+  const svg = document.getElementById('pf');
+  const css = getComputedStyle(document.documentElement);
+  const C = (n) => css.getPropertyValue('--pf-' + n).trim();
+  const el = (tag, attrs, parent = svg) => {
+    const e = document.createElementNS(NS, tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    parent.appendChild(e);
+    return e;
+  };
+  const pts = (a) => a.map((p) => p.join(',')).join(' ');
+  const line = (a, stroke, w, extra = {}, parent) => el('polyline', { points: pts(a), fill: 'none', stroke, 'stroke-width': w, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', ...extra }, parent);
+  const label = (x, y, text, cls = '', parent) => { const t = el('text', { x, y, class: 'pf-label ' + cls }, parent); t.textContent = text; return t; };
+  const smooth = (p, it = 3) => { let c = p; for (let k = 0; k < it; k++) { const n = [c[0]]; for (let i = 0; i < c.length - 1; i++) { const [ax, ay] = c[i], [bx, by] = c[i + 1]; n.push([ax * .75 + bx * .25, ay * .75 + by * .25], [ax * .25 + bx * .75, ay * .25 + by * .75]); } n.push(c[c.length - 1]); c = n; } return c; };
+  const offset = (p, w) => { const l = [], r = []; for (let i = 0; i < p.length; i++) { const a = p[Math.max(0, i - 1)], b = p[Math.min(p.length - 1, i + 1)]; let tx = b[0] - a[0], ty = b[1] - a[1]; const n = Math.hypot(tx, ty) || 1; tx /= n; ty /= n; l.push([p[i][0] + ty * w, p[i][1] - tx * w]); r.push([p[i][0] - ty * w, p[i][1] + tx * w]); } return [l, r]; };
+  const ramp = (centre, w, color, extra = {}) => {
+    const c = smooth(centre);
+    const [l, r] = offset(c, w);
+    el('polygon', { points: pts([...l, ...r.reverse()]), fill: color, 'fill-opacity': extra.fillOpacity ?? .22 });
+    line(l, color, extra.rail ?? 4);
+    line(r.reverse(), color, extra.rail ?? 4);
+    return c;
+  };
+
+  // defs: floor texture, hatch
+  const defs = el('defs', {});
+  const pat = el('pattern', { id: 'boards', width: 24, height: 1240, patternUnits: 'userSpaceOnUse' }, defs);
+  el('rect', { width: 24, height: 1240, fill: C('floor') }, pat);
+  el('line', { x1: 0, y1: 0, x2: 0, y2: 1240, stroke: C('floor2'), 'stroke-width': 1.2 }, pat);
+  const hatch = el('pattern', { id: 'hatch', width: 8, height: 8, patternUnits: 'userSpaceOnUse', patternTransform: 'rotate(45)' }, defs);
+  el('rect', { width: 8, height: 8, fill: C('steel') }, hatch);
+  el('line', { x1: 0, y1: 0, x2: 0, y2: 8, stroke: C('ink'), 'stroke-width': 2 }, hatch);
+
+  // cabinet and floor
+  el('rect', { x: 0, y: 0, width: 600, height: 1240, fill: C('cab') });
+  el('path', { d: 'M20,1240 L20,80 Q20,18 82,18 L518,18 Q580,18 580,80 L580,1240 Z', fill: 'url(#boards)' });
+  // Main Street: a darker dirt road up the middle
+  el('path', { d: 'M232,760 L236,232 L322,232 L326,760 Z', fill: C('floor2'), opacity: .55 });
+  for (let y = 260; y < 740; y += 44) line([[279, y], [279, y + 18]], C('paper'), 3, { opacity: .7 });
+  label(279, 790, 'MAIN STREET', 'small');
+
+  // orbit walls
+  line([[80, 582], [62, 560], [62, 120], [66, 90], [86, 70], [110, 64], [380, 64]], C('ink'), 5);            // railroad (left orbit) inner wall
+  line([[380, 64], [380, 300]], C('ink'), 5);                                                                    // saloon left wall
+  line([[490, 640], [490, 112], [484, 84], [466, 68], [446, 64]], C('ink'), 5);                                   // saloon lane inner wall / saloon right wall
+  line([[540, 1180], [540, 128]], C('ink'), 5);                                                                   // shooter lane wall
+  el('path', { d: 'M20,1240 L20,80 Q20,18 82,18 L518,18 Q580,18 580,80 L580,1240', fill: 'none', stroke: C('ink'), 'stroke-width': 6 });
+  // railroad sleepers along the left orbit
+  for (let y = 120; y < 570; y += 18) line([[24, y], [58, y]], C('wood'), 4, { opacity: .55 });
+  line([[30, 120], [30, 570]], C('steel'), 2); line([[52, 120], [52, 570]], C('steel'), 2);
+
+  // saloon interior and swinging doors
+  el('rect', { x: 382, y: 66, width: 106, height: 232, fill: C('wood'), opacity: .35 });
+  line([[392, 70], [420, 92]], C('gold'), 5); line([[478, 70], [450, 92]], C('gold'), 5);
+  label(435, 128, 'SALOON', 'light');
+  // saloon flipper
+  const fl = (px, py, len, ang, w0 = 13, w1 = 7) => {
+    const tx = px + Math.cos(ang) * len, ty = py + Math.sin(ang) * len;
+    const nx = -Math.sin(ang), ny = Math.cos(ang);
+    el('path', { d: `M${px + nx * w0},${py + ny * w0} L${tx + nx * w1},${ty + ny * w1} A${w1},${w1} 0 0 1 ${tx - nx * w1},${ty - ny * w1} L${px - nx * w0},${py - ny * w0} A${w0},${w0} 0 0 1 ${px + nx * w0},${py + ny * w0} Z`, fill: C('paper'), stroke: C('ink'), 'stroke-width': 3 });
+    el('circle', { cx: px, cy: py, r: 4, fill: C('red') });
+  };
+  line([[489.5, 190], [489.5, 264]], C('ink'), 5);
+  fl(478, 280, 75, Math.PI - 0.52);
+
+  // pops (barrels)
+  for (const [x, y] of [[418, 336], [452, 414]]) {
+    el('circle', { cx: x, cy: y, r: 28, fill: C('wood'), stroke: C('ink'), 'stroke-width': 3 });
+    el('circle', { cx: x, cy: y, r: 19, fill: 'none', stroke: C('gold'), 'stroke-width': 3 });
+    el('circle', { cx: x, cy: y, r: 7, fill: C('glow') });
+  }
+
+  // High Noon
+  el('rect', { x: 200, y: 90, width: 155, height: 124, fill: C('wood'), stroke: C('ink'), 'stroke-width': 4 });
+  el('polygon', { points: '192,94 277,72 363,94', fill: C('steel'), stroke: C('ink'), 'stroke-width': 3 });
+  el('circle', { cx: 277.5, cy: 120, r: 17, fill: C('paper'), stroke: C('ink'), 'stroke-width': 3 });
+  line([[277.5, 120], [277.5, 108]], C('ink'), 2.5); line([[277.5, 120], [286, 124]], C('ink'), 2.5);
+  label(277.5, 160, 'HIGH NOON', 'light small');
+  [218, 258, 298].forEach((x, i) => {
+    el('rect', { x, y: 176, width: 39, height: 38, fill: i === 1 ? C('gold') : C('paper'), stroke: C('ink'), 'stroke-width': 3 });
+  });
+  // outlaw in the lit window
+  el('circle', { cx: 277.5, cy: 186, r: 5, fill: C('ink') });
+  el('rect', { x: 268, y: 181, width: 19, height: 3, fill: C('ink') });
+  el('path', { d: 'M271,192 L284,192 L282,212 L273,212 Z', fill: C('ink') });
+  line([[238, 200], [252, 200]], C('red'), 2.5); line([[304, 200], [318, 200]], C('red'), 2.5);
+
+  // Sheriff & Hardware
+  el('rect', { x: 332, y: 300, width: 30, height: 100, fill: C('wood'), stroke: C('ink'), 'stroke-width': 3 });
+  line([[332, 412], [362, 412]], C('red'), 6); line([[330, 302], [330, 398]], C('red'), 6);
+  const vt = (x, y, text) => { const t = label(x, y, text, 'light small'); t.setAttribute('transform', `rotate(-90 ${x} ${y})`); };
+  vt(350, 350, 'SHERIFF·HDW');
+
+  // Gold Pan
+  el('circle', { cx: 122, cy: 502, r: 64, fill: C('steel'), stroke: C('ink'), 'stroke-width': 4 });
+  el('circle', { cx: 122, cy: 502, r: 56, fill: C('floor2'), stroke: C('gold'), 'stroke-width': 2 });
+  for (let r = 0; r < 4; r++) for (let c = -r; c <= r; c += 2) el('circle', { cx: 122 + c * 14, cy: 462 + r * 22, r: 3.2, fill: C('gold'), stroke: C('ink'), 'stroke-width': 1 });
+  [[94, 'R'], [122, 'N'], [150, 'X']].forEach(([x, t]) => { el('rect', { x: x - 11, y: 534, width: 22, height: 18, fill: C('ink') }); label(x, 547, t, 'light small'); });
+  label(122, 452, 'GOLD PAN', 'small');
+
+  // Jailhouse
+  el('polygon', { points: '158,742 127,668 187,644 218,718', fill: C('steel'), stroke: C('ink'), 'stroke-width': 4 });
+  for (let i = 0; i < 6; i++) { const t = (i + 1) / 7; line([[127 + 60 * t, 668 - 24 * t], [158 + 60 * t, 742 - 24 * t]], C('ink'), 2.2); }
+  [[150, 680], [165, 674], [180, 668]].forEach(([x, y]) => el('circle', { cx: x, cy: y, r: 9, fill: C('paper'), stroke: C('ink'), 'stroke-width': 1.5 }));
+  label(173, 776, 'JAIL', 'small');
+
+  // Railroad drop targets
+  [[30, 597], [50, 591], [70, 585]].forEach(([x, y]) => el('rect', { x: x - 9, y: y - 4, width: 18, height: 8, fill: C('red'), stroke: C('ink'), 'stroke-width': 1.5, transform: `rotate(-17 ${x} ${y})` }));
+
+  // Gold Mine house and elevator
+  el('rect', { x: 72, y: 88, width: 80, height: 112, fill: C('wood'), stroke: C('ink'), 'stroke-width': 4 });
+  el('rect', { x: 84, y: 96, width: 26, height: 100, fill: 'url(#hatch)', stroke: C('ink'), 'stroke-width': 2 });
+  el('rect', { x: 86, y: 128, width: 22, height: 14, fill: C('gold'), stroke: C('ink'), 'stroke-width': 1.5 });
+  label(132, 192, 'MINE', 'light small');
+
+  // Gold Mine ramp (raised)
+  ramp([[187, 330], [176, 300], [156, 262], [134, 226], [118, 202]], 25, C('gold'), { fillOpacity: .32 });
+  // diverter to the pan
+  line([[150, 258], [138, 300], [128, 420]], C('gold'), 2.5, { 'stroke-dasharray': '5 5' });
+  // mine wire track (top level), across the back into the saloon
+  const wire = smooth([[98, 104], [118, 80], [180, 76], [300, 76], [372, 78], [414, 92], [430, 110]]);
+  line(wire, C('ink'), 7, { opacity: .5 }); line(wire, C('paper'), 2.5);
+
+  // Stagecoach ramp: up the right, across the back, down the left to the left inlane
+  const stage = [[350, 640], [356, 560], [380, 512], [430, 470], [508, 420], [516, 340], [516, 130], [510, 60], [470, 34], [300, 32], [110, 32], [60, 40], [40, 80], [38, 300], [40, 560], [48, 760], [70, 830], [93, 860]];
+  ramp(stage, 18, C('turq'), { fillOpacity: .28, rail: 3.5 });
+
+  // standard lower section (stand-in)
+  const lower = (m) => {
+    const X = (dx) => 277.5 + m * dx;
+    line([[X(-202), 868], [X(-202), 965], [X(-111), 1040]], C('ink'), 5);
+    el('polygon', { points: pts([[X(-165), 850], [X(-165), 950], [X(-111), 993]]), fill: C('paper'), stroke: C('ink'), 'stroke-width': 4, 'stroke-linejoin': 'round' });
+    line([[X(-165), 850], [X(-111), 993]], C('red'), 5);
+    el('circle', { cx: X(-202), cy: 868, r: 6, fill: C('ink') });
+  };
+  lower(1); lower(-1);
+  fl(178, 1056, 88, 0.52); fl(377, 1056, 88, Math.PI - 0.52);
+  // apron
+  el('path', { d: 'M20,1120 L200,1180 L200,1240 L20,1240 Z', fill: C('cab') });
+  el('path', { d: 'M540,1120 L355,1180 L355,1240 L540,1240 Z', fill: C('cab') });
+  // plunger
+  el('rect', { x: 549, y: 1150, width: 22, height: 60, fill: C('steel'), stroke: C('ink'), 'stroke-width': 2 });
+  el('circle', { cx: 560, cy: 1140, r: 12, fill: C('paper'), stroke: C('ink'), 'stroke-width': 2 });
+
+  // wanted posters
+  const poster = (x, y) => { el('rect', { x, y, width: 34, height: 44, fill: C('paper'), stroke: C('ink'), 'stroke-width': 2 }); el('circle', { cx: x + 17, cy: y + 34, r: 5, fill: C('gold'), stroke: C('ink'), 'stroke-width': 1 }); line([[x + 7, y + 10], [x + 27, y + 10]], C('ink'), 2); line([[x + 9, y + 18], [x + 25, y + 18]], C('ink'), 1.5); };
+  [640, 694, 748].forEach((y) => poster(78, y));
+  [670, 724, 778].forEach((y) => poster(494, y));
+
+  // brand on the floor
+  label(277.5, 900, 'DUST & LEAD');
+
+  // shots overlay
+  const shotLayer = el('g', { id: 'shots' });
+  const colorFor = { railroad: C('steel'), jail: C('ink'), mine: C('gold'), noonL: C('red'), noonC: C('red'), noonR: C('red'), hardware: C('wood'), sheriff: C('wood'), stage: C('turq'), saloon: C('paper') };
+
+  // markers
+  const marks = [[1, 160, 112], [2, 60, 470], [3, 106, 720], [4, 41, 360], [5, 220, 250], [6, 279, 540], [7, 347, 270], [8, 468, 330], [9, 435, 220], [10, 512, 600], [11, 410, 470], [12, 95, 818], [13, 562, 1080], [14, 277.5, 990]];
+  const mk = el('g', { class: 'pf-mk' });
+  for (const [n, x, y] of marks) { const g = el('g', {}, mk); el('circle', { cx: x, cy: y, r: 13 }, g); const t = el('text', { x, y }, g); t.textContent = n; }
+
+  function drawShots(side) {
+    shotLayer.replaceChildren();
+    const legend = document.getElementById('shotLegend');
+    if (side === 'none') { legend.textContent = ''; return; }
+    const list = SHOTS[side];
+    // misses first, makes on top
+    const ordered = [...list.filter(([k]) => !colorFor[k]), ...list.filter(([k]) => colorFor[k])];
+    for (const [k, flat] of ordered) {
+      const p = []; for (let i = 0; i < flat.length; i += 2) p.push([flat[i], flat[i + 1]]);
+      if (p.length < 2) continue;
+      const made = !!colorFor[k];
+      line(p, made ? colorFor[k] : C('ink'), made ? 2.4 : 1.4, { opacity: made ? .9 : .28 }, shotLayer);
+      if (made) el('circle', { cx: p[p.length - 1][0], cy: p[p.length - 1][1], r: 3, fill: colorFor[k], stroke: C('ink'), 'stroke-width': 1 }, shotLayer);
+    }
+    const made = list.filter(([k]) => colorFor[k]).length;
+    legend.textContent = `${made} of ${list.length} flips make a shot (coloured); ${list.length - made} hit something first or fall back (grey).`;
+  }
+  svg.insertBefore(shotLayer, mk);
+  for (const b of document.querySelectorAll('.toggle button')) {
+    b.addEventListener('click', () => {
+      for (const o of document.querySelectorAll('.toggle button')) o.setAttribute('aria-pressed', String(o === b));
+      drawShots(b.dataset.side);
+    });
+  }
+
+  // reach table
+  const rows = [
+    ['Railroad lane', ['railroad']], ['Jailhouse', ['jail']], ['Gold Mine ramp', ['mine']],
+    ['High Noon (any window)', ['noonL', 'noonC', 'noonR']], ['Sheriff and Hardware', ['sheriff', 'hardware']],
+    ['Stagecoach ramp', ['stage']], ['Saloon lane', ['saloon']],
+  ];
+  const tb = document.getElementById('reach');
+  const sum = (side, ids) => ids.reduce((a, id) => a + (TALLY[side][id] || 0), 0);
+  for (const [name, ids] of rows) {
+    const tr = document.createElement('tr');
+    const td = document.createElement('td'); td.textContent = name; tr.appendChild(td);
+    for (const side of ['left', 'right']) {
+      const n = sum(side, ids);
+      const c = document.createElement('td'); c.className = 'num' + (n ? '' : ' none');
+      c.textContent = n || '–';
+      if (n) { const bar = document.createElement('span'); bar.className = 'bar'; bar.style.width = Math.round(n * 1.6) + 'px'; c.appendChild(bar); }
+      tr.appendChild(c);
+    }
+    tb.appendChild(tr);
+  }
+  const u = TALLY.upper, uN = Object.values(u).reduce((a, b) => a + b, 0);
+  const town = (u['blocked:town'] || 0) + (u.hardware || 0) + (u.sheriff || 0);
+  const noonSide = (u.noonSide || 0) + (u['blocked:noon'] || 0);
+  const windows = (u.noonL || 0) + (u.noonC || 0) + (u.noonR || 0);
+  document.getElementById('upperNote').textContent =
+    `Saloon flipper, ${uN} flips with the ball rolling in: ${town} hit the Sheriff and Hardware building, ${noonSide} hit the side of High Noon, ${windows} reach a High Noon window, and ${u.mine || 0} reach the Gold Mine. See question 1.`;
+})();
+</script>
