@@ -4,6 +4,8 @@ Pinball tables for the [squidzombie.com](https://squidzombie.com) collection. Bu
 web app first (runs in any modern browser, installable on a phone), structured so it can be
 wrapped as a native iPhone app later.
 
+Picking up the work in a new session? Start with [`HANDOFF.md`](HANDOFF.md).
+
 ## Table 1: Cyber Psychosis
 
 An industrial cyberpunk heist, laid out and coloured after the concept sketch: pale cracked

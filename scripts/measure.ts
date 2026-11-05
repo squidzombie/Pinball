@@ -1,12 +1,13 @@
 // Layout measurements for the fan layout: where every shot goes and how wide each window is.
-// Usage: npm run measure [-- section]   sections: windows, ramps, alley, plunge, pops, breach, gaps
+// Usage: npm run measure [-- section]   sections: windows, ramps, alley, plunge, pops, breach, upper, gaps
+// SLOPE=9 npm run measure measures a gentler table.
 //
 // Launches come from real flips: a ball is cradled, dropped and flipped at many delays, and
 // each launch (point, angle, speed) is recorded. Windows then sweep the launch angle in 0.25°
 // steps from the nearest real launch. "Arrives" means where the ball reaches the flipper line
 // (y 1040): on a flipper, between the flipper tips (centre drain), or down an outlane.
 import { Game } from '../src/game/game';
-import { FLOOR, type Ball, type Flipper } from '../src/engine/physics';
+import { FLOOR, gravityAt, type Ball, type Flipper } from '../src/engine/physics';
 import * as L from '../src/game/tables/psychosis-layout';
 import { measureGaps } from './gaps';
 
@@ -14,6 +15,7 @@ import { measureGaps } from './gaps';
 const only = process.argv[2];
 const want = (s: string) => !only || only === s;
 const g = new Game();
+if (process.env.SLOPE) g.main.world.gravity = gravityAt(Number(process.env.SLOPE));
 (g as any).startGame();
 const m = g.main as any;
 const w = m.world;
