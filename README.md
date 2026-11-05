@@ -6,6 +6,12 @@ wrapped as a native iPhone app later.
 
 Picking up the work in a new session? Start with [`HANDOFF.md`](HANDOFF.md).
 
+The start screen has a table picker: **Cyber Psychosis** (table 1) and **Dust & Lead** (table 2,
+a western, in layout review). The choice is remembered on the device; `?table=dust` in the URL
+picks one for a link, and a build made with `VITE_TABLE=dust` opens on Dust & Lead (the phone
+link for its layout review). Tables are listed in `src/game/tables/registry.ts`, each with its own
+high score, display colour, painted-art path and attract text.
+
 ## Table 1: Cyber Psychosis
 
 An industrial cyberpunk heist, laid out and coloured after the concept sketch: pale cracked
@@ -170,6 +176,15 @@ any core hit with no job running starts it.
 | Game speed (100% / 90% / 80%) | | the % button next to 🔊 |
 | Table slope (16° / 12° / 9° / 6.5°, a real table's), in trial builds (`VITE_SLOPE=9 npm run build`): gentler lets the ball float, but the shots are aimed for 16° | | the ° button next to the % button |
 
+## Table 2: Dust & Lead (in layout review)
+
+A western, from the owner's concept sketch (`reference/dust-and-lead-sketch.webp`), on a real
+table's 6.5° slope. Layout round 2 is playable: the walls, ramps and toys work (the minecart lift
+and wire track, the Gold Pan, the Jailhouse scoop, the Railroad drop targets, the saloon and its
+flipper, the walking outlaw), the display names each shot, and there's no scoring yet. The design
+record, every measurement and the open questions are in
+[`docs/dust-and-lead/DESIGN.md`](docs/dust-and-lead/DESIGN.md).
+
 ## Development
 
 ```bash
@@ -181,6 +196,9 @@ npm run sim        # headless soak test: a bot plays and checks for physics leak
 npx tsx scripts/shotmap.ts   # which shots each flipper can reach
 npm run measure    # layout measurements: shot windows, returns, pops, Breach, clearances
 npm run template   # regenerate the art templates in art/template from the physics
+TABLE=dust npm run sim               # the soak test on Dust & Lead
+npx tsx scripts/dust-measure.ts      # Dust & Lead's layout measurements (or one section: windows, saloon, ramps, orbits, plunge, pops, jail, pan)
+npx tsx scripts/dust-gaps.ts         # Dust & Lead's clearances, in balls
 ```
 
 No game engine or runtime dependencies: TypeScript, Canvas 2D and Web Audio.
@@ -189,7 +207,8 @@ No game engine or runtime dependencies: TypeScript, Canvas 2D and Web Audio.
 src/
   engine/   physics (custom fixed-step pinball solver), dot-matrix display, synth audio, effects
   game/     game flow, scoring, input, modes (the heist / RAGE / Blackout)
-  game/tables/  per table: layout geometry, rules and art (psychosis-layout.ts, psychosis.ts, psychosis-art.ts)
+  game/tables/  per table: layout geometry, rules and art (psychosis-layout.ts, psychosis.ts, psychosis-art.ts;
+                dust-layout.ts, dust.ts, dust-art.ts), and registry.ts, the list of tables
 ```
 
 The physics runs at 480 Hz with layered collision so ramps can pass over the floor, and kinematic
@@ -199,7 +218,8 @@ perspective. Raised objects are depth-sorted against the ball, and the lighting 
 general illumination (which modes can dim or slowly pulse), insert lamps with lamp shows, and flashers.
 Nothing that lights or darkens a large part of the screen flashes more than 3 times a second.
 All art and sound is generated in code. The playfield's printed art can be replaced by a painted
-picture: put it at `public/art/playfield.png` and the game draws the rails, toys and lights on top.
+picture: put it at `public/art/playfield.png` (Dust & Lead's at `public/art/dust-and-lead/playfield.png`)
+and the game draws the rails, toys and lights on top.
 The drawing kit (a layered PSD with guides rendered from the game) and how to use it are in
 [`art/README.md`](art/README.md).
 

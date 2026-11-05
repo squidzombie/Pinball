@@ -3,11 +3,13 @@
 The second Squidzombie table, a western. Started 5 November 2026 from the owner's concept sketch,
 [`reference/dust-and-lead-sketch.webp`](../../reference/dust-and-lead-sketch.webp).
 
-Nothing is built yet. Order of work, as for Cyber Psychosis: layout rounds on a phone link until
+Layout round 2 is built and playable (no scoring yet). Order of work, as for Cyber Psychosis: layout rounds on a phone link until
 the owner approves one, then the rule sheet, then code, then the toys and lights, then the drawing
 kit for the owner's painted playfield.
 
-**Phone link:** https://claude.ai/artifact/DwDXUXjypRkmGgczSxHwK6 (layout round 1).
+**Phone links:**
+- Layout round 2, playable: https://claude.ai/artifact/JzoEhP414h7DFHdZ3hEWim
+- Layout round 1, the plan: https://claude.ai/artifact/DwDXUXjypRkmGgczSxHwK6
 
 ## Decisions
 
@@ -28,6 +30,135 @@ kit for the owner's painted playfield.
    (its slope, and the feedback that it looks plain).
 6. **"Too plain" applies here too.** The owner's feedback on Cyber Psychosis is that it's plain.
    This table is designed around moving toys and layered ramps from the first round.
+
+### 5 November 2026: round 1's questions
+
+The owner handed these to me ("you are welcome to make decisions on these things, be
+thoughtful"). Each answer and the reason for it:
+
+1. **The saloon flipper shoots the outlaw: Quick Draw.** High Noon gets a side window facing the
+   saloon, and the Sheriff and Hardware building takes the saloon flipper's other shots. Reasons:
+   the measurements say the saloon flipper's shots go to High Noon's side wall (49 of 133) and the
+   town building (74 of 133), not to the Gold Mine (0), and no rearrangement short of shrinking
+   High Noon (the centrepiece) gives it a fair lane to the mine. It also reads well: a gunfight
+   from the saloon across the street. The Gold Mine still loops into the saloon (ramp, elevator,
+   wire track, saloon flipper), so the "accessible, repeatable shot" from the sketch is kept.
+2. **The Stagecoach keeps the long route** up the right, across the back and down the left to the
+   left inlane, as sketched. It's the owner's signature toy, it gives the left flipper a ramp that
+   feeds itself (a combo loop), and it's raised for nearly all its length, so it costs no floor
+   space. The crowding is visual; the art round has to keep the mine corner readable.
+3. **The Gold Pan is the Gold Mine's reward.** Every Gold Mine ramp sends an ore cart up; the
+   third lights PAN FOR GOLD and the next mine shot drops into the pan. Keeping it on the mine
+   means each feature feeds one idea (the Railroad stays Train Robbery's).
+4. **The Railroad drop targets block the lane** until all three are down; the open lane is then a
+   shot worth making, and the targets reset once it's made. The right flipper's most reliable shot
+   (30 of 150) becomes a two-step goal, as on many classic machines.
+5. **The six Wanted posters are the six modes:** Bounty, Gold Rush, Train Robbery, Jailbreak and
+   Stampede, then High Noon as the finale. The rule sheet comes after the layout is approved.
+6. **The name is Dust & Lead,** from the sketch.
+7. **Colours start from Oxide** (rust brown and turquoise), set aside for this table in October.
+
+### 5 November 2026: layout round 2 (built; for review)
+
+The owner asked me to carry on and make the calls ("be thoughtful"). Each one, and why:
+
+1. **One app, a table picker on the start screen** (decision 3). `src/game/tables/registry.ts`
+   lists the tables; Cyber Psychosis is the default and is unchanged: 216 of 216 tests, every
+   deterministic measurement identical, a clean soak test. Each table keeps its own high score,
+   display colour (Dust & Lead's is Oxide turquoise), painted-art path and attract text.
+2. **The lower playfield keeps the proven flippers, slings and lane spacing, and adds outlane
+   guards.** "All new" (decision 4) applies to the look; the geometry under the flippers is
+   flipper feel and is measured, so I changed it only where a measurement said to. On a 6.5° table
+   a rebound keeps its sideways run, and balls rolling down the side walls dropped straight into
+   the outlanes. Measured without and with the guards: High Noon and drop target rebounds to an
+   outlane 17% and 2%; pop exits 3 of 12 and 0; saloon misses 8 of 12 and 0. A kickback or new
+   sling shapes are left as questions below.
+3. **The saloon is a hub behind two one-way doors.** The Railroad lane, the plunge and the Saloon
+   lane all come in over the top and can't go back out, so every ball that gets there drops onto
+   the saloon flipper. (Built with one post, as in round 1's plan, every plunge bounced back down
+   the shooter lane.) The Saloon lane and the shooter lane bend left at the top so balls are carried
+   round into the saloon; straight, they hit the flat top wall and came back down.
+4. **The saloon flipper is 75 long, with the lower flippers' pivot, and its guide ends over the
+   bat.** With a steep guide ending by the pivot (the saloon's wall leaves no room for the lower
+   flippers' 40° guides), a cradled ball balanced on the pivot and flips barely moved it.
+5. **Quick Draw is most of High Noon's right side** (90 tall), since it's the saloon flipper's
+   main target.
+6. **The Gold Mine and Stagecoach entrances sit on the flippers' measured shot lines** (the mine
+   on the right flipper's 99-100° shots, the Stagecoach on the left flipper's 72° line with a
+   funnel mouth). The Stagecoach's floor-level foot is short, so it doesn't push rebounds aside.
+7. **Gold Pan: three pins and three cups,** placed by measurement: Nuggets 52%, Riches 33%, Extra
+   Ball 15% over 100 drops, every gap wider than a ball.
+8. **Physics constants that depend on the slope:** plunge 1150-2400 units/s (Cyber Psychosis
+   1250-3300; half pull and up reach the saloon), auto-plunge 2150, ramp landing 600 (900 bounced
+   balls off the flipper's pivot), pop kick 700 (Cyber Psychosis 900; chosen, not measured
+   against 900). Flipper strength and the ramps' climb constant are unchanged.
+9. **The Railroad drop targets reset once the lane's been run** and nothing's in their way, and
+   every third Gold Mine trip turns the next one into the pan, so both can be seen working before
+   there are rules.
+
+## Layout round 2 (5 November 2026): playable
+
+The layout as real geometry and physics at 6.5°, drawn plainly in the Oxide colours: placeholder art
+until the owner approves the layout. The display names each shot as it's made. No scoring, modes or
+locks yet; the Jailhouse holds a ball for a second and lets it go.
+
+Code: `src/game/tables/dust-layout.ts` (geometry), `dust.ts` (physics and the toys' mechanisms),
+`dust-art.ts` (drawing). Tools: `scripts/dust-measure.ts`, `scripts/dust-gaps.ts`, and
+`TABLE=dust npm run sim`.
+
+### Measurements (the owner's bar, `HANDOFF.md` section 6)
+
+| Check | Target | Result |
+|---|---|---|
+| Stagecoach returns to its inlane | 11 of 12, 0 drains | **12 of 12** to the left flipper at 2400 and 3000 units/s; at 1800, 4 made and all 12 to a flipper |
+| Gold Mine round trip (lift, wire, saloon) | | **12 of 12**; with the saloon flipper left alone, 12 of 12 then reach a lower flipper |
+| Orbits reach the saloon | 11 of 12 | **12 of 12**, both lanes, at 1800, 2400 and 3000 |
+| Plunge | 12 of 12 from 50% to 100% | **12 of 12 from 30% to 100%**; under 30% it falls back to the plunger; never stuck |
+| Pops exit toward an outlane | at most 1 of 12 | **0 of 12** (about 11 pops a visit) |
+| Jailhouse kickout reaches a flipper | 10 of 12 | **12 of 12** |
+| Gold Pan exit reaches a flipper | | **24 of 24** (cups: 11 Nuggets, 9 Riches, 4 Extra Ball) |
+| Target rebounds | not down the middle | **0 down the middle**; 10 of 537 to an outlane (2%) |
+| Saloon misses (not flipped) | | **12 of 12** reach a lower flipper |
+| Bot play | 0 leaks, 0 stuck | **0 and 0** in 50 minutes (it found two: balls driving into the mine house, and slipping past the jail's catch; both fixed) |
+| Clearances | every gap listed in balls | every gap is wider than a ball (the tightest 1.07, the Gold Pan's middle cup) or closed; `scripts/dust-gaps.ts` |
+
+### Shot map
+
+Every flip timing 2 ms apart, from a cradled ball and from a ball rolling off the inlane, flipper
+let go after the stroke as a player does. Share of timings that make the shot (cradle / live):
+
+| Shot | Left flipper | Right flipper |
+|---|---|---|
+| Saloon lane | 19% / 1% | 7% / 0% |
+| Railroad lane (drops down) | 9% / 0% | 19% / 2% |
+| Railroad drop targets | 12% / 1% | 21% / 4% |
+| High Noon windows | 16% / 5% | 11% / 5% |
+| Stagecoach ramp | 9% / 6% | |
+| Gold Mine ramp | | 9% / 3% |
+| Jailhouse | 5% / 12% | 6% / 3% |
+| Sheriff and Hardware | 5% / 7% | 6% / 1% |
+
+Saloon flipper (ball from the wire): Quick Draw 12% / 12% of timings, High Noon 5% / 5%; a third of
+flips that send the ball away hit Quick Draw. Unflipped, the ball rolls off into the pops.
+
+Cyber Psychosis for comparison: Skyway 19% / 2%, Black Market 9% / 16%.
+
+### Compromises and questions for the owner
+
+1. **The flippers' favoured angles** (Cyber Psychosis's open question, `AUDIT.md` section 1) shape
+   this table too: the left flipper's 70° shots go to the pops rather than the Stagecoach, which
+   tops out at 9%. Widening its mouth further didn't help. If you decide to smooth the flippers'
+   aim, the shot map changes and I'd re-aim.
+2. **Live shots are harder than cradled ones,** most of all the orbits (Saloon lane 1% live). At
+   6.5° a ball off the inlane is slow and the timing window is short. Worth feeling on the phone.
+3. **How far to take "all new" under the flippers:** a kickback in the left outlane (with the
+   Stagecoach feeding the left inlane, it would suit), or new sling shapes, are options. Today it's
+   the proven geometry plus the guards.
+4. **The Stagecoach wants a firm shot** (about 1850 units/s at its mouth). Short shots roll back
+   down to the left flipper (11 of 12 at 1800), so a miss isn't punished.
+5. **Pop strength** is 700 against Cyber Psychosis's 900, my guess for a gentler table.
+6. **The art is a placeholder.** After the layout's approved: the rule sheet, then the toys and
+   lights in code and the drawing kit for your painted playfield.
 
 ## Layout round 1 (5 November 2026): the sketch to scale
 

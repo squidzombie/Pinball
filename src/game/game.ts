@@ -2,15 +2,14 @@ import { STEP, type Ball } from '../engine/physics';
 import { sound } from '../engine/audio';
 import { DMD } from '../engine/dmd';
 import { FX } from '../engine/fx';
-import { Psychosis } from './tables/psychosis';
+import { tableDef, type TableDef } from './tables/registry';
 import { fmt, short } from './format';
-import { TABLE_H, TABLE_W } from './tables/table';
+import { TABLE_H, TABLE_W, type Table } from './tables/table';
 
 export type GameState = 'attract' | 'play' | 'bonus' | 'over';
 
 const BALLS_PER_GAME = 3;
 const BALL_SAVE_SECONDS = 12;
-const HS_KEY = 'sz-pinball.cyber-psychosis.high';
 
 interface Message {
   l1: string;
@@ -23,7 +22,8 @@ interface Message {
 export class Game {
   fx = new FX();
   dmd = new DMD();
-  main: Psychosis;
+  main!: Table;
+  def!: TableDef;
   state: GameState = 'attract';
   paused = false;
 
@@ -58,12 +58,22 @@ export class Game {
   private newHigh = false;
   time = 0;
 
-  constructor() {
-    this.main = new Psychosis(this);
+  /** `table` is a table id from the registry; Cyber Psychosis if left out. */
+  constructor(table?: string) {
+    this.setTable(table);
+  }
+
+  /** Build a table from the registry (between games only). */
+  setTable(id?: string) {
+    if (this.main && this.state !== 'attract' && this.state !== 'over') return;
+    this.def = tableDef(id);
+    this.main = this.def.build(this);
     this.main.attract = true;
-    this.dmd.color = [255, 52, 36];
+    this.state = 'attract';
+    this.lastScore = 0;
+    this.dmd.color = this.def.dmdColor;
     try {
-      this.highScore = Number(localStorage.getItem(HS_KEY)) || 0;
+      this.highScore = Number(localStorage.getItem(this.def.highScoreKey)) || 0;
     } catch {
       this.highScore = 0;
     }
@@ -200,7 +210,7 @@ export class Game {
     this.main.resetForGame();
     this.fx.particles = [];
     this.startBall();
-    this.show('CYBER PSYCHOSIS', 'BALL 1', 2);
+    this.show(this.def.title, 'BALL 1', 2);
   }
 
   private startBall() {
@@ -223,7 +233,7 @@ export class Game {
     let fired = false;
     for (const b of this.main.world.balls) {
       if (this.main.inShooterLane(b) && b.y > 1100 && b.speed < 80) {
-        b.vy = -(1250 + pull * 2050);
+        b.vy = -this.main.plungeSpeed(pull);
         b.vx = 0;
         fired = true;
       }
@@ -306,7 +316,7 @@ export class Game {
       this.highScore = this.score;
       this.newHigh = true;
       try {
-        localStorage.setItem(HS_KEY, String(this.score));
+        localStorage.setItem(this.def.highScoreKey, String(this.score));
       } catch {
         /* storage unavailable */
       }
@@ -397,7 +407,7 @@ export class Game {
     for (const a of this.autoLaunch) {
       a.t -= dt;
       if (a.t <= 0) {
-        a.ball.vy = -3150;
+        a.ball.vy = -this.main.autoLaunchSpeed;
         sound.launch(0.9);
       }
     }
@@ -469,15 +479,16 @@ export class Game {
     if (this.state === 'attract') {
       const page = Math.floor(this.time / 3) % (this.lastScore ? 5 : 4);
       if (page === 0) {
-        d.fitText('CYBER PSYCHOSIS', 64, 3, 126, 2, { align: 'center' });
+        d.fitText(this.def.title, 64, 3, 126, 2, { align: 'center' });
         d.text('SQUIDZOMBIE PINBALL', 64, 22, { align: 'center', level: 2 });
       } else if (page === 1) {
         d.fitText('PRESS START', 64, 3, 126, 2, { align: 'center' });
         d.text('TAP OR PRESS ENTER', 64, 22, { align: 'center', level: 2 });
       } else if (page === 2) {
-        d.text('SPELL B-R-E-A-C-H', 64, 4, { align: 'center', level: 3 });
-        d.text('RUN THE HEIST TO', 64, 14, { align: 'center', level: 2 });
-        d.text('BLACKOUT', 64, 23, { align: 'center', level: 3 });
+        const [h1, h2, h3] = this.def.attractHint;
+        d.text(h1, 64, 4, { align: 'center', level: 3 });
+        d.text(h2, 64, 14, { align: 'center', level: 2 });
+        d.text(h3, 64, 23, { align: 'center', level: 3 });
       } else if (page === 3) {
         d.text('HIGH SCORE', 64, 2, { align: 'center', level: 2 });
         d.fitText(fmt(this.highScore), 64, 13, 124, 2, { align: 'center' });

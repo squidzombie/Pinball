@@ -1,16 +1,19 @@
 // Headless soak test: a bot plays the table and we watch for physics leaks
 // (balls escaping or ending up inside solid structures) and stuck balls.
-// Usage: npm run sim [-- seconds]; SLOPE=9 npm run sim plays on a gentler table.
+// Usage: npm run sim [-- seconds]; SLOPE=9 npm run sim plays on a gentler table;
+// TABLE=dust npm run sim plays Dust & Lead.
 import { Game } from '../src/game/game';
 import { FLOOR, gravityAt } from '../src/engine/physics';
 import type { Table } from '../src/game/tables/table';
 import * as L from '../src/game/tables/psychosis-layout';
+import * as D from '../src/game/tables/dust-layout';
 import type { P } from '../src/game/tables/geom';
 
 const SECONDS = Number(process.argv[2] ?? 600);
 const DT = 1 / 60;
 
-const g = new Game();
+const TABLE = process.env.TABLE ?? 'psychosis';
+const g = new Game(TABLE);
 if (process.env.SLOPE) g.main.world.gravity = gravityAt(Number(process.env.SLOPE));
 const anyG = g as unknown as Record<string, (...a: unknown[]) => void>;
 const stats: Record<string, number> = {};
@@ -49,13 +52,29 @@ const depth = (p: P, poly: P[]) => {
   return d;
 };
 // the sealed outline goes round the Reactor's funnel: with the drops down a ball may run up to the captive ball
-const SOLIDS: [string, P[]][] = [
-  ['sealed', L.SEALED],
-  ['sealed nest', L.SEALED_NEST],
-  ['behind skyway', L.BEHIND_SKYWAY],
-  ['tumbler block', L.TUMBLER_BLOCK],
-  ...L.RAMPS.map((r) => [`${r.id}-foot`, [...r.walls.left.slice(0, r.baseTo + 1), ...r.walls.right.slice(0, r.baseTo + 1).reverse()]] as [string, P[]]),
+const box = (x0: number, y0: number, x1: number, y1: number): P[] => [
+  [x0, y0],
+  [x1, y0],
+  [x1, y1],
+  [x0, y1],
 ];
+const SOLIDS: [string, P[]][] =
+  TABLE === 'dust'
+    ? [
+        ['high noon', box(D.NOON.x0, D.NOON.y0, D.NOON.x1, D.NOON.y1)],
+        ['town', D.TOWN],
+        ['mine house', box(D.MINE_HOUSE.x0, D.MINE_HOUSE.y0, D.MINE_HOUSE.x1, D.MINE_HOUSE.y1)],
+        // the jail's back half: a ball sits in the hole, never behind it
+        ['jail', [D.JAIL_WALLS[1], D.JAIL_WALLS[2], D.along(D.JAIL_WALLS[2], D.JAIL_WALLS[3], 0.3), D.along(D.JAIL_WALLS[1], D.JAIL_WALLS[0], 0.3)]],
+        ...D.RAMPS.map((r) => [`${r.id}-foot`, [...r.walls.left.slice(0, r.baseTo + 1), ...r.walls.right.slice(0, r.baseTo + 1).reverse()]] as [string, P[]]),
+      ]
+    : [
+        ['sealed', L.SEALED],
+        ['sealed nest', L.SEALED_NEST],
+        ['behind skyway', L.BEHIND_SKYWAY],
+        ['tumbler block', L.TUMBLER_BLOCK],
+        ...L.RAMPS.map((r) => [`${r.id}-foot`, [...r.walls.left.slice(0, r.baseTo + 1), ...r.walls.right.slice(0, r.baseTo + 1).reverse()]] as [string, P[]]),
+      ];
 const inSolid = (p: P) => SOLIDS.find(([, poly]) => inside(p, poly) && depth(p, poly) > 6);
 
 const held = new Map<object, number>();

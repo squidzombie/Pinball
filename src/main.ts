@@ -4,6 +4,7 @@ import { bindInput } from './game/input';
 import { sound } from './engine/audio';
 import { SLOPE, gravityAt } from './engine/physics';
 import { TABLE_H, TABLE_W, Table } from './game/tables/table';
+import { tableDef } from './game/tables/registry';
 import './style.css';
 
 // The playfield canvas is tilted away from the player with a CSS 3D transform,
@@ -37,21 +38,35 @@ document.getElementById('manual')?.addEventListener('click', (e) => {
 
 const tctx = tableCanvas.getContext('2d', { alpha: false })!;
 const dctx = dmdCanvas.getContext('2d', { alpha: false })!;
-const game = new Game();
-
 const params = new URLSearchParams(location.search);
 
-// Painted playfield art (art/README.md): public/art/playfield.png (or .jpg) replaces the code's own
-// floor art when the build has one. On a computer, drop a picture on the game to try it without
-// rebuilding; ?noart shows the code's own art for comparison.
-if (!params.has('noart')) {
-  const painted = new Image();
-  painted.onload = () => game.main.setFloorArt(painted);
-  painted.onerror = () => {
-    if (painted.src.endsWith('.png')) painted.src = 'art/playfield.jpg';
-  };
-  painted.src = 'art/playfield.png';
+// The table: ?table=dust picks one for a link; otherwise the last one played on this device.
+const TABLE_KEY = 'table';
+let savedTable: string | null = null;
+try {
+  savedTable = localStorage.getItem(TABLE_KEY);
+} catch {
+  // no storage (private window): the default table
 }
+// A build can open on another table (VITE_TABLE=dust for Dust & Lead's phone link).
+const game = new Game(tableDef(params.get('table') ?? savedTable ?? import.meta.env.VITE_TABLE).id);
+
+// Painted playfield art (art/README.md): each table's <artPath>.png (or .jpg) under public/ replaces
+// the code's own floor art when the build has one. On a computer, drop a picture on the game to try
+// it without rebuilding; ?noart shows the code's own art for comparison.
+function loadArt() {
+  if (params.has('noart')) return;
+  const def = game.def;
+  const painted = new Image();
+  painted.onload = () => {
+    if (game.def === def) game.main.setFloorArt(painted);
+  };
+  painted.onerror = () => {
+    if (painted.src.endsWith('.png')) painted.src = `${def.artPath}.jpg`;
+  };
+  painted.src = `${def.artPath}.png`;
+}
+loadArt();
 window.addEventListener('dragover', (e) => e.preventDefault());
 window.addEventListener('drop', (e) => {
   e.preventDefault();
@@ -166,7 +181,7 @@ const trialSlope = Number(import.meta.env.VITE_SLOPE);
 let slope = SLOPE;
 function setSlope(deg: number) {
   slope = deg;
-  game.main.world.gravity = gravityAt(deg);
+  if (game.def.id === 'psychosis') game.main.world.gravity = gravityAt(deg);
   if (slopeBtn) slopeBtn.textContent = `${deg}°`;
 }
 if (SLOPES.includes(trialSlope)) {
@@ -189,6 +204,32 @@ if (SLOPES.includes(trialSlope)) {
     }
   });
 } else slopeBtn?.remove();
+
+// The start screen's table picker.
+const pickers = [...document.querySelectorAll<HTMLButtonElement>('[data-pick]')];
+function showTable() {
+  const def = game.def;
+  document.documentElement.dataset.table = def.id;
+  document.title = `${def.title.replace(/\w\S*/g, (w) => w[0] + w.slice(1).toLowerCase())} · Squidzombie Pinball`;
+  for (const b of pickers) b.setAttribute('aria-pressed', String(b.dataset.pick === def.id));
+  // the slope trial is for Cyber Psychosis; other tables play at their own slope
+  if (slopeBtn) slopeBtn.hidden = def.id !== 'psychosis';
+  if (def.id === 'psychosis' && SLOPES.includes(trialSlope)) setSlope(slope);
+}
+for (const b of pickers) {
+  b.addEventListener('click', () => {
+    if (game.state !== 'attract' || b.dataset.pick === game.def.id) return;
+    game.setTable(b.dataset.pick);
+    try {
+      localStorage.setItem(TABLE_KEY, game.def.id);
+    } catch {
+      // not remembered, but still applied
+    }
+    loadArt();
+    showTable();
+  });
+}
+showTable();
 
 let overlayMode = '';
 function updateOverlay() {

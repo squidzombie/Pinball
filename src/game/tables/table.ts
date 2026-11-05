@@ -1,5 +1,6 @@
 import { Ball, FLOOR, RAMP, RAMP2, World, type Flipper } from '../../engine/physics';
 import type { Game } from '../game';
+import type { DMD } from '../../engine/dmd';
 import {
   art,
   drawBall,
@@ -79,6 +80,37 @@ export abstract class Table {
   floorArt: CanvasImageSource | null = null;
 
   constructor(public readonly game: Game) {}
+
+  // ---------------------------------------------------------------- what Game asks of every table
+
+  /** 0..1 while the player holds the plunger (the table draws the spring). */
+  plungerPull = 0;
+  /** The multiball running, if any (its name), or null. */
+  abstract multiball: string | null;
+  /** Balls already on their way out of a lock, counted as in play. */
+  abstract get releasing(): number;
+  abstract resetForGame(): void;
+  abstract resetForBall(): void;
+  /** A ball has just been served to the shooter lane. */
+  abstract armSkillShot(): void;
+  abstract onPlunge(): void;
+  abstract onFlipperPress(side: -1 | 1): void;
+  /** The last ball drained (not a tilt). */
+  abstract ballLost(): void;
+  /** A ball is held in a scoop or lock, so the ball save waits. */
+  abstract ballHeld(): boolean;
+  abstract endModes(quiet?: boolean): void;
+  abstract endMultiball(): void;
+  /** Start this ball's music. */
+  abstract music(): void;
+  /** The display during play. */
+  abstract drawDMD(d: DMD): void;
+  /** Launch speed for a plunge at `pull` (0..1), units/s up the lane. */
+  plungeSpeed(pull: number) {
+    return 1250 + pull * 2050;
+  }
+  /** Launch speed of the auto-plunger (ball saves, multiballs). */
+  autoLaunchSpeed = 3150;
 
   /** Static floor art (rendered once into a cache). Call drawInserts() where the inserts belong. */
   protected abstract drawStatic(ctx: CanvasRenderingContext2D): void;

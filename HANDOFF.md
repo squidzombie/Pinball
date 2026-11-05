@@ -3,6 +3,12 @@
 Written 5 November 2026 by the session that built Cyber Psychosis, for the session that builds
 the next table. Read this first, then `README.md`, then skim `DESIGN.md` and `AUDIT.md`.
 
+> **Update, 5 November 2026 (later the same day):** the next table is under way. It's **Dust &
+> Lead**, the western, on the branch `claude/modest-hawking-6xsi3e` (built on this one). Section 0's
+> four questions are answered and section 4's refactor is done (a table picker; Cyber Psychosis
+> unchanged). Its layout round 2 is playable and waiting for the owner's review. Everything about it
+> is in [`docs/dust-and-lead/DESIGN.md`](docs/dust-and-lead/DESIGN.md).
+
 If "the next table build" turns out to mean the next build of Cyber Psychosis rather than a new
 table, everything here still applies except section 12; section 10 lists that table's open
 threads.
