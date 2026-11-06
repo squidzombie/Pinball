@@ -8,7 +8,8 @@ import type { DMD } from '../../engine/dmd';
 import type { Game } from '../game';
 import { buildLowerSection, poly, type LowerSection, type P } from './geom';
 import * as L from './dust-layout';
-import { paintDynamic, paintRamps, paintStatic, paintTop, type DustView } from './dust-art';
+import { POSTER_COLORS, POSTER_NAMES, POSTER_SPOTS, paintDynamic, paintFloor, paintRamps, paintTop, spriteList, type DustView } from './dust-art';
+import type { Lamp, LampState } from './draw';
 import { Table, type Sprite } from './table';
 
 export const DUST_SLOPE = 6.5;
@@ -31,6 +32,9 @@ export const SHOT_NAME: Record<DustShot, string> = {
   stage: 'STAGECOACH',
   saloon: 'SALOON',
 };
+
+/** Which shots each Wanted poster's mode will use (a preview until the rule sheet). */
+const WANTED_SHOTS: DustShot[][] = [['jail', 'noon'], ['mine', 'pan'], ['railroad', 'saloon'], ['jail', 'railroad'], ['stage', 'saloon'], ['noon', 'mine', 'stage']];
 
 interface Drop {
   seg: Segment;
@@ -81,6 +85,11 @@ export class DustAndLead extends Table implements DustView {
   }
   /** What was made last, for the display. */
   private last: { name: string; t: number } | null = null;
+  /** When each shot was last made (its arrow flashes), and how many this ball (the reward ladder). */
+  private madeAt: Partial<Record<DustShot, number>> = {};
+  private madeThisBall = 0;
+  /** 0..1: the stagecoach toy rocks after a ramp. */
+  coachRock = 0;
   private counts: Partial<Record<DustShot, number>> = {};
   /** Balls just let out of the jail, ignored by its hole for a moment. */
   private jailIgnore = new Map<number, number>();
@@ -234,6 +243,84 @@ export class DustAndLead extends Table implements DustView {
 
     w.force = (b, dt) => this.rampForce(b, dt);
     this.shooter = { ...L.SHOOTER };
+
+    this.flashers = [
+      { x: 140, y: 100, r: 6, z: 50, z0: 36, color: '#ff3b2a', level: 0 }, // the mine house
+      { x: 349, y: 96, r: 6, z: 58, z0: 40, color: '#ffd23f', level: 0 }, // High Noon's roof
+      { x: 478, y: 70, r: 6, z: 46, color: '#ff3b2a', level: 0 }, // the saloon
+      { x: 192, y: 650, r: 5, z: 34, z0: 26, color: '#ff3b2a', level: 0 }, // the jail
+      { x: 490, y: 540, r: 6, z: 62, z0: 48, color: '#3fffe5', level: 0 }, // the stagecoach's shelf
+    ];
+    this.buildLamps();
+  }
+
+  // ---------------------------------------------------------------- inserts (no rules yet: they show what the table is doing)
+
+  private buildLamps() {
+    const lamp = (l: Lamp) => this.lamps.push(l);
+    const dirAngle = (d: P) => Math.atan2(d[0], -d[1]);
+    const unit = (v: P): P => {
+      const l = Math.hypot(v[0], v[1]) || 1;
+      return [v[0] / l, v[1] / l];
+    };
+    const flashing = (s: DustShot) => this.time - (this.madeAt[s] ?? -9) < 1.2;
+    /** An arrow pointing at the shot, a jackpot light behind it and a Wanted light behind that, in the shot's colour. */
+    const stack = (s: DustShot, mouth: P, from: P, color: string, label: string, gaps: number[], base: () => LampState) => {
+      const d = unit([mouth[0] - from[0], mouth[1] - from[1]]);
+      const at = (k: number): P => [mouth[0] - d[0] * gaps[k], mouth[1] - d[1] * gaps[k]];
+      const [a, j, m] = [at(0), at(1), at(2)];
+      lamp({ id: `arrow:${s}`, kind: 'arrow', x: a[0], y: a[1], w: 26, h: 34, angle: dirAngle(d), color, label, labelSize: 6.5, labelTurns: true, state: () => (flashing(s) ? 3 : base()) });
+      lamp({ id: `jackpot:${s}`, kind: 'circle', x: j[0], y: j[1], w: 16, color: '#ff3b2a', label: 'JP', labelSize: 6.5, state: () => (flashing(s) ? 3 : 0) });
+      if (gaps[2] !== undefined)
+        lamp({ id: `wanted:${s}`, kind: 'star', x: m[0], y: m[1], w: 18, color: '#fff3d6', tint: () => POSTER_COLORS[this.featured()], state: () => (WANTED_SHOTS[this.featured()].includes(s) ? 2 : 0) });
+    };
+    const RF: P = [346, 1040];
+    const LF: P = [240, 1061];
+    stack('railroad', L.along(L.RR_MOUTH[0], L.RR_MOUTH[1], 0.5), RF, '#3fffe5', 'RAIL', [44, 70, 94], () => (this.drops.every((d) => d.down) ? 2 : 0));
+    stack('mine', L.MINE.path[0], RF, '#ffc21a', 'MINE', [48, 74, 98], () => (this.panLit ? 2 : 1));
+    stack('jail', L.along(L.JAIL_MOUTH[0], L.JAIL_MOUTH[1], 0.5), [L.JAIL_HOLE[0] + L.JAIL_AXIS[0] * 200, L.JAIL_HOLE[1] + L.JAIL_AXIS[1] * 200], '#ff8a1f', 'JAIL', [36, 60], () => 1);
+    stack('noon', [277.5, 214], [277.5, 1000], '#fff3d6', 'NOON', [70, 96, 120], () => 1);
+    stack('stage', L.STAGE.path[0], LF, '#c066ff', 'STAGE', [46, 72, 96], () => 1);
+    stack('saloon', L.along(L.SALOON_MOUTH[0], L.SALOON_MOUTH[1], 0.5), LF, '#ff3b2a', 'SALOON', [44, 70, 94], () => 1);
+    lamp({ id: 'target:hardware', kind: 'circle', x: 316, y: 350, w: 14, color: '#3fffe5', label: 'H', labelSize: 7, state: () => (this.targetFlash[4] > 0 ? 3 : 1) });
+    lamp({ id: 'target:sheriff', kind: 'circle', x: 347, y: 416, w: 14, color: '#3fffe5', label: 'S', labelSize: 7, state: () => (this.targetFlash[5] > 0 ? 3 : 1) });
+    // ore carts toward the Gold Pan, and the pan itself
+    [0, 1, 2].forEach((i) =>
+      lamp({ id: `ore:${i + 1}`, kind: 'circle', x: 190 - i * 9, y: 368 + i * 22, w: 13, color: '#ffc21a', label: String(i + 1), labelSize: 7, state: () => (this.oreCarts > i ? 1 : 0) }),
+    );
+    lamp({ id: 'pan', kind: 'rect', x: 205, y: 452, w: 30, h: 13, color: '#ffc21a', label: 'PAN', labelSize: 7.5, state: () => (this.panLit ? 3 : 0) });
+    lamp({ id: 'train', kind: 'rect', x: 41, y: 520, w: 30, h: 13, angle: -Math.PI / 2, color: '#3fffe5', label: 'TRAIN', labelSize: 7, labelTurns: true, state: () => (this.drops.every((d) => d.down) ? 2 : 0) });
+    // the reward ladder up Main Street: a sheriff's star for every three shots made this ball
+    ['2X', '3X', '4X', '5X', '6X'].forEach((t, i) =>
+      lamp({ id: `reward:${t}`, kind: 'star', x: 278.5, y: 564 - i * 40, w: 30, color: '#ffc21a', label: t, labelSize: 7, state: () => (this.madeThisBall >= (i + 1) * 3 ? 1 : this.madeThisBall >= i * 3 ? 2 : 0) }),
+    );
+    // the six Wanted posters: one at a time comes up wanted (a preview of the modes to come)
+    POSTER_SPOTS.forEach(([x, y], i) =>
+      lamp({ id: `poster:${i}`, kind: 'rect', x, y: y + 4, w: 26, h: 28, color: POSTER_COLORS[i], label: POSTER_NAMES[i], labelSize: 4.6, state: () => (this.featured() === i ? 2 : 0) }),
+    );
+    // lanes: inlane arrows, outlane SPECIAL lights, the skill shot and Shoot Again
+    for (const m of [1, -1]) {
+      lamp({ id: `inlane:${m}`, kind: 'arrow', x: L.CX - m * 183.5, y: 915, w: 16, h: 22, angle: Math.PI, color: '#3fffe5', state: () => 1 });
+      lamp({ id: `outlane:${m}`, kind: 'rect', x: L.CX - m * 230, y: 935, w: 13, h: 34, color: '#ff3b2a', label: 'SPECIAL', labelSize: 5, state: () => 0 });
+    }
+    lamp({ id: 'skill', kind: 'arrow', x: L.SHOOTER.x, y: 1110, w: 22, h: 30, color: '#ffc21a', state: () => (this.world.balls.some((b) => this.inShooterLane(b)) ? 3 : 0) });
+    lamp({ id: 'shoot-again', kind: 'shield', x: L.CX, y: 1148, w: 46, h: 30, color: '#ff3b2a', label: 'SHOOT AGAIN', labelSize: 5.5, state: () => (this.game.ballSave > 0 ? 2 : 0) });
+  }
+
+  /** The Wanted poster lit up (the modes come with the rule sheet; for now they take turns). */
+  featured() {
+    return Math.floor(this.time / 8) % 6;
+  }
+
+  /** Where the minecart is: under a riding ball, rolling back down, or waiting at the bottom. */
+  cart() {
+    const rest = { x: L.LIFT.from[0], y: L.LIFT.from[1], z: L.LIFT.z0, busy: false };
+    const tr = this.trips.find((t) => t.kind === 'mine');
+    if (!tr) return rest;
+    if (tr.t < MINE_LIFT_S) return { x: tr.b.x, y: tr.b.y, z: tr.b.tags.tripZ ?? L.LIFT.z0, busy: true };
+    const u = Math.min(1, (tr.t - MINE_LIFT_S) / 0.8);
+    const p = L.along(L.LIFT.to, L.LIFT.from, u);
+    return { x: p[0], y: p[1], z: L.LIFT.z1 + (L.LIFT.z0 - L.LIFT.z1) * u, busy: u < 1 };
   }
 
   /** At 6.5° a soft pull still drops back to the plunger; half pull and up reach the saloon. */
@@ -245,6 +332,11 @@ export class DustAndLead extends Table implements DustView {
 
   private made(s: DustShot) {
     this.counts[s] = (this.counts[s] ?? 0) + 1;
+    this.madeAt[s] = this.time;
+    this.madeThisBall++;
+    const fl: Record<DustShot, number> = { mine: 0, pan: 0, noon: 1, quickdraw: 1, hardware: 1, sheriff: 1, saloon: 2, railroad: 2, jail: 3, stage: 4 };
+    this.flash(fl[s], 1);
+    if (s === 'stage') this.coachRock = 1;
     if (s === 'stage' || s === 'mine') sound.ramp();
     else if (s === 'railroad' || s === 'saloon') sound.orbit();
     else if (s === 'jail') sound.scoop();
@@ -451,6 +543,7 @@ export class DustAndLead extends Table implements DustView {
     this.updateTrips(dt);
     this.resetDropsWhenClear();
     this.doorsSwing = Math.max(0, this.doorsSwing - dt * 1.6);
+    this.coachRock = Math.max(0, this.coachRock - dt * 0.8);
     for (let i = 0; i < this.bumperFlash.length; i++) this.bumperFlash[i] = Math.max(0, this.bumperFlash[i] - dt * 4);
     for (let i = 0; i < this.targetFlash.length; i++) this.targetFlash[i] = Math.max(0, this.targetFlash[i] - dt * 2);
     for (let i = 0; i < 3; i++) this.cupFlash[i] = Math.max(0, this.cupFlash[i] - dt * 1.2);
@@ -483,6 +576,7 @@ export class DustAndLead extends Table implements DustView {
     }
   }
   resetForBall() {
+    this.madeThisBall = 0;
     this.trips = [];
   }
   armSkillShot() {}
@@ -513,20 +607,19 @@ export class DustAndLead extends Table implements DustView {
 
   protected override drawStatic(ctx: CanvasRenderingContext2D) {
     if (this.floorArt) ctx.drawImage(this.floorArt, 0, 0, 600, 1200);
-    paintStatic(ctx, !this.floorArt);
-    this.drawInserts(ctx);
+    paintFloor(ctx, () => this.drawInserts(ctx), !this.floorArt);
   }
   protected override drawRamps(ctx: CanvasRenderingContext2D) {
-    paintRamps(ctx);
+    paintRamps(ctx, () => this.drawFlasherDomes(ctx));
     return true;
   }
   protected override drawDynamic(ctx: CanvasRenderingContext2D) {
     paintDynamic(ctx, this);
   }
   protected override sprites(out: Sprite[]) {
-    out.push({ y: L.NOON.y1, draw: (c) => paintTop(c, this, 'noon') });
+    spriteList(this, out);
   }
   protected override drawTop(ctx: CanvasRenderingContext2D) {
-    paintTop(ctx, this, 'top');
+    paintTop(ctx, this);
   }
 }

@@ -8,7 +8,7 @@ the owner approves one, then the rule sheet, then code, then the toys and lights
 kit for the owner's painted playfield.
 
 **Phone links:**
-- Layout round 2, playable: https://claude.ai/artifact/JzoEhP414h7DFHdZ3hEWim
+- Art round 1 (and layout round 2), playable: https://claude.ai/artifact/JzoEhP414h7DFHdZ3hEWim
 - Layout round 1, the plan: https://claude.ai/artifact/DwDXUXjypRkmGgczSxHwK6
 
 ## Decisions
@@ -57,6 +57,36 @@ thoughtful"). Each answer and the reason for it:
    Stampede, then High Noon as the finale. The rule sheet comes after the layout is approved.
 6. **The name is Dust & Lead,** from the sketch.
 7. **Colours start from Oxide** (rust brown and turquoise), set aside for this table in October.
+
+### 6 November 2026: art round 1 (built; for review)
+
+The owner played round 2: the feel and speed are right ("great"), the board is "soooo boring", with
+three real machines as the bar (Walking Dead, Big Guns, Aerosmith). Two answers from the owner:
+**I design the printed playfield too** (in code; a painting can still replace it with the kit), in a
+**bold cartoon western** look: saturated sunset colours under heavy ink lines.
+
+Built in `dust-art.ts`, with no change to the physics (measurements and soak test unchanged):
+
+- **Printed playfield:** a sunset sky with a striped sun going down behind High Noon, red mesas,
+  sun rays fanning across the desert from the logo, a dirt Main Street between boardwalks, a
+  turquoise river from the mine into the Gold Pan's pool, the railroad bed with a locomotive, cacti
+  and a longhorn skull, turquoise inlanes and red outlanes, and the logo on a plank over crossed
+  revolvers. Apron cards with the table's story.
+- **About 50 inserts:** at every shot an arrow in the shot's colour, a jackpot light and a Wanted
+  star; a reward ladder of sheriff's stars up Main Street (2X to 6X); six Wanted posters above the
+  logo; ore-cart and PAN lights; TRAIN; Hardware and Sheriff; inlane arrows, outlane SPECIALs,
+  the skill shot and Shoot Again. Until the rule sheet they show what the table is doing: an arrow
+  flashes when its shot is made, the Railroad lights blink while the lane is open, the ore carts
+  count up, the ladder climbs a star for every three shots made in a ball, Shoot Again shows the
+  ball save, and the Wanted posters take turns (a preview of the modes).
+- **Toys:** High Noon as a false-front building with a clock and porch, the outlaw in its windows;
+  the Gold Mine's timber mouth and headframe, its wheel turning while a minecart carries the ball
+  up; a brick jail with a barred roof (a held ball shows through the bars); the Sheriff's office
+  with its star; a stagecoach on a plastic shelf that rocks after a ramp; red-capped barrel pops;
+  a SALOON sign with chasing bulbs; swinging saloon doors.
+- **Ramps and light:** the Stagecoach as a chrome wireform, the Gold Mine as a timber trestle, the
+  wire track in chrome; five flashers (mine, High Noon, saloon, jail, stagecoach) that fire on their
+  shots; warm general illumination under the rails and plastics; painted sling plastics.
 
 ### 5 November 2026: layout round 2 (built; for review)
 
