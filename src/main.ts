@@ -158,9 +158,9 @@ speedBtn?.addEventListener('click', () => {
   }
 });
 
-// Table slope, for feeling a gentler table: a build made with VITE_SLOPE=9 starts there and shows a
-// button for 16 degrees (as tuned), 12, 9 or a real table's 6.5, remembered on this device. The
-// shots are aimed for 16: gentler, they fly straighter and some miss. Other builds play at 16.
+// Table slope, for feeling a gentler table: a build made with VITE_SLOPE=6.5 always starts there and
+// shows a button for 16 degrees (as tuned), 12, 9 or a real table's 6.5. The shots are aimed for 16:
+// gentler, they fly straighter and some miss. Other builds play at 16.
 const SLOPES = [SLOPE, 12, 9, 6.5];
 const trialSlope = Number(import.meta.env.VITE_SLOPE);
 let slope = SLOPE;
@@ -171,23 +171,8 @@ function setSlope(deg: number) {
 }
 if (SLOPES.includes(trialSlope)) {
   document.documentElement.classList.add('slope');
-  let start = trialSlope;
-  try {
-    const saved = Number(localStorage.getItem('pitch'));
-    if (SLOPES.includes(saved)) start = saved;
-  } catch {
-    // no storage (private window): the build's slope
-  }
-  setSlope(start);
-  slopeBtn?.addEventListener('click', () => {
-    const next = SLOPES[(SLOPES.indexOf(slope) + 1) % SLOPES.length];
-    setSlope(next);
-    try {
-      localStorage.setItem('pitch', String(next));
-    } catch {
-      // not remembered, but still applied
-    }
-  });
+  setSlope(trialSlope);
+  slopeBtn?.addEventListener('click', () => setSlope(SLOPES[(SLOPES.indexOf(slope) + 1) % SLOPES.length]));
 } else slopeBtn?.remove();
 
 let overlayMode = '';

@@ -7,7 +7,7 @@
 // steps from the nearest real launch. "Arrives" means where the ball reaches the flipper line
 // (y 1040): on a flipper, between the flipper tips (centre drain), or down an outlane.
 import { Game } from '../src/game/game';
-import { FLOOR, gravityAt, type Ball, type Flipper } from '../src/engine/physics';
+import { FLOOR, GRAVITY, gravityAt, type Ball, type Flipper } from '../src/engine/physics';
 import * as L from '../src/game/tables/psychosis-layout';
 import { measureGaps } from './gaps';
 
@@ -16,6 +16,8 @@ const only = process.argv[2];
 const want = (s: string) => !only || only === s;
 const g = new Game();
 if (process.env.SLOPE) g.main.world.gravity = gravityAt(Number(process.env.SLOPE));
+/** Timings and time limits stretch on a gentler table: the ball covers the same ground in 1/sqrt(pull) the time. */
+const T = Math.sqrt(GRAVITY / g.main.world.gravity);
 (g as any).startGame();
 const m = g.main as any;
 const w = m.world;
@@ -91,7 +93,7 @@ function batDist(b: Ball, f: Flipper) {
 }
 /** Follow a ball until it reaches a flipper, drains between them, or goes down an outlane. */
 function arrive(b: Ball, max = 10): string {
-  for (let t = 0; t < max; t += DT) {
+  for (let t = 0; t < max * T; t += DT) {
     step(b);
     if (ev.includes('L-OUT') || ev.includes('R-OUT')) return 'OUTLANE';
     if (b.layer === FLOOR && !b.captured && b.y > 950) {
@@ -129,7 +131,7 @@ const SHOTS = ['alley', 'breach', 'market', 'skyway', 'reactor', 'upper'];
 /** The first shot made, else the first target or the first wall the ball meets. */
 function follow(b: Ball, max = 3): string {
   let firstHit = '';
-  for (let t = 0; t < max; t += DT) {
+  for (let t = 0; t < max * T; t += DT) {
     const vx = b.vx;
     const vy = b.vy;
     step(b);
@@ -145,17 +147,17 @@ function follow(b: Ball, max = 3): string {
 /** Flip at every timing (2 ms apart) and record each launch and what it reached. */
 function sweep(f: Flipper, start: [number, number], feed: 'cradle' | 'live', dropsDown = false): Flip[] {
   const out: Flip[] = [];
-  const [d0, d1] = feed === 'cradle' ? [0.3, 0.9] : [0.4, 0.8];
+  const [d0, d1] = (feed === 'cradle' ? [0.3, 0.9] : [0.4, 0.8]).map((d) => d * T);
   for (let delay = d0; delay < d1; delay += 0.002) {
     reset(dropsDown);
     const b = m.addBall(start[0], start[1], 0, 100);
     if (feed === 'cradle') {
       f.pressed = true;
-      for (let t = 0; t < 2; t += DT) w.step(DT);
+      for (let t = 0; t < 2 * T; t += DT) w.step(DT);
       f.pressed = false;
     }
     let got: Omit<Flip, 'k'> | null = null;
-    for (let t = 0; t < 1.5 && !got; t += DT) {
+    for (let t = 0; t < 1.5 * T && !got; t += DT) {
       if (t > delay + (feed === 'cradle' ? 0.03 : 0)) f.pressed = true;
       w.step(DT);
       // launched: leaving the bat upward, still within its reach
@@ -265,7 +267,7 @@ if (want('ramps')) {
 if (want('alley')) {
   say('\n## Back Alley (12 launches that make it)');
   trials('loop closed', F.right, 'alley', (b) => {
-    for (let t = 0; t < 4 && !ev.some((e) => e.startsWith('CAM')); t += DT) step(b);
+    for (let t = 0; t < 4 * T && !ev.some((e) => e.startsWith('CAM')); t += DT) step(b);
     return ev.some((e) => e.startsWith('CAM')) ? 'top lanes' : `missed (${ev.join('>') || 'nothing'})`;
   });
   // Flips that go up the orbit but don't make it over the top: where do they come back to?
@@ -275,7 +277,7 @@ if (want('alley')) {
     reset();
     const b = relaunch(fl);
     let rose = false;
-    for (let t = 0; t < 1.2; t += DT) {
+    for (let t = 0; t < 1.2 * T; t += DT) {
       step(b);
       if (b.x < 70 && b.y < 500) rose = true;
     }
@@ -287,7 +289,7 @@ if (want('alley')) {
     F.right,
     'alley',
     (b) => {
-      for (let t = 0; t < 4 && !ev.includes('upper'); t += DT) {
+      for (let t = 0; t < 4 * T && !ev.includes('upper'); t += DT) {
         m.doorOpen = 5;
         step(b);
       }
@@ -317,11 +319,11 @@ if (want('plunge') || want('pops')) {
     reset();
     const pull = 0.5 + (0.5 * i) / 11;
     const b = m.addBall(557.5, 1165);
-    for (let t = 0; t < 0.4; t += DT) w.step(DT);
+    for (let t = 0; t < 0.4 * T; t += DT) w.step(DT);
     (g as any).fire(pull);
     let tIn = -1;
     let tOut = -1;
-    for (let t = 0; t < 12; t += DT) {
+    for (let t = 0; t < 12 * T; t += DT) {
       step(b);
       if (tIn < 0 && ev.some((e) => e.startsWith('CAM'))) tIn = t;
       if (tIn >= 0 && b.y > L.EXIT_BOTTOM + 10) {
@@ -346,9 +348,9 @@ if (want('plunge') || want('pops')) {
   for (const [label, speed] of [['auto-launch (multiball / ball save)', 3150]] as const) {
     reset();
     const b = m.addBall(557.5, 1165);
-    for (let t = 0; t < 0.4; t += DT) w.step(DT);
+    for (let t = 0; t < 0.4 * T; t += DT) w.step(DT);
     b.vy = -speed;
-    for (let t = 0; t < 4 && !ev.some((e) => e.startsWith('CAM')); t += DT) step(b);
+    for (let t = 0; t < 4 * T && !ev.some((e) => e.startsWith('CAM')); t += DT) step(b);
     say(`${label}: ${ev.find((e) => e.startsWith('CAM')) ? 'top lanes' : 'missed'}`);
   }
 }
@@ -373,7 +375,7 @@ if (want('breach')) {
       if (!fl.k.startsWith('letter')) continue;
       reset();
       const b = relaunch(fl);
-      for (let t = 0; t < 1 && !ev.length; t += DT) step(b);
+      for (let t = 0; t < 1 * T && !ev.length; t += DT) step(b);
       (after[fl.k] ??= []).push(arrive(b));
     }
     for (const [k, v] of Object.entries(after).sort()) say(`  from the ${side} flipper, ${k}: ${tally(v)}`);
@@ -396,7 +398,7 @@ if (want('upper')) {
       const b = m.addBall(70 + (i % 4) * 9, L.UPPER_LANE_TOP_Y - 20, 30 + i * 25, -500 - i * 60);
       let t = 0;
       let out = '';
-      for (; t < 30 && !out; t += DT) {
+      for (; t < 30 * T && !out; t += DT) {
         if (play)
           for (const f of upper) {
             const near = Math.hypot(b.x - (f.px + f.tipX) / 2, b.y - (f.py + f.tipY) / 2) < 34 && b.vy > -50;
@@ -421,14 +423,14 @@ if (want('upper')) {
   // Shots off the upper flippers: cradle on each, flip at each timing, see what it reaches.
   for (const [k, f] of upper.entries()) {
     const out: string[] = [];
-    for (let delay = 0.1; delay < 0.7; delay += 0.004) {
+    for (let delay = 0.1 * T; delay < 0.7 * T; delay += 0.004) {
       reset();
       const b = m.addBall(f.px + (k ? -12 : 12), f.py - 30, 0, 50);
       f.pressed = true;
-      for (let t = 0; t < 1.5; t += DT) w.step(DT);
+      for (let t = 0; t < 1.5 * T; t += DT) w.step(DT);
       f.pressed = false;
       let flipped = false;
-      for (let t = 0; t < 2.5; t += DT) {
+      for (let t = 0; t < 2.5 * T; t += DT) {
         if (t > delay && !flipped) {
           f.pressed = true;
           flipped = true;

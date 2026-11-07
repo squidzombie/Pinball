@@ -168,7 +168,7 @@ any core hit with no job running starts it.
 | Mute / Pause | `M` / `P` | 🔊 button |
 | Flat / tilted view | `V` (or add `?flat` to the URL) | |
 | Game speed (100% / 90% / 80%) | | the % button next to 🔊 |
-| Table slope (16° / 12° / 9° / 6.5°, a real table's), in trial builds (`VITE_SLOPE=9 npm run build`): gentler lets the ball float, but the shots are aimed for 16° | | the ° button next to the % button |
+| Table slope (16° / 12° / 9° / 6.5°, a real table's), in trial builds (`VITE_SLOPE=6.5 npm run build` starts at 6.5°): gentler lets the ball float, but the shots are aimed for 16° | | the ° button next to the % button |
 
 ## Development
 

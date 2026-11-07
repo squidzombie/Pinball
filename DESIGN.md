@@ -1160,6 +1160,16 @@ exactly where every wall, lane, ramp entrance and insert is. Regenerate them wit
 
 ## 8. Decisions
 
+### 7 November 2026: the slope (decided; re-aiming to come)
+
+1. **Cyber Psychosis moves to 6.5°,** the slope Dust & Lead plays at: the owner finds it plays a
+   lot better. Today's pull (`GRAVITY`, 2000) is about a 16° table.
+2. **First, play it unchanged at 6.5°.** The phone link is a trial build at 6.5° with the layout
+   as it is; the ° button still switches to 16° for comparison.
+3. **Then re-aim.** Measured at 6.5° (`SLOPE=6.5 npm run measure`), the Skyway is lost (0% / 1%
+   of flips, from 19% / 2%) and the Breach moves to the left flipper (3% / 14%; from the right
+   1% / 1%). The Black Market and Back Alley get easier, and everything else meets the bar.
+
 ### 30 October 2026, fifteenth round: the audit (built; questions open)
 
 1. **The Breach's right lip flared** (you cleared changes to the targets around the Breach).

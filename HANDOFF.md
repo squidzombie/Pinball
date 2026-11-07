@@ -211,18 +211,33 @@ The table's pull down the playfield is `GRAVITY = 2000` units/s² (`physics.ts`)
 1. A trial of 85% pull was too small a change ("didn't feel much different").
 2. The phone link now has a trial ° button that gives 16°, 12°, 9° and 6.5°, which pull 100%,
    75%, 57% and 41% (`gravityAt(deg)` in `physics.ts`).
-3. The button only exists in trial builds, `VITE_SLOPE=9 npm run build`. Normal builds and the app
-   play at 16° exactly as before.
-4. The owner hasn't picked a slope yet.
+3. The button only exists in trial builds, `VITE_SLOPE=6.5 npm run build`, which always start at
+   the slope they were built for. Normal builds and the app play at 16° exactly as before.
+4. **On 7 November the owner chose 6.5° for Cyber Psychosis,** to match Dust & Lead, which they
+   find plays much better. The phone link plays at 6.5° with the layout unchanged; re-aiming the
+   shots for it comes next.
 
 **Why the layout depends on it.** With a weaker pull the ball flies straighter, so shots aimed at
-16° miss. These are from `SLOPE=12 npm run measure` and so on:
+16° miss. Cyber Psychosis's shots at 6.5° with the layout unchanged (`SLOPE=6.5 npm run measure`;
+cradled / live share of flip timings):
 
-| Slope | What changes |
-|---|---|
-| 12° | Most shots hold; the Breach from the right flipper drops from about 9–13% to 2% |
-| 9° | The Skyway drops to 1% |
-| 6.5° | The Skyway, Back Alley and upper playfield can't be made |
+| Shot | 16° | 6.5° |
+|---|---|---|
+| Skyway (left) | 19% / 2% | 0% / 1%: the one shot that's lost |
+| Breach (right / left) | 9% / 13%, 0% / 3% | 1% / 1%, 3% / 14%: it moves to the left flipper |
+| Black Market (left / right) | 9% / 16%, 12% / 4% | 18% / 24%, 15% / 13% |
+| Back Alley (right) | 10% / 4% | 18% / 1% |
+| Reactor (left) | 10% / 10% | 7% / 10% |
+| Vault lane (right) | 1% / 0% | 1% / 1% |
+
+Ramp returns, the plunge, the pops and the Breach's kickout all still meet the bar, and bot play
+finds no leaks or stuck balls.
+
+**Measure at the slope you play.** The measuring scripts flip within time windows; a gentler
+table needs longer ones, since the ball rolls down the bat more slowly. `scripts/measure.ts` now
+stretches every timing by `sqrt(GRAVITY / gravity)`, so its 16° results are unchanged. Before that
+fix it reported the Back Alley and the Skyway as impossible at 6.5°, which was wrong for the
+Back Alley; figures this session gave for 12° and 9° came from the old windows too.
 
 **For the new table:**
 - Agree the slope first.
